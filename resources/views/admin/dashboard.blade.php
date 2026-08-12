@@ -81,8 +81,8 @@
     <!-- Bar Chart Percentage -->
     <div class="col-lg-8">
         <div class="card card-custom p-4 h-100">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Rata-Rata Pencapaian (%) per Elemen SMKP</h5>
-            <p class="text-muted small mb-3">Grafik evaluasi tingkat pemenuhan elemen pada seluruh sesi audit yang berjalan/selesai.</p>
+            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Perbandingan Pencapaian Nilai Audit Antar Area</h5>
+            <p class="text-muted small mb-3">Grafik evaluasi perbandingan persentase skor akhir hasil audit antar area / departemen.</p>
             <div style="height: 260px;">
                 <canvas id="elementBarChart"></canvas>
             </div>
@@ -207,18 +207,18 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Bar Chart Percentage
+        // 1. Bar Chart Area Audit Score Comparison
         const ctxBar = document.getElementById('elementBarChart').getContext('2d');
         new Chart(ctxBar, {
             type: 'bar',
             data: {
-                labels: {!! json_encode($chartLabels) !!},
+                labels: {!! json_encode($areaLabels) !!},
                 datasets: [{
-                    label: 'Rata-Rata Pencapaian (%)',
-                    data: {!! json_encode($chartData) !!},
-                    backgroundColor: 'rgba(2, 132, 199, 0.75)',
-                    borderColor: '#0284c7',
-                    borderWidth: 2,
+                    label: 'Skor Akhir Pencapaian (%)',
+                    data: {!! json_encode($areaScores) !!},
+                    backgroundColor: {!! json_encode($areaColors) !!},
+                    borderColor: 'rgba(15, 23, 42, 0.1)',
+                    borderWidth: 1,
                     borderRadius: 8,
                 }]
             },
@@ -232,6 +232,11 @@
                         ticks: {
                             callback: function(value) { return value + '%'; }
                         }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
                     }
                 }
             }

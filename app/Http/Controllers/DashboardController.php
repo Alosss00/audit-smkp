@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller
 {
     /**
-     * Admin Dashboard with visual chart analytics & audit findings breakdown.
+     * Admin Dashboard with visual chart analytics & area audit score comparison.
      */
     public function admin()
     {
@@ -29,30 +29,26 @@ class DashboardController extends Controller
         ];
 
         $elemens = Elemen::orderBy('kode_elemen')->get();
-        $chartLabels = [];
-        $chartData = [];
         $findingLabels = [];
         $findingCounts = [];
 
-        $allSessions = AuditSesi::whereIn('status', ['berjalan', 'selesai'])->get();
+        // 1. Comparison of Final Compliance Score per Area Audit
+        $allSessions = AuditSesi::with('user')->latest()->get();
+        $areaLabels = [];
+        $areaScores = [];
+        $areaColors = [];
 
-        // 1. Average Compliance Percentage per Elemen
-        foreach ($elemens as $el) {
-            $chartLabels[] = 'Elemen ' . $el->kode_elemen;
+        foreach ($allSessions as $session) {
+            $skor = (float) ($session->skor_akhir ?? $session->hitungSkorAkhir());
+            $areaLabels[] = $session->area_audit;
+            $areaScores[] = round($skor, 2);
 
-            if ($allSessions->count() > 0) {
-                $totalPercentageSum = 0;
-                foreach ($allSessions as $session) {
-                    $rekap = $session->getRekapPerElemen();
-                    foreach ($rekap as $row) {
-                        if ($row['elemen_id'] == $el->id) {
-                            $totalPercentageSum += $row['persentase'];
-                        }
-                    }
-                }
-                $chartData[] = round($totalPercentageSum / $allSessions->count(), 2);
+            if ($skor >= 80) {
+                $areaColors[] = 'rgba(34, 197, 94, 0.75)'; // Green (>= 80%)
+            } elseif ($skor >= 70) {
+                $areaColors[] = 'rgba(234, 179, 8, 0.75)'; // Yellow (70-79%)
             } else {
-                $chartData[] = 0;
+                $areaColors[] = 'rgba(239, 68, 68, 0.75)'; // Red (< 70%)
             }
         }
 
@@ -61,7 +57,6 @@ class DashboardController extends Controller
         foreach ($elemens as $el) {
             $findingLabels[] = 'Elemen ' . $el->kode_elemen;
 
-            // Count audit details belonging to this element that have findings (catatan != null or nilai < nilai_maksimal)
             $count = AuditDetail::whereHas('kriteria.subElemen', function ($q) use ($el) {
                 $q->where('elemen_id', $el->id);
             })
@@ -81,7 +76,6 @@ class DashboardController extends Controller
             ];
         }
 
-        // Sort elements by highest number of findings
         usort($findingsPerElemen, function ($a, $b) {
             return $b['total_findings'] <=> $a['total_findings'];
         });
@@ -90,8 +84,9 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'stats',
-            'chartLabels',
-            'chartData',
+            'areaLabels',
+            'areaScores',
+            'areaColors',
             'findingLabels',
             'findingCounts',
             'topFindings'
@@ -99,7 +94,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Auditor Dashboard with visual chart analytics & personal audit findings breakdown.
+     * Auditor Dashboard with area audit score comparison & personal audit findings breakdown.
      */
     public function auditor()
     {
@@ -117,26 +112,31 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $latestAudit = AuditSesi::where('user_id', $userId)->latest()->first();
-        $chartLabels = [];
-        $chartData = [];
-        $findingLabels = [];
-        $findingCounts = [];
+        $allAuditorSessions = AuditSesi::where('user_id', $userId)
+            ->latest()
+            ->get();
 
-        $elemens = Elemen::orderBy('kode_elemen')->get();
+        $areaLabels = [];
+        $areaScores = [];
+        $areaColors = [];
 
-        if ($latestAudit) {
-            $rekap = $latestAudit->getRekapPerElemen();
-            foreach ($rekap as $row) {
-                $chartLabels[] = 'Elemen ' . $row['kode_elemen'];
-                $chartData[] = $row['persentase'];
-            }
-        } else {
-            foreach ($elemens as $el) {
-                $chartLabels[] = 'Elemen ' . $el->kode_elemen;
-                $chartData[] = 0;
+        foreach ($allAuditorSessions as $session) {
+            $skor = (float) ($session->skor_akhir ?? $session->hitungSkorAkhir());
+            $areaLabels[] = $session->area_audit;
+            $areaScores[] = round($skor, 2);
+
+            if ($skor >= 80) {
+                $areaColors[] = 'rgba(34, 197, 94, 0.75)'; // Green (>= 80%)
+            } elseif ($skor >= 70) {
+                $areaColors[] = 'rgba(234, 179, 8, 0.75)'; // Yellow (70-79%)
+            } else {
+                $areaColors[] = 'rgba(239, 68, 68, 0.75)'; // Red (< 70%)
             }
         }
+
+        $elemens = Elemen::orderBy('kode_elemen')->get();
+        $findingLabels = [];
+        $findingCounts = [];
 
         // Auditor Findings Frequency per Elemen
         $findingsPerElemen = [];
@@ -174,9 +174,9 @@ class DashboardController extends Controller
         return view('auditor.dashboard', compact(
             'stats',
             'recentAudits',
-            'latestAudit',
-            'chartLabels',
-            'chartData',
+            'areaLabels',
+            'areaScores',
+            'areaColors',
             'findingLabels',
             'findingCounts',
             'topFindings'

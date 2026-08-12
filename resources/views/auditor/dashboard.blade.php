@@ -78,26 +78,23 @@
 
 <!-- Visual Charts Section -->
 <div class="row g-4 mb-4">
-    <!-- Bar Chart Compliance Percentage for Latest Audit -->
-    @if($latestAudit)
-        <div class="col-lg-6">
-            <div class="card card-custom p-4 h-100">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div>
-                        <h5 class="fw-bold text-slate-800 mb-0"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Pencapaian Audit Terbaru</h5>
-                        <small class="text-muted">Area: <strong>{{ $latestAudit->area_audit }}</strong></small>
-                    </div>
-                    <span class="fs-5 fw-bold text-primary">{{ number_format($latestAudit->skor_akhir ?? 0, 2) }}%</span>
-                </div>
-                <div style="height: 220px;">
-                    <canvas id="auditorBarChart"></canvas>
+    <!-- Bar Chart Comparison of Compliance Scores Across Area Audits -->
+    <div class="col-lg-6">
+        <div class="card card-custom p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h5 class="fw-bold text-slate-800 mb-0"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Perbandingan Nilai Audit Antar Area</h5>
+                    <small class="text-muted">Grafik evaluasi pencapaian skor akhir SMKP antar area audit</small>
                 </div>
             </div>
+            <div style="height: 220px;">
+                <canvas id="auditorBarChart"></canvas>
+            </div>
         </div>
-    @endif
+    </div>
 
     <!-- Horizontal Bar Chart Audit Findings Frequency -->
-    <div class="col-lg-{{ $latestAudit ? '6' : '12' }}">
+    <div class="col-lg-6">
         <div class="card card-custom p-4 h-100 border-start border-4 border-danger">
             <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Frekuensi Temuan Audit per Elemen</h5>
             <p class="text-muted small mb-3">Akumulasi jumlah temuan ketidaksesuaian pada seluruh audit Anda.</p>
@@ -178,37 +175,40 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        @if($latestAudit)
-            // Bar Chart Compliance
-            const ctxBar = document.getElementById('auditorBarChart').getContext('2d');
-            new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: {!! json_encode($chartLabels) !!},
-                    datasets: [{
-                        label: 'Persentase Pencapaian (%)',
-                        data: {!! json_encode($chartData) !!},
-                        backgroundColor: 'rgba(2, 132, 199, 0.75)',
-                        borderColor: '#0284c7',
-                        borderWidth: 2,
-                        borderRadius: 6,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                callback: function(value) { return value + '%'; }
-                            }
+        // Bar Chart Comparison Across Area Audits
+        const ctxBar = document.getElementById('auditorBarChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($areaLabels) !!},
+                datasets: [{
+                    label: 'Skor Akhir Pencapaian (%)',
+                    data: {!! json_encode($areaScores) !!},
+                    backgroundColor: {!! json_encode($areaColors) !!},
+                    borderColor: 'rgba(15, 23, 42, 0.1)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) { return value + '%'; }
                         }
                     }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
                 }
-            });
-        @endif
+            }
+        });
 
         // Horizontal Bar Chart Findings
         const ctxFindings = document.getElementById('auditorFindingsChart').getContext('2d');
