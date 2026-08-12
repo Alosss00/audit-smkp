@@ -25,6 +25,8 @@ class AuditSesiExport implements FromView, WithTitle, ShouldAutoSize, WithEvents
      */
     public function view(): View
     {
+        libxml_use_internal_errors(true);
+
         $sesi = $this->sesi;
         $elemens = Elemen::with(['subElemens.kriterias'])->orderBy('kode_elemen')->get();
         $details = $sesi->auditDetails()->with('kriteria')->get();

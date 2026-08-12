@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditSesi;
 use App\Models\Pica;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,42 +11,50 @@ use Illuminate\Http\Request;
 class PicaController extends Controller
 {
     /**
-     * Display global listing of all PICA items for Administrator oversight.
+     * Display global listing of all PICA items grouped by Audit Session for Administrator oversight.
      */
     public function index(Request $request)
     {
-        $query = Pica::with(['auditDetail.auditSesi.user', 'auditDetail.kriteria.subElemen.elemen']);
+        $query = AuditSesi::whereHas('auditDetails.pica')
+            ->with([
+                'user',
+                'auditDetails' => function ($q) {
+                    $q->whereHas('pica');
+                },
+                'auditDetails.pica',
+                'auditDetails.kriteria.subElemen.elemen'
+            ]);
 
-        // Filter by Status
+        // Filter by Status (sessions having at least one PICA with matching status)
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $status = $request->status;
+            $query->whereHas('auditDetails.pica', function ($q) use ($status) {
+                $q->where('status', $status);
+            });
         }
 
         // Filter by Auditor (user_id)
         if ($request->filled('user_id')) {
-            $userId = $request->user_id;
-            $query->whereHas('auditDetail.auditSesi', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
+            $query->where('user_id', $request->user_id);
         }
 
-        // Filter by Search Query (deskripsi, akar masalah, pic, area audit, auditor name)
+        // Filter by Search Query (area_audit or deskripsi_temuan / pic / akar_masalah / auditor name)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('deskripsi_temuan', 'like', "%{$search}%")
-                  ->orWhere('pic_perbaikan', 'like', "%{$search}%")
-                  ->orWhere('akar_masalah', 'like', "%{$search}%")
-                  ->orWhereHas('auditDetail.auditSesi', function ($qs) use ($search) {
-                      $qs->where('area_audit', 'like', "%{$search}%")
-                        ->orWhereHas('user', function ($qu) use ($search) {
-                            $qu->where('name', 'like', "%{$search}%");
-                        });
+                $q->where('area_audit', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($qu) use ($search) {
+                      $qu->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('auditDetails.pica', function ($qp) use ($search) {
+                      $qp->where('deskripsi_temuan', 'like', "%{$search}%")
+                        ->orWhere('pic_perbaikan', 'like', "%{$search}%")
+                        ->orWhere('akar_masalah', 'like', "%{$search}%");
                   });
             });
         }
 
-        $picas = $query->latest()->paginate(10);
+        $auditSesis = $query->latest()->paginate(10);
 
         // Global Stats Summary
         $stats = [
@@ -62,7 +71,7 @@ class PicaController extends Controller
         // Auditor list for filter dropdown
         $auditors = User::where('role', 'auditor')->orderBy('name')->get();
 
-        return view('admin.pica.index', compact('picas', 'stats', 'auditors'));
+        return view('admin.pica.index', compact('auditSesis', 'stats', 'auditors'));
     }
 
     /**

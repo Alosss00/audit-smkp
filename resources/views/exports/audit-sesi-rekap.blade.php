@@ -7,7 +7,7 @@
     <table>
         <!-- Meta Header Audit Sesi -->
         <tr>
-            <td colspan="14" style="font-weight: bold; font-size: 14pt; text-align: center;">LAPORAN REKAPITULASI & PENILAIAN AUDIT INTERNAL SMKP MINERBA</td>
+            <td colspan="14" style="font-weight: bold; font-size: 14pt; text-align: center;">LAPORAN REKAPITULASI &amp; PENILAIAN AUDIT INTERNAL SMKP MINERBA</td>
         </tr>
         <tr>
             <td colspan="14" style="font-size: 10pt; text-align: center; color: #475569;">Berdasarkan Keputusan Direktur Jenderal Mineral dan Batubara ESDM Nomor 185.K/37.04/DJB/2019</td>

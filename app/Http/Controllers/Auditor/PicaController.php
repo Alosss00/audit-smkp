@@ -3,55 +3,66 @@
 namespace App\Http\Controllers\Auditor;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditSesi;
 use App\Models\Pica;
 use Illuminate\Http\Request;
 
 class PicaController extends Controller
 {
     /**
-     * Display a listing of PICA items scoped to the authenticated auditor.
+     * Display a listing of PICA items grouped by Audit Session for authenticated auditor.
      */
     public function index(Request $request)
     {
         $userId = auth()->id();
 
-        $query = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userId) {
-            $q->where('user_id', $userId);
-        })->with(['auditDetail.auditSesi', 'auditDetail.kriteria.subElemen.elemen']);
+        $query = AuditSesi::where('user_id', $userId)
+            ->whereHas('auditDetails.pica')
+            ->with([
+                'user',
+                'auditDetails' => function ($q) {
+                    $q->whereHas('pica');
+                },
+                'auditDetails.pica',
+                'auditDetails.kriteria.subElemen.elemen'
+            ]);
 
-        // Filter by Status
+        // Filter by Status (sessions having at least one PICA with matching status)
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $status = $request->status;
+            $query->whereHas('auditDetails.pica', function ($q) use ($status) {
+                $q->where('status', $status);
+            });
         }
 
-        // Filter by Search Query
+        // Filter by Search Query (area_audit or deskripsi_temuan / pic / akar_masalah)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('deskripsi_temuan', 'like', "%{$search}%")
-                  ->orWhere('pic_perbaikan', 'like', "%{$search}%")
-                  ->orWhere('akar_masalah', 'like', "%{$search}%")
-                  ->orWhereHas('auditDetail.auditSesi', function ($qs) use ($search) {
-                      $qs->where('area_audit', 'like', "%{$search}%");
+                $q->where('area_audit', 'like', "%{$search}%")
+                  ->orWhereHas('auditDetails.pica', function ($qp) use ($search) {
+                      $qp->where('deskripsi_temuan', 'like', "%{$search}%")
+                        ->orWhere('pic_perbaikan', 'like', "%{$search}%")
+                        ->orWhere('akar_masalah', 'like', "%{$search}%");
                   });
             });
         }
 
-        $picas = $query->latest()->paginate(10);
+        $auditSesis = $query->latest()->paginate(10);
 
         // Stats summary
-        $baseQuery = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userId) {
+        $basePicaQuery = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userId) {
             $q->where('user_id', $userId);
         });
 
         $stats = [
-            'total' => (clone $baseQuery)->count(),
-            'open' => (clone $baseQuery)->where('status', 'open')->count(),
-            'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
-            'closed' => (clone $baseQuery)->where('status', 'closed')->count(),
+            'total' => (clone $basePicaQuery)->count(),
+            'open' => (clone $basePicaQuery)->where('status', 'open')->count(),
+            'in_progress' => (clone $basePicaQuery)->where('status', 'in_progress')->count(),
+            'closed' => (clone $basePicaQuery)->where('status', 'closed')->count(),
         ];
 
-        return view('auditor.pica.index', compact('picas', 'stats'));
+        return view('auditor.pica.index', compact('auditSesis', 'stats'));
     }
 
     /**
