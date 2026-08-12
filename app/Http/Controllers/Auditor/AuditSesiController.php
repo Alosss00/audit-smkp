@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auditor;
 
+use App\Exports\AuditSesiExport;
 use App\Http\Controllers\Controller;
 use App\Models\AuditDetail;
 use App\Models\AuditSesi;
@@ -11,6 +12,7 @@ use App\Models\Pica;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AuditSesiController extends Controller
 {
@@ -229,9 +231,9 @@ class AuditSesiController extends Controller
     }
 
     /**
-     * Export audit session rekap & criteria matrix to downloadable CSV file.
+     * Export audit session rekap & criteria matrix to official Excel (.xlsx) file (TT-MGT-FRS-026B).
      */
-    public function exportCsv($id)
+    public function exportExcel($id)
     {
         $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
 
@@ -239,70 +241,9 @@ class AuditSesiController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
-        $rekap = $sesi->getRekapPerElemen();
-        $skorAkhir = $sesi->skor_akhir ?? $sesi->hitungSkorAkhir();
+        $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . str_replace(' ', '_', $sesi->area_audit) . '_' . $sesi->tanggal_audit->format('Y-m-d') . '.xlsx';
 
-        $fileName = 'Audit_SMKP_' . str_replace(' ', '_', $sesi->area_audit) . '_' . $sesi->tanggal_audit->format('Y-m-d') . '.csv';
-
-        $headers = [
-            'Content-type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename={$fileName}",
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0',
-        ];
-
-        $callback = function () use ($sesi, $rekap, $skorAkhir) {
-            $file = fopen('php://output', 'w');
-            
-            // UTF-8 BOM for Excel
-            fputs($file, "\xEF\xBB\xBF");
-
-            // Meta Info Header
-            fputcsv($file, ['LAPORAN REKAPITULASI AUDIT INTERNAL SMKP MINERBA KEPDIRJEN 185']);
-            fputcsv($file, ['Area Audit', $sesi->area_audit]);
-            fputcsv($file, ['Tanggal Audit', $sesi->tanggal_audit->format('d M Y')]);
-            fputcsv($file, ['Auditor Pelaksana', $sesi->user->name]);
-            fputcsv($file, ['Status Sesi', strtoupper($sesi->status)]);
-            fputcsv($file, ['Skor Akhir Total (%)', number_format($skorAkhir, 2) . '%']);
-            fputcsv($file, []);
-
-            // Summary per Elemen Table
-            fputcsv($file, ['I. REKAPITULASI PER ELEMEN']);
-            fputcsv($file, ['Kode Elemen', 'Nama Elemen', 'Total Nilai Aktual', 'Total Maks Efektif', 'Persentase (%)', 'Bobot (%)', 'Skor Akhir Elemen (%)']);
-
-            foreach ($rekap as $row) {
-                fputcsv($file, [
-                    'Elemen ' . $row['kode_elemen'],
-                    $row['nama_elemen'],
-                    $row['total_nilai_aktual'],
-                    $row['total_nilai_maks_efektif'],
-                    $row['persentase'] . '%',
-                    $row['bobot'] . '%',
-                    $row['skor_elemen'] . '%',
-                ]);
-            }
-            fputcsv($file, []);
-
-            // Detailed Criteria Matrix Table
-            fputcsv($file, ['II. DETAIL KRITERIA PENILAIAN & CATATAN TEMUAN']);
-            fputcsv($file, ['Kode Kriteria', 'Deskripsi Kriteria', 'Nilai Maksimal', 'Nilai Aktual', 'Status N/A', 'Catatan Temuan / Bukti']);
-
-            foreach ($sesi->auditDetails as $detail) {
-                fputcsv($file, [
-                    $detail->kriteria ? $detail->kriteria->kode_kriteria : '-',
-                    $detail->kriteria ? $detail->kriteria->deskripsi : '-',
-                    $detail->kriteria ? $detail->kriteria->nilai_maksimal : '-',
-                    $detail->is_na ? '0.00' : $detail->nilai,
-                    $detail->is_na ? 'YA' : 'TIDAK',
-                    $detail->catatan ?? '-',
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(new AuditSesiExport($sesi), $fileName);
     }
 
     /**

@@ -12,8 +12,8 @@
         <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Tanggal: <strong>{{ $sesi->tanggal_audit->format('d M Y') }}</strong></p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('auditor.audit-sesi.export-csv', $sesi->id) }}" class="btn btn-success rounded-3 px-3">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Excel (CSV)
+        <a href="{{ route('auditor.audit-sesi.export-excel', $sesi->id) }}" class="btn btn-success rounded-3 px-3">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export Excel (.xlsx)
         </a>
         <a href="{{ route('auditor.audit-sesi.cetak', $sesi->id) }}" target="_blank" class="btn btn-dark rounded-3 px-3">
             <i class="bi bi-printer me-1"></i> Cetak Laporan (PDF)

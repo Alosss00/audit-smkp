@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuditOversightController;
 use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
+use App\Http\Controllers\Admin\PicaController as AdminPicaController;
 use App\Http\Controllers\Admin\SubElemenController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auditor\AuditSesiController;
@@ -40,7 +41,11 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::get('/rekap-audit', [AuditOversightController::class, 'index'])->name('rekap-audit.index');
         Route::get('/rekap-audit/{id}', [AuditOversightController::class, 'show'])->name('rekap-audit.show');
         Route::get('/rekap-audit/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('rekap-audit.cetak');
-        Route::get('/rekap-audit/{id}/export-csv', [AuditSesiController::class, 'exportCsv'])->name('rekap-audit.export-csv');
+        Route::get('/rekap-audit/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('rekap-audit.export-excel');
+
+        // Monitoring PICA (Problem Identification and Corrective Action)
+        Route::get('/pica', [AdminPicaController::class, 'index'])->name('pica.index');
+        Route::put('/pica/{id}', [AdminPicaController::class, 'update'])->name('pica.update');
 
         // Master Data CRUD
         Route::post('/elemens/{id}/restore', [ElemenController::class, 'restore'])->name('elemens.restore');
@@ -61,7 +66,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::post('/audit-sesi/{id}/matrix', [AuditSesiController::class, 'updateMatrix'])->name('audit-sesi.matrix.update');
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiController::class, 'rekap'])->name('audit-sesi.rekap');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('audit-sesi.cetak');
-        Route::get('/audit-sesi/{id}/export-csv', [AuditSesiController::class, 'exportCsv'])->name('audit-sesi.export-csv');
+        Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
         Route::resource('audit-sesi', AuditSesiController::class);
 

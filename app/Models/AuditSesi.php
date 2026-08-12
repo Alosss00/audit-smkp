@@ -100,6 +100,48 @@ class AuditSesi extends Model
     }
 
     /**
+     * Calculate rekap score per sub-element for Excel export aggregation.
+     *
+     * @return array Keyed by sub_elemen_id
+     */
+    public function getRekapPerSubElemen(): array
+    {
+        $details = $this->auditDetails()->with('kriteria.subElemen')->get();
+        $subElemens = SubElemen::orderBy('kode_sub')->get();
+
+        $rekap = [];
+
+        foreach ($subElemens as $sub) {
+            $totalNilaiAktual = 0;
+            $totalNilaiMaksEfektif = 0;
+
+            $subDetails = $details->filter(function ($detail) use ($sub) {
+                return $detail->kriteria && $detail->kriteria->sub_elemen_id == $sub->id;
+            });
+
+            foreach ($subDetails as $detail) {
+                if (!$detail->is_na) {
+                    $totalNilaiAktual += (float) $detail->nilai;
+                    $totalNilaiMaksEfektif += (float) $detail->kriteria->nilai_maksimal;
+                }
+            }
+
+            $persentase = $totalNilaiMaksEfektif > 0 ? ($totalNilaiAktual / $totalNilaiMaksEfektif) * 100 : 0;
+
+            $rekap[$sub->id] = [
+                'sub_elemen_id' => $sub->id,
+                'kode_sub' => $sub->kode_sub,
+                'nama_sub' => $sub->nama_sub,
+                'total_nilai_aktual' => round($totalNilaiAktual, 2),
+                'total_nilai_maks_efektif' => round($totalNilaiMaksEfektif, 2),
+                'persentase' => round($persentase, 2),
+            ];
+        }
+
+        return $rekap;
+    }
+
+    /**
      * Recalculate and update `skor_akhir` on the audit session.
      *
      * @return float
