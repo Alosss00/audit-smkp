@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -62,12 +63,14 @@ class UserController extends Controller
             'password' => 'nullable|string|min:6',
         ]);
 
+        $isActive = $request->has('is_active') ? true : false;
+
         $data = [
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
             'role' => $request->role,
-            'is_active' => $request->has('is_active') ? true : false,
+            'is_active' => $isActive,
         ];
 
         if ($request->filled('password')) {
@@ -75,6 +78,11 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        // Force logout active session if deactivated
+        if (!$user->is_active) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Data user berhasil diperbarui!');
@@ -93,6 +101,11 @@ class UserController extends Controller
 
         $user->is_active = !$user->is_active;
         $user->save();
+
+        // Force logout active session if deactivated
+        if (!$user->is_active) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
 
         $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 

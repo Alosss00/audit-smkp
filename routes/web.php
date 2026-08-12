@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\KriteriaController;
 use App\Http\Controllers\Admin\SubElemenController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auditor\AuditSesiController;
+use App\Http\Controllers\Auditor\PicaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
@@ -24,7 +25,7 @@ Route::get('/', function () {
 // Guest Routes (Authentication)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 });
 
 // Authenticated Routes (Protected with Anti-Back-History Cache)
@@ -63,5 +64,9 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::get('/audit-sesi/{id}/export-csv', [AuditSesiController::class, 'exportCsv'])->name('audit-sesi.export-csv');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
         Route::resource('audit-sesi', AuditSesiController::class);
+
+        // Modul PICA (Problem Identification and Corrective Action)
+        Route::get('/pica', [PicaController::class, 'index'])->name('pica.index');
+        Route::put('/pica/{id}', [PicaController::class, 'update'])->name('pica.update');
     });
 });

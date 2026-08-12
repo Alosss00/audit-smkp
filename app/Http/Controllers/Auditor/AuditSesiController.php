@@ -7,6 +7,7 @@ use App\Models\AuditDetail;
 use App\Models\AuditSesi;
 use App\Models\Elemen;
 use App\Models\Kriteria;
+use App\Models\Pica;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -126,12 +127,10 @@ class AuditSesiController extends Controller
                 if ($detail) {
                     $isNa = isset($data['is_na']) && $data['is_na'] == 1;
                     $nilai = $isNa ? 0.00 : (float) ($data['nilai'] ?? 0);
+                    $max = $detail->kriteria ? (float) $detail->kriteria->nilai_maksimal : 4.00;
 
-                    if ($detail->kriteria) {
-                        $max = (float) $detail->kriteria->nilai_maksimal;
-                        if ($nilai > $max) {
-                            $nilai = $max;
-                        }
+                    if ($nilai > $max) {
+                        $nilai = $max;
                     }
 
                     $updatePayload = [
@@ -150,6 +149,33 @@ class AuditSesiController extends Controller
                     }
 
                     $detail->update($updatePayload);
+
+                    // PICA Auto-Trigger & Clean Logic
+                    if (!$isNa && $nilai < $max) {
+                        $pica = Pica::where('audit_detail_id', $detail->id)->first();
+                        $deskripsiTemuan = !empty($data['catatan']) 
+                            ? $data['catatan'] 
+                            : ($detail->catatan ?? "Ketidaksesuaian kriteria " . ($detail->kriteria ? $detail->kriteria->kode_kriteria : '') . " (Skor " . number_format($nilai, 2) . " / " . number_format($max, 2) . ")");
+
+                        if (!$pica) {
+                            Pica::create([
+                                'audit_detail_id' => $detail->id,
+                                'deskripsi_temuan' => $deskripsiTemuan,
+                                'status' => 'open',
+                            ]);
+                        } else {
+                            $pica->update([
+                                'deskripsi_temuan' => $deskripsiTemuan,
+                            ]);
+                        }
+                    } else {
+                        $pica = Pica::where('audit_detail_id', $detail->id)->first();
+                        if ($pica) {
+                            if ($pica->status === 'open' && empty($pica->akar_masalah)) {
+                                $pica->delete();
+                            }
+                        }
+                    }
                 }
             }
 

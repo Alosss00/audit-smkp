@@ -53,4 +53,12 @@ class AuditDetail extends Model
     {
         return $this->belongsTo(Kriteria::class, 'kriteria_id')->withTrashed();
     }
+
+    /**
+     * Relationship to Pica.
+     */
+    public function pica()
+    {
+        return $this->hasOne(Pica::class, 'audit_detail_id');
+    }
 }
