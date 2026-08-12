@@ -25,11 +25,12 @@ class AuditSesiExport implements FromView, WithTitle, ShouldAutoSize, WithEvents
      */
     public function view(): View
     {
+        $sesi = $this->sesi;
         $elemens = Elemen::with(['subElemens.kriterias'])->orderBy('kode_elemen')->get();
-        $details = $this->sesi->auditDetails()->with('kriteria')->get();
-        $rekapElemen = $this->sesi->getRekapPerElemen();
-        $rekapSub = $this->sesi->getRekapPerSubElemen();
-        $skorAkhir = $this->sesi->skor_akhir ?? $this->sesi->hitungSkorAkhir();
+        $details = $sesi->auditDetails()->with('kriteria')->get();
+        $rekapElemen = $sesi->getRekapPerElemen();
+        $rekapSub = $sesi->getRekapPerSubElemen();
+        $skorAkhir = $sesi->skor_akhir ?? $sesi->hitungSkorAkhir();
 
         return view('exports.audit-sesi-rekap', compact(
             'sesi',
