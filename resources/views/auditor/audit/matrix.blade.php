@@ -3,14 +3,17 @@
 @section('title', 'Matriks Penilaian Audit SMKP')
 
 @section('content')
-<form action="{{ route('auditor.audit-sesi.matrix.update', $sesi->id) }}" method="POST" enctype="multipart/form-data">
+@php
+    $routePrefix = auth()->user()->isAdmin() ? 'admin' : 'auditor';
+@endphp
+<form action="{{ route($routePrefix . '.audit-sesi.matrix.update', $sesi->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
 
     <!-- Header Section -->
     <div class="card card-custom p-4 mb-4 border-start border-5 border-primary">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
-                <a href="{{ route('auditor.audit-sesi.index') }}" class="text-decoration-none text-muted small">
+                <a href="{{ route($routePrefix . '.audit-sesi.index') }}" class="text-decoration-none text-muted small">
                     <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Sesi
                 </a>
                 <h3 class="fw-bold text-slate-800 mb-1 mt-1">Matriks Penilaian Audit Internal SMKP</h3>
@@ -25,7 +28,7 @@
                     <i class="bi bi-bar-chart-line me-1"></i> Simpan & Lihat Rekap
                 </button>
 
-                <a href="{{ route('auditor.audit-sesi.rekap', $sesi->id) }}" class="btn btn-outline-secondary rounded-3">
+                <a href="{{ route($routePrefix . '.audit-sesi.rekap', $sesi->id) }}" class="btn btn-outline-secondary rounded-3">
                     Rekap
                 </a>
             </div>

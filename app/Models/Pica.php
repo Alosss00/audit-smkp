@@ -15,8 +15,8 @@ class Pica extends Model
         'akar_masalah',
         'tindakan_koreksi',
         'tindakan_pencegahan',
+        'bukti_perbaikan',
         'tenggat_waktu',
-        'pic_perbaikan',
         'status',
         'catatan_verifikasi_auditor',
     ];
@@ -24,6 +24,19 @@ class Pica extends Model
     protected $casts = [
         'tenggat_waktu' => 'date',
     ];
+
+    protected $appends = ['bukti_perbaikan_url'];
+
+    /**
+     * Accessor for full storage URL of bukti perbaikan file.
+     */
+    public function getBuktiPerbaikanUrlAttribute(): ?string
+    {
+        if ($this->bukti_perbaikan) {
+            return asset('storage/' . $this->bukti_perbaikan);
+        }
+        return null;
+    }
 
     /**
      * Relationship to AuditDetail.
@@ -33,3 +46,4 @@ class Pica extends Model
         return $this->belongsTo(AuditDetail::class, 'audit_detail_id');
     }
 }
+

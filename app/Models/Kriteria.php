@@ -24,7 +24,7 @@ class Kriteria extends Model
     ];
 
     protected $casts = [
-        'nilai_maksimal' => 'decimal:2',
+        'nilai_maksimal' => 'integer',
     ];
 
     /**

@@ -21,8 +21,8 @@ class AuditDetail extends Model
     ];
 
     protected $casts = [
-        'nilai' => 'decimal:2',
-        'is_na' => 'boolean',
+        'nilai'  => 'integer',
+        'is_na'  => 'boolean',
     ];
 
     protected $appends = ['lampiran_url'];

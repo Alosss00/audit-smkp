@@ -13,15 +13,17 @@ class AuditSesi extends Model
 
     protected $fillable = [
         'user_id',
-        'tanggal_audit',
+        'tanggal_mulai',
+        'tanggal_selesai',
         'area_audit',
         'status',
         'skor_akhir',
     ];
 
     protected $casts = [
-        'tanggal_audit' => 'date',
-        'skor_akhir' => 'decimal:2',
+        'tanggal_mulai'   => 'date',
+        'tanggal_selesai' => 'date',
+        'skor_akhir'      => 'decimal:2',
     ];
 
     /**

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditOversightController;
+use App\Http\Controllers\Admin\AuditSesiAdminController;
 use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
 use App\Http\Controllers\Admin\PicaController as AdminPicaController;
@@ -43,9 +44,18 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::get('/rekap-audit/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('rekap-audit.cetak');
         Route::get('/rekap-audit/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('rekap-audit.export-excel');
 
-        // Monitoring PICA (Problem Identification and Corrective Action)
+        // Monitoring PICA (Problem Identification and Corrective Action) — all auditors
         Route::get('/pica', [AdminPicaController::class, 'index'])->name('pica.index');
         Route::put('/pica/{id}', [AdminPicaController::class, 'update'])->name('pica.update');
+
+        // Audit Sesi Pribadi Admin (Admin sebagai Auditor untuk sesi miliknya sendiri)
+        Route::get('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'matrix'])->name('audit-sesi.matrix');
+        Route::post('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'updateMatrix'])->name('audit-sesi.matrix.update');
+        Route::get('/audit-sesi/{id}/rekap', [AuditSesiAdminController::class, 'rekap'])->name('audit-sesi.rekap');
+        Route::get('/audit-sesi/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('audit-sesi.cetak');
+        Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
+        Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiAdminController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
+        Route::resource('audit-sesi', AuditSesiAdminController::class);
 
         // Master Data CRUD
         Route::post('/elemens/{id}/restore', [ElemenController::class, 'restore'])->name('elemens.restore');

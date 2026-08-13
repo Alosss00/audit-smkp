@@ -68,6 +68,25 @@
             padding: 16px 12px;
             flex-grow: 1;
             overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background-color: #334155;
+            border-radius: 99px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background-color: #475569;
         }
 
         .nav-section-title {
@@ -246,6 +265,17 @@
                     <a href="{{ route('admin.pica.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.pica.*') ? 'active' : '' }}">
                         <i class="bi bi-tools"></i>
                         <span>Monitoring PICA</span>
+                    </a>
+
+                    {{-- Audit Pribadi Admin --}}
+                    <div class="nav-section-title">Audit Pribadi Saya</div>
+                    <a href="{{ route('admin.audit-sesi.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-sesi.index') || request()->routeIs('admin.audit-sesi.matrix') || request()->routeIs('admin.audit-sesi.rekap') ? 'active' : '' }}">
+                        <i class="bi bi-journal-check"></i>
+                        <span>Sesi Audit Saya</span>
+                    </a>
+                    <a href="{{ route('admin.audit-sesi.create') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-sesi.create') ? 'active' : '' }}">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Buat Sesi Baru</span>
                     </a>
                 @else
                     <a href="{{ route('auditor.audit-sesi.index') }}" class="sidebar-nav-link {{ request()->routeIs('auditor.audit-sesi.index') || request()->routeIs('auditor.audit-sesi.matrix') || request()->routeIs('auditor.audit-sesi.rekap') ? 'active' : '' }}">
