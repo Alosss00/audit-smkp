@@ -19,13 +19,17 @@ class DashboardController extends Controller
     public function admin()
     {
         $stats = [
-            'total_elemens'     => Elemen::count(),
-            'total_sub_elemens' => SubElemen::count(),
-            'total_kriterias'   => Kriteria::count(),
-            'total_users'       => User::count(),
-            'total_audits'      => AuditSesi::count(),
-            'audits_selesai'    => AuditSesi::where('status', 'selesai')->count(),
-            'audits_berjalan'   => AuditSesi::where('status', 'berjalan')->count(),
+            'total_elemens'      => Elemen::count(),
+            'total_sub_elemens'  => SubElemen::count(),
+            'total_kriterias'    => Kriteria::count(),
+            'total_users'        => User::count(),
+            'total_audits'       => AuditSesi::count(),
+            'audits_selesai'     => AuditSesi::where('status', 'selesai')->count(),
+            'audits_berjalan'    => AuditSesi::where('status', 'berjalan')->count(),
+            'total_pica'         => \App\Models\Pica::count(),
+            'open_pica'          => \App\Models\Pica::where('status', 'open')->count(),
+            'in_progress_pica'   => \App\Models\Pica::where('status', 'in_progress')->count(),
+            'closed_pica'        => \App\Models\Pica::where('status', 'closed')->count(),
         ];
 
         $elemens = Elemen::orderBy('kode_elemen')->get();

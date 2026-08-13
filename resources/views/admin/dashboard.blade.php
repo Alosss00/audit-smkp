@@ -4,72 +4,75 @@
 
 @section('content')
 <div class="row align-items-center mb-4">
-    <div class="col-md-8">
+    <div class="col-md-7">
         <h2 class="fw-bold text-slate-800 mb-1">
-            <i class="bi bi-speedometer2 text-danger me-2"></i>Dashboard Administrator
+            <i class="bi bi-speedometer2 text-danger me-2"></i>Dashboard Administrator (Lead Auditor)
         </h2>
-        <p class="text-muted mb-0">Selamat datang, <strong>{{ auth()->user()->name }}</strong>. Monitoring & Evaluasi Penerapan Regulasi SMKP Kepdirjen 185.</p>
+        <p class="text-muted mb-0">Selamat datang, <strong>{{ auth()->user()->name }}</strong>. Pengawasan audit internal, pembuatan sesi, penilaian matriks, dan otoritas PICA SMKP Minerba.</p>
     </div>
-    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill">
-            <i class="bi bi-shield-lock-fill me-1"></i> Mode Administrator
-        </span>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end gap-2">
+        <a href="{{ route('admin.audit-sesi.create') }}" class="btn btn-danger rounded-3 shadow-sm px-3 py-2 fw-semibold">
+            <i class="bi bi-plus-circle me-1"></i> Buat Sesi Audit
+        </a>
+        <a href="{{ route('admin.pica.index') }}" class="btn btn-outline-danger rounded-3 px-3 py-2 fw-semibold">
+            <i class="bi bi-tools me-1"></i> Otoritas PICA
+        </a>
     </div>
 </div>
 
-<!-- Stat Cards -->
+<!-- Stat Cards: Lead Auditor & Oversight KPIs -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4 col-lg-3">
+    <div class="col-md-3">
         <div class="card card-custom p-3 border-start border-4 border-primary">
             <div class="d-flex align-items-center gap-3">
                 <div class="stat-icon-box bg-primary bg-opacity-10 text-primary">
-                    <i class="bi bi-folder-fill"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-semibold">Total Elemen</div>
-                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['total_elemens'] }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 col-lg-3">
-        <div class="card card-custom p-3 border-start border-4 border-info">
-            <div class="d-flex align-items-center gap-3">
-                <div class="stat-icon-box bg-info bg-opacity-10 text-info">
-                    <i class="bi bi-diagram-3-fill"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-semibold">Sub-Elemen</div>
-                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['total_sub_elemens'] }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 col-lg-3">
-        <div class="card card-custom p-3 border-start border-4 border-success">
-            <div class="d-flex align-items-center gap-3">
-                <div class="stat-icon-box bg-success bg-opacity-10 text-success">
-                    <i class="bi bi-list-check"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-semibold">Kriteria Penilaian</div>
-                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['total_kriterias'] }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 col-lg-3">
-        <div class="card card-custom p-3 border-start border-4 border-warning">
-            <div class="d-flex align-items-center gap-3">
-                <div class="stat-icon-box bg-warning bg-opacity-10 text-warning">
                     <i class="bi bi-journal-check"></i>
                 </div>
                 <div>
                     <div class="text-muted small fw-semibold">Total Sesi Audit</div>
                     <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['total_audits'] }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-custom p-3 border-start border-4 border-danger">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon-box bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-semibold">PICA Status Open</div>
+                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['open_pica'] }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-custom p-3 border-start border-4 border-warning">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon-box bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-semibold">PICA In Progress</div>
+                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['in_progress_pica'] }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-custom p-3 border-start border-4 border-success">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon-box bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-semibold">PICA Closed</div>
+                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['closed_pica'] }}</h3>
                 </div>
             </div>
         </div>
