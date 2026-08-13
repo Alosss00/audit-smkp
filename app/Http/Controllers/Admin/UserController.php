@@ -29,11 +29,12 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users,username',
             'email'    => 'nullable|email|unique:users,email',
             'role'     => 'required|in:admin,auditor',
-            'area'     => 'nullable|string|max:255',
+            'area'     => 'required_if:role,auditor|nullable|string|max:255',
             'password' => 'required|string|min:6',
         ], [
             'username.unique' => 'Username sudah digunakan.',
             'password.min'    => 'Password minimal 6 karakter.',
+            'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor (Auditee / PIC Area).',
         ]);
 
         User::create([
@@ -62,8 +63,10 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users,username,' . $user->id,
             'email'    => 'nullable|email|unique:users,email,' . $user->id,
             'role'     => 'required|in:admin,auditor',
-            'area'     => 'nullable|string|max:255',
+            'area'     => 'required_if:role,auditor|nullable|string|max:255',
             'password' => 'nullable|string|min:6',
+        ], [
+            'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor (Auditee / PIC Area).',
         ]);
 
         $isActive = $request->has('is_active') ? true : false;

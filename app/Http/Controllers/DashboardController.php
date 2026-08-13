@@ -37,7 +37,7 @@ class DashboardController extends Controller
         $findingCounts = [];
 
         // 1. Comparison of Final Compliance Score per Area Audit
-        $allSessions = AuditSesi::with('user')->latest()->get();
+        $allSessions = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen'])->latest()->get();
         $areaLabels = [];
         $areaScores = [];
         $areaColors = [];
@@ -103,8 +103,11 @@ class DashboardController extends Controller
     public function auditor()
     {
         $userArea = auth()->user()->area;
+        if (empty($userArea) && !auth()->user()->isAdmin()) {
+            abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
+        }
 
-        // Base AuditSesi query filtered by user's assigned area (if area is set)
+        // Base AuditSesi query filtered by user's assigned area
         $auditQuery = AuditSesi::query();
         if (!empty($userArea)) {
             $auditQuery->where('area_audit', $userArea);

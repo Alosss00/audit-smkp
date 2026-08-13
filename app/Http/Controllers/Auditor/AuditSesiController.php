@@ -21,7 +21,15 @@ class AuditSesiController extends Controller
      */
     public function index(Request $request)
     {
-        $userArea = auth()->user()->area;
+        if (!auth()->user()->isAdmin()) {
+            $userArea = auth()->user()->area;
+            if (empty($userArea)) {
+                abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
+            }
+        } else {
+            $userArea = null;
+        }
+
         $query = AuditSesi::query()->latest();
 
         if (!empty($userArea)) {
@@ -42,7 +50,15 @@ class AuditSesiController extends Controller
      */
     public function rekap($id)
     {
-        $userArea = auth()->user()->area;
+        if (!auth()->user()->isAdmin()) {
+            $userArea = auth()->user()->area;
+            if (empty($userArea)) {
+                abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
+            }
+        } else {
+            $userArea = null;
+        }
+
         $query = AuditSesi::query();
 
         if (!empty($userArea)) {
@@ -61,10 +77,18 @@ class AuditSesiController extends Controller
      */
     public function cetak($id)
     {
-        $userArea = auth()->user()->area;
+        if (!auth()->user()->isAdmin()) {
+            $userArea = auth()->user()->area;
+            if (empty($userArea)) {
+                abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
+            }
+        } else {
+            $userArea = null;
+        }
+
         $query = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen']);
 
-        if (!empty($userArea) && !auth()->user()->isAdmin()) {
+        if (!empty($userArea)) {
             $query->where('area_audit', $userArea);
         }
 
@@ -80,10 +104,18 @@ class AuditSesiController extends Controller
      */
     public function exportExcel($id)
     {
-        $userArea = auth()->user()->area;
+        if (!auth()->user()->isAdmin()) {
+            $userArea = auth()->user()->area;
+            if (empty($userArea)) {
+                abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
+            }
+        } else {
+            $userArea = null;
+        }
+
         $query = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen']);
 
-        if (!empty($userArea) && !auth()->user()->isAdmin()) {
+        if (!empty($userArea)) {
             $query->where('area_audit', $userArea);
         }
 

@@ -54,8 +54,11 @@ class AuditSesi extends Model
      */
     public function getRekapPerElemen(): array
     {
-        // Load details with kriteria and hierarchy
-        $details = $this->auditDetails()->with('kriteria.subElemen.elemen')->get();
+        // Load details with kriteria and hierarchy, reusing preloaded relationship if available
+        $details = $this->relationLoaded('auditDetails')
+            ? $this->auditDetails
+            : $this->auditDetails()->with('kriteria.subElemen.elemen')->get();
+
         $elemens = Elemen::orderBy('kode_elemen')->get();
 
         $rekap = [];
@@ -108,7 +111,9 @@ class AuditSesi extends Model
      */
     public function getRekapPerSubElemen(): array
     {
-        $details = $this->auditDetails()->with('kriteria.subElemen')->get();
+        $details = $this->relationLoaded('auditDetails')
+            ? $this->auditDetails
+            : $this->auditDetails()->with('kriteria.subElemen')->get();
         $subElemens = SubElemen::orderBy('kode_sub')->get();
 
         $rekap = [];

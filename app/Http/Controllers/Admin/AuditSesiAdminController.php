@@ -140,8 +140,14 @@ class AuditSesiAdminController extends AuditorAuditSesiController
         try {
             $changedDetails = [];
 
+            // Preload all details for this session with kriteria & pica to avoid N+1 queries in loop
+            $existingDetails = AuditDetail::where('audit_sesi_id', $sesi->id)
+                ->with(['kriteria', 'pica'])
+                ->get()
+                ->keyBy('id');
+
             foreach ($request->details as $detailId => $data) {
-                $detail = AuditDetail::where('audit_sesi_id', $sesi->id)->find($detailId);
+                $detail = $existingDetails->get($detailId);
                 if ($detail) {
                     $originalValues = $detail->getOriginal();
 
@@ -177,7 +183,7 @@ class AuditSesiAdminController extends AuditorAuditSesiController
 
                     // PICA Auto-Trigger & Clean Logic
                     if (!$isNa && $nilai < $max) {
-                        $pica            = Pica::where('audit_detail_id', $detail->id)->first();
+                        $pica            = $detail->pica;
                         $deskripsiTemuan = !empty($data['catatan'])
                             ? $data['catatan']
                             : ($detail->catatan ?? 'Ketidaksesuaian kriteria ' . ($detail->kriteria ? $detail->kriteria->kode_kriteria : '') . ' (Skor ' . $nilai . ' / ' . $max . ')');

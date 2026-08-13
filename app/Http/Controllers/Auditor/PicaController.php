@@ -17,8 +17,12 @@ class PicaController extends Controller
     public function index(Request $request)
     {
         $userArea = auth()->user()->area;
+        if (empty($userArea)) {
+            abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
+        }
 
         $query = AuditSesi::whereHas('auditDetails.pica')
+            ->where('area_audit', $userArea)
             ->with([
                 'user',
                 'auditDetails' => function ($q) {
@@ -27,10 +31,6 @@ class PicaController extends Controller
                 'auditDetails.pica',
                 'auditDetails.kriteria.subElemen.elemen'
             ]);
-
-        if (!empty($userArea)) {
-            $query->where('area_audit', $userArea);
-        }
 
         if ($request->filled('status')) {
             $status = $request->status;
@@ -53,9 +53,7 @@ class PicaController extends Controller
         $auditSesis = $query->latest()->paginate(10);
 
         $basePicaQuery = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-            if (!empty($userArea)) {
-                $q->where('area_audit', $userArea);
-            }
+            $q->where('area_audit', $userArea);
         });
 
         $stats = [
@@ -74,11 +72,12 @@ class PicaController extends Controller
     public function edit($id)
     {
         $userArea = auth()->user()->area;
+        if (empty($userArea)) {
+            abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
+        }
 
         $pica = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-            if (!empty($userArea)) {
-                $q->where('area_audit', $userArea);
-            }
+            $q->where('area_audit', $userArea);
         })->with(['auditDetail.kriteria.subElemen.elemen', 'auditDetail.auditSesi'])->findOrFail($id);
 
         $lastLog = AuditLog::where('modul', 'PICA')
@@ -97,11 +96,12 @@ class PicaController extends Controller
     public function update(Request $request, $id)
     {
         $userArea = auth()->user()->area;
+        if (empty($userArea)) {
+            abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
+        }
 
         $pica = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-            if (!empty($userArea)) {
-                $q->where('area_audit', $userArea);
-            }
+            $q->where('area_audit', $userArea);
         })->findOrFail($id);
 
         $request->validate([
