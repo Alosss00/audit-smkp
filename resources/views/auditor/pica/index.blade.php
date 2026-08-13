@@ -128,7 +128,7 @@
                         <td class="ps-4 fw-semibold text-muted">{{ $auditSesis->firstItem() + $index }}</td>
                         <td>
                             <strong class="d-block text-slate-800 fs-6">{{ $sesi->area_audit }}</strong>
-                            <small class="text-muted"><i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_audit->format('d M Y') }}</small>
+                            <small class="text-muted"><i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</small>
                         </td>
                         <td>
                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
@@ -158,7 +158,7 @@
                         <td class="pe-4 text-end">
                             <button class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold" 
                                 data-bs-toggle="modal" data-bs-target="#areaPicaModal{{ $sesi->id }}">
-                                <i class="bi bi-list-check me-1"></i> Detail & Tindak Lanjut ({{ $totalPica }})
+                                <i class="bi bi-list-check me-1"></i> Detail & Respon ({{ $totalPica }})
                             </button>
                         </td>
                     </tr>
@@ -196,7 +196,7 @@
                             <i class="bi bi-tools text-info me-2"></i> Daftar Temuan PICA — Area: {{ $sesi->area_audit }}
                         </h5>
                         <small class="text-slate-300" style="font-size: 0.8rem; color: #cbd5e1;">
-                            <i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_audit->format('d M Y') }} | Total {{ $detailsWithPica->count() }} Temuan PICA
+                            <i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }} | Total {{ $detailsWithPica->count() }} Temuan PICA
                         </small>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -265,60 +265,40 @@
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="row g-3">
-                                                <div class="col-12">
-                                                    <label class="form-label fw-semibold small text-secondary">Akar Masalah (Root Cause) <span class="text-danger">*</span></label>
-                                                    <textarea name="akar_masalah" rows="2" class="form-control bg-light" 
-                                                        placeholder="Jelaskan analisis penyebab utama terjadinya temuan ini...">{{ old('akar_masalah', $pica->akar_masalah) }}</textarea>
-                                                </div>
+                                                 <div class="col-md-6">
+                                                     <small class="text-muted d-block fw-semibold">Akar Masalah (Root Cause):</small>
+                                                     <div class="p-2 bg-light rounded border text-slate-800 small">{{ $pica->akar_masalah ?? 'Belum diisi oleh responden' }}</div>
+                                                 </div>
+                                                 <div class="col-md-6">
+                                                     <small class="text-muted d-block fw-semibold">Bukti Perbaikan:</small>
+                                                     @if($pica->bukti_perbaikan)
+                                                         <a href="{{ $pica->bukti_perbaikan_url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                                                             <i class="bi bi-paperclip me-1"></i> Lihat Bukti Terunggah
+                                                         </a>
+                                                     @else
+                                                         <div class="p-2 bg-light rounded border text-muted small">Belum ada file bukti perbaikan</div>
+                                                     @endif
+                                                 </div>
+                                                 <div class="col-md-4">
+                                                     <small class="text-muted d-block fw-semibold">Tenggat Waktu (Lead Auditor):</small>
+                                                     <strong class="text-slate-800">{{ $pica->tenggat_waktu ? $pica->tenggat_waktu->format('d M Y') : 'Belum ditentukan' }}</strong>
+                                                 </div>
+                                                 <div class="col-md-4">
+                                                     <small class="text-muted d-block fw-semibold">Status Saat Ini:</small>
+                                                     <span class="badge bg-{{ $pica->status === 'closed' ? 'success' : ($pica->status === 'in_progress' ? 'warning text-dark' : 'danger') }} text-uppercase">{{ $pica->status }}</span>
+                                                 </div>
+                                                 <div class="col-md-4">
+                                                     <small class="text-muted d-block fw-semibold">Catatan Verifikasi Auditor:</small>
+                                                     <span class="small text-slate-700">{{ $pica->catatan_verifikasi_auditor ?? '-' }}</span>
+                                                 </div>
+                                             </div>
 
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Tindakan Koreksi (Corrective Action)</label>
-                                                    <textarea name="tindakan_koreksi" rows="2" class="form-control bg-light" 
-                                                        placeholder="Tindakan langsung perbaikan temuan...">{{ old('tindakan_koreksi', $pica->tindakan_koreksi) }}</textarea>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Tindakan Pencegahan (Preventive Action)</label>
-                                                    <textarea name="tindakan_pencegahan" rows="2" class="form-control bg-light" 
-                                                        placeholder="Tindakan agar temuan tidak terulang...">{{ old('tindakan_pencegahan', $pica->tindakan_pencegahan) }}</textarea>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">PIC Penanggung Jawab Perbaikan</label>
-                                                    <input type="text" name="pic_perbaikan" class="form-control bg-light" 
-                                                        placeholder="Nama PIC perbaikan..." value="{{ old('pic_perbaikan', $pica->pic_perbaikan) }}">
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Tenggat Waktu Selesai (Target Date)</label>
-                                                    <input type="date" name="tenggat_waktu" class="form-control bg-light" 
-                                                        value="{{ old('tenggat_waktu', $pica->tenggat_waktu ? $pica->tenggat_waktu->format('Y-m-d') : '') }}">
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Status PICA <span class="text-danger">*</span></label>
-                                                    <select name="status" class="form-select bg-light fw-bold">
-                                                        <option value="open" {{ old('status', $pica->status) == 'open' ? 'selected' : '' }}>🔴 Open (Belum Ditindaklanjuti)</option>
-                                                        <option value="in_progress" {{ old('status', $pica->status) == 'in_progress' ? 'selected' : '' }}>🟡 In Progress (Dalam Perbaikan)</option>
-                                                        <option value="closed" {{ old('status', $pica->status) == 'closed' ? 'selected' : '' }}>🟢 Closed (Selesai Verifikasi)</option>
-                                                    </select>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Catatan Verifikasi Auditor</label>
-                                                    <textarea name="catatan_verifikasi_auditor" rows="2" class="form-control bg-light" 
-                                                        placeholder="Wajib diisi saat status diubah ke Closed...">{{ old('catatan_verifikasi_auditor', $pica->catatan_verifikasi_auditor) }}</textarea>
-                                                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">* Wajib diisi jika status diubah ke Closed.</small>
-                                                </div>
-                                            </div>
-
-                                            <div class="mt-3 text-end">
-                                                <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">
-                                                    <i class="bi bi-save me-1"></i> Simpan PICA {{ $kriteria ? $kriteria->kode_kriteria : '' }}
-                                                </button>
-                                            </div>
+                                             <div class="mt-3 text-end">
+                                                 <a href="{{ route('auditor.pica.edit', $pica->id) }}" class="btn btn-primary px-4 rounded-3 fw-semibold">
+                                                     <i class="bi bi-pencil-square me-1"></i> Isi Respon & Upload Bukti PICA
+                                                 </a>
+                                             </div>
                                         </form>
 
                                     </div>

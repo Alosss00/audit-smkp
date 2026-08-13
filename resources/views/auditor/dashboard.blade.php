@@ -6,14 +6,9 @@
 <div class="row align-items-center mb-4">
     <div class="col-md-8">
         <h2 class="fw-bold text-slate-800 mb-1">
-            <i class="bi bi-clipboard-check-fill text-info me-2"></i>Dashboard Auditor
+            <i class="bi bi-clipboard-check-fill text-info me-2"></i>Dashboard Auditor (Auditee / PIC Area)
         </h2>
-        <p class="text-muted mb-0">Selamat datang, <strong>{{ auth()->user()->name }}</strong>. Pengelolaan dan pengisian matriks audit SMKP Minerba.</p>
-    </div>
-    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-        <a href="{{ route('auditor.audit-sesi.create') }}" class="btn btn-primary rounded-3 shadow-sm px-3 py-2 fw-semibold">
-            <i class="bi bi-plus-lg me-1"></i> Buat Sesi Audit Baru
-        </a>
+        <p class="text-muted mb-0">Selamat datang, <strong>{{ auth()->user()->name }}</strong>. Area Kerja: <span class="badge bg-primary fs-6">{{ $userArea ?? 'Semua Area' }}</span></p>
     </div>
 </div>
 
@@ -26,7 +21,7 @@
                     <i class="bi bi-journal-text"></i>
                 </div>
                 <div>
-                    <div class="text-muted small fw-semibold">Total Sesi Audit</div>
+                    <div class="text-muted small fw-semibold">Sesi Audit Area</div>
                     <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['total_sesi'] }}</h3>
                 </div>
             </div>
@@ -34,14 +29,14 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card card-custom p-3 border-start border-4 border-secondary">
+        <div class="card card-custom p-3 border-start border-4 border-danger">
             <div class="d-flex align-items-center gap-3">
-                <div class="stat-icon-box bg-secondary bg-opacity-10 text-secondary">
-                    <i class="bi bi-file-earmark-text"></i>
+                <div class="stat-icon-box bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-exclamation-circle-fill"></i>
                 </div>
                 <div>
-                    <div class="text-muted small fw-semibold">Status Draft</div>
-                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['draft'] }}</h3>
+                    <div class="text-muted small fw-semibold">PICA Status Open</div>
+                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['open_pica'] }}</h3>
                 </div>
             </div>
         </div>
@@ -54,8 +49,8 @@
                     <i class="bi bi-hourglass-split"></i>
                 </div>
                 <div>
-                    <div class="text-muted small fw-semibold">Berjalan</div>
-                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['berjalan'] }}</h3>
+                    <div class="text-muted small fw-semibold">PICA In Progress</div>
+                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['in_progress'] }}</h3>
                 </div>
             </div>
         </div>
@@ -68,8 +63,8 @@
                     <i class="bi bi-check-circle-fill"></i>
                 </div>
                 <div>
-                    <div class="text-muted small fw-semibold">Selesai</div>
-                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['selesai'] }}</h3>
+                    <div class="text-muted small fw-semibold">PICA Closed</div>
+                    <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['closed_pica'] }}</h3>
                 </div>
             </div>
         </div>
@@ -83,8 +78,8 @@
         <div class="card card-custom p-4 h-100">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <div>
-                    <h5 class="fw-bold text-slate-800 mb-0"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Perbandingan Nilai Audit Antar Area</h5>
-                    <small class="text-muted">Grafik evaluasi pencapaian skor akhir SMKP antar area audit</small>
+                    <h5 class="fw-bold text-slate-800 mb-0"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Perbandingan Nilai Audit Area</h5>
+                    <small class="text-muted">Grafik evaluasi pencapaian skor akhir SMKP area Anda</small>
                 </div>
             </div>
             <div style="height: 220px;">
@@ -97,7 +92,7 @@
     <div class="col-lg-6">
         <div class="card card-custom p-4 h-100 border-start border-4 border-danger">
             <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Frekuensi Temuan Audit per Elemen</h5>
-            <p class="text-muted small mb-3">Akumulasi jumlah temuan ketidaksesuaian pada seluruh audit Anda.</p>
+            <p class="text-muted small mb-3">Akumulasi jumlah temuan ketidaksesuaian pada area kerja Anda.</p>
             <div style="height: 220px;">
                 <canvas id="auditorFindingsChart"></canvas>
             </div>
@@ -108,22 +103,21 @@
 <!-- Recent Audit Sessions Table -->
 <div class="card card-custom p-4">
     <div class="d-flex align-items-center justify-content-between mb-3">
-        <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Sesi Audit Terbaru</h5>
+        <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Sesi Audit Area Terbaru</h5>
         <a href="{{ route('auditor.audit-sesi.index') }}" class="btn btn-sm btn-outline-secondary rounded-3">Lihat Semua</a>
     </div>
 
     @if($recentAudits->isEmpty())
         <div class="text-center py-5 text-muted">
             <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
-            <p class="mb-0">Belum ada sesi audit yang dibuat.</p>
-            <small>Klik tombol "Buat Sesi Audit Baru" untuk memulai penilaian matriks SMKP.</small>
+            <p class="mb-0">Belum ada sesi audit pada area kerja Anda.</p>
         </div>
     @else
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Tanggal</th>
+                        <th>Periode Audit</th>
                         <th>Area Audit</th>
                         <th>Status</th>
                         <th>Skor Akhir</th>
@@ -133,7 +127,7 @@
                 <tbody>
                     @foreach($recentAudits as $audit)
                         <tr>
-                            <td>{{ $audit->tanggal_audit->format('d M Y') }}</td>
+                            <td>{{ $audit->tanggal_mulai->format('d M Y') }} - {{ $audit->tanggal_selesai->format('d M Y') }}</td>
                             <td class="fw-semibold">{{ $audit->area_audit }}</td>
                             <td>
                                 @if($audit->status === 'draft')
@@ -153,11 +147,6 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group gap-1">
-                                    @if($audit->status !== 'selesai')
-                                        <a href="{{ route('auditor.audit-sesi.matrix', $audit->id) }}" class="btn btn-sm btn-primary rounded-2">
-                                            <i class="bi bi-pencil-square me-1"></i> Isi Matriks
-                                        </a>
-                                    @endif
                                     <a href="{{ route('auditor.audit-sesi.rekap', $audit->id) }}" class="btn btn-sm btn-outline-info text-dark rounded-2">
                                         <i class="bi bi-bar-chart-line me-1"></i> Rekap
                                     </a>

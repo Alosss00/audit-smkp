@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Sesi Audit Saya — Admin SMKP Minerba')
 
@@ -51,7 +51,7 @@
                 <thead class="table-light">
                     <tr>
                         <th style="width: 50px;">No</th>
-                        <th>Tanggal Audit</th>
+                        <th>Periode Audit</th>
                         <th>Area Audit</th>
                         <th>Status</th>
                         <th>Skor Akhir</th>
@@ -62,7 +62,7 @@
                     @foreach($auditSesis as $index => $sesi)
                         <tr>
                             <td>{{ $auditSesis->firstItem() + $index }}</td>
-                            <td><i class="bi bi-calendar-event me-1 text-muted"></i>{{ $sesi->tanggal_audit->format('d M Y') }}</td>
+                            <td><i class="bi bi-calendar-event me-1 text-muted"></i>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</td>
                             <td><span class="fw-bold text-slate-800">{{ $sesi->area_audit }}</span></td>
                             <td>
                                 @if($sesi->status === 'draft')

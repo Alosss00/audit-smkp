@@ -9,7 +9,7 @@
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Audit
         </a>
         <h2 class="fw-bold text-slate-800 mb-0 mt-1">Rekap Hasil Audit Internal SMKP</h2>
-        <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Tanggal: <strong>{{ $sesi->tanggal_audit->format('d M Y') }}</strong></p>
+        <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Periode: <strong>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</strong></p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('auditor.audit-sesi.export-excel', $sesi->id) }}" class="btn btn-success rounded-3 px-3">
@@ -18,19 +18,6 @@
         <a href="{{ route('auditor.audit-sesi.cetak', $sesi->id) }}" target="_blank" class="btn btn-dark rounded-3 px-3">
             <i class="bi bi-printer me-1"></i> Cetak Laporan (PDF)
         </a>
-        <a href="{{ route('auditor.audit-sesi.matrix', $sesi->id) }}" class="btn btn-outline-primary rounded-3">
-            <i class="bi bi-pencil-square me-1"></i> Form Matriks
-        </a>
-        @if($sesi->status !== 'selesai')
-            <form action="{{ route('auditor.audit-sesi.finalisasi', $sesi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin memfinalisasi sesi audit ini? Sesi yang sudah selesai tidak dapat diubah lagi.')">
-                @csrf
-                <button type="submit" class="btn btn-success rounded-3 fw-bold">
-                    <i class="bi bi-check-circle-fill me-1"></i> Finalisasi Sesi Audit
-                </button>
-            </form>
-        @else
-            <span class="badge bg-success p-2 rounded-3 fs-6"><i class="bi bi-lock-fill me-1"></i> Sesi Selesai (Terkunci)</span>
-        @endif
     </div>
 </div>
 

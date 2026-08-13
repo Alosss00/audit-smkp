@@ -9,7 +9,7 @@
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Audit Saya
         </a>
         <h2 class="fw-bold text-slate-800 mb-0 mt-1">Rekap Hasil Audit Internal SMKP</h2>
-        <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Tanggal: <strong>{{ $sesi->tanggal_audit->format('d M Y') }}</strong></p>
+        <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Periode: <strong>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</strong></p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.audit-sesi.export-excel', $sesi->id) }}" class="btn btn-success rounded-3 px-3">

@@ -62,8 +62,8 @@
                 @endif
             </div>
             <div>
-                <small class="text-light opacity-50 d-block">Tanggal Audit:</small>
-                <span class="text-white">{{ $sesi->tanggal_audit->format('d M Y') }}</span>
+                <small class="text-light opacity-50 d-block">Periode Audit:</small>
+                <span class="text-white">{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</span>
             </div>
         </div>
     </div>

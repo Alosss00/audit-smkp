@@ -258,33 +258,26 @@
                 <div class="nav-section-title">Penilaian & Monitoring</div>
 
                 @if(auth()->user()->isAdmin())
+                    <a href="{{ route('admin.audit-sesi.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-sesi.index') || request()->routeIs('admin.audit-sesi.matrix') || request()->routeIs('admin.audit-sesi.rekap') ? 'active' : '' }}">
+                        <i class="bi bi-journal-check"></i>
+                        <span>Kelola Sesi Audit</span>
+                    </a>
+                    <a href="{{ route('admin.audit-sesi.create') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-sesi.create') ? 'active' : '' }}">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Buat Sesi Baru</span>
+                    </a>
                     <a href="{{ route('admin.rekap-audit.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.rekap-audit.*') ? 'active' : '' }}">
                         <i class="bi bi-shield-check"></i>
                         <span>Monitoring Audit</span>
                     </a>
                     <a href="{{ route('admin.pica.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.pica.*') ? 'active' : '' }}">
                         <i class="bi bi-tools"></i>
-                        <span>Monitoring PICA</span>
-                    </a>
-
-                    {{-- Audit Pribadi Admin --}}
-                    <div class="nav-section-title">Audit Pribadi Saya</div>
-                    <a href="{{ route('admin.audit-sesi.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-sesi.index') || request()->routeIs('admin.audit-sesi.matrix') || request()->routeIs('admin.audit-sesi.rekap') ? 'active' : '' }}">
-                        <i class="bi bi-journal-check"></i>
-                        <span>Sesi Audit Saya</span>
-                    </a>
-                    <a href="{{ route('admin.audit-sesi.create') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-sesi.create') ? 'active' : '' }}">
-                        <i class="bi bi-plus-circle"></i>
-                        <span>Buat Sesi Baru</span>
+                        <span>Otoritas & Oversight PICA</span>
                     </a>
                 @else
-                    <a href="{{ route('auditor.audit-sesi.index') }}" class="sidebar-nav-link {{ request()->routeIs('auditor.audit-sesi.index') || request()->routeIs('auditor.audit-sesi.matrix') || request()->routeIs('auditor.audit-sesi.rekap') ? 'active' : '' }}">
+                    <a href="{{ route('auditor.audit-sesi.index') }}" class="sidebar-nav-link {{ request()->routeIs('auditor.audit-sesi.index') || request()->routeIs('auditor.audit-sesi.rekap') ? 'active' : '' }}">
                         <i class="bi bi-journal-check"></i>
-                        <span>Sesi Audit Saya</span>
-                    </a>
-                    <a href="{{ route('auditor.audit-sesi.create') }}" class="sidebar-nav-link {{ request()->routeIs('auditor.audit-sesi.create') ? 'active' : '' }}">
-                        <i class="bi bi-plus-circle"></i>
-                        <span>Buat Sesi Baru</span>
+                        <span>Sesi Audit Area Saya</span>
                     </a>
                     <a href="{{ route('auditor.pica.index') }}" class="sidebar-nav-link {{ request()->routeIs('auditor.pica.*') ? 'active' : '' }}">
                         <i class="bi bi-tools"></i>

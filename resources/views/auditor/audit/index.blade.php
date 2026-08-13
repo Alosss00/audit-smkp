@@ -6,14 +6,9 @@
 <div class="row align-items-center mb-4">
     <div class="col-md-8">
         <h2 class="fw-bold text-slate-800 mb-1">
-            <i class="bi bi-journal-text text-info me-2"></i>Daftar Sesi Audit Internal
+            <i class="bi bi-journal-text text-info me-2"></i>Sesi Audit Area Kerja
         </h2>
-        <p class="text-muted mb-0">Kelola dan tinjau seluruh sesi penilaian matriks SMKP Minerba Anda.</p>
-    </div>
-    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-        <a href="{{ route('auditor.audit-sesi.create') }}" class="btn btn-primary rounded-3 shadow-sm px-3 py-2 fw-semibold">
-            <i class="bi bi-plus-lg me-1"></i> Buat Sesi Audit Baru
-        </a>
+        <p class="text-muted mb-0">Daftar dan rekapitulasi sesi penilaian matriks SMKP pada area kerja: <strong>{{ $userArea ?? 'Semua Area' }}</strong></p>
     </div>
 </div>
 
@@ -41,11 +36,7 @@
     @if($auditSesis->isEmpty())
         <div class="text-center py-5 text-muted">
             <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
-            <p class="mb-2 fs-5 fw-semibold">Belum ada sesi audit.</p>
-            <p class="small text-muted mb-3">Klik tombol di bawah ini untuk membuat sesi audit internal baru.</p>
-            <a href="{{ route('auditor.audit-sesi.create') }}" class="btn btn-primary rounded-3 px-4">
-                <i class="bi bi-plus-lg me-1"></i> Buat Sesi Pertama
-            </a>
+            <p class="mb-2 fs-5 fw-semibold">Belum ada sesi audit pada area kerja Anda.</p>
         </div>
     @else
         <div class="table-responsive">
@@ -53,7 +44,7 @@
                 <thead class="table-light">
                     <tr>
                         <th style="width: 50px;">No</th>
-                        <th>Tanggal Audit</th>
+                        <th>Periode Audit</th>
                         <th>Area Audit</th>
                         <th>Status</th>
                         <th>Skor Akhir</th>
@@ -66,7 +57,7 @@
                             <td>{{ $auditSesis->firstItem() + $index }}</td>
                             <td>
                                 <i class="bi bi-calendar-event me-1 text-muted"></i>
-                                {{ $sesi->tanggal_audit->format('d M Y') }}
+                                {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}
                             </td>
                             <td>
                                 <span class="fw-bold text-slate-800">{{ $sesi->area_audit }}</span>
@@ -88,27 +79,9 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                <div class="btn-group gap-1">
-                                    @if($sesi->status !== 'selesai')
-                                        <a href="{{ route('auditor.audit-sesi.matrix', $sesi->id) }}" class="btn btn-sm btn-primary rounded-2">
-                                            <i class="bi bi-pencil-square me-1"></i> Isi Matriks
-                                        </a>
-                                    @endif
-
-                                    <a href="{{ route('auditor.audit-sesi.rekap', $sesi->id) }}" class="btn btn-sm btn-outline-info text-dark rounded-2">
-                                        <i class="bi bi-bar-chart-line me-1"></i> Rekap
-                                    </a>
-
-                                    @if($sesi->status !== 'selesai')
-                                        <form action="{{ route('auditor.audit-sesi.destroy', $sesi->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus sesi audit ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-2">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
+                                <a href="{{ route('auditor.audit-sesi.rekap', $sesi->id) }}" class="btn btn-sm btn-outline-info text-dark rounded-2">
+                                    <i class="bi bi-bar-chart-line me-1"></i> Rekap
+                                </a>
                             </td>
                         </tr>
                     @endforeach

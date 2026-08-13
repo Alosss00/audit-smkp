@@ -30,11 +30,12 @@ class SampleAuditSeeder extends Seeder
         // 1. Sesi Audit 1: Operational Area Pit West (Status: berjalan)
         // ==========================================
         $sesi1 = AuditSesi::create([
-            'user_id' => $auditor->id,
-            'tanggal_audit' => now()->subDays(3)->toDateString(),
-            'area_audit' => 'Area Tambang Utama Pit West & Haulage Road',
-            'status' => 'berjalan',
-            'skor_akhir' => 0.00,
+            'user_id'         => $admin->id,
+            'tanggal_mulai'   => now()->subDays(5)->toDateString(),
+            'tanggal_selesai' => now()->subDays(3)->toDateString(),
+            'area_audit'      => 'Area Tambang Utama Pit West & Haulage Road',
+            'status'          => 'berjalan',
+            'skor_akhir'      => 0.00,
         ]);
 
         foreach ($kriterias as $index => $kriteria) {
@@ -84,7 +85,6 @@ class SampleAuditSeeder extends Seeder
                         'tindakan_koreksi' => 'Melaksanakan rapat evaluasi Kebijakan KP bersama KTT dan seluruh Kepala Bagian.',
                         'tindakan_pencegahan' => 'Menetapkan kalender pengingat otomatis di portal HSE setiap bulan Januari.',
                         'tenggat_waktu' => now()->addDays(14)->toDateString(),
-                        'pic_perbaikan' => 'Budi Santoso (HSE Manager)',
                         'status' => 'in_progress',
                     ]);
                 } elseif ($index === 5) {
@@ -95,7 +95,6 @@ class SampleAuditSeeder extends Seeder
                         'tindakan_koreksi' => 'Revisi dokumen IBPR lereng barat sesuai rekomendasi geoteknik terbaru.',
                         'tindakan_pencegahan' => 'SOP Wajib pemutakhiran IBPR setiap ada laporan kajian geoteknik baru.',
                         'tenggat_waktu' => now()->addDays(5)->toDateString(),
-                        'pic_perbaikan' => 'Rian Hidayat (Geotech Engineer)',
                         'status' => 'closed',
                         'catatan_verifikasi_auditor' => 'Telah diverifikasi: Dokumen IBPR lereng barat revisi 02 telah disahkan KTT pada ' . now()->subDay()->format('d M Y'),
                     ]);
@@ -115,11 +114,12 @@ class SampleAuditSeeder extends Seeder
         // 2. Sesi Audit 2: Processing Plant & Workshop (Status: selesai)
         // ==========================================
         $sesi2 = AuditSesi::create([
-            'user_id' => $auditor->id,
-            'tanggal_audit' => now()->subDays(10)->toDateString(),
-            'area_audit' => 'Processing Plant & Heavy Equipment Workshop',
-            'status' => 'selesai',
-            'skor_akhir' => 0.00,
+            'user_id'         => $admin->id,
+            'tanggal_mulai'   => now()->subDays(12)->toDateString(),
+            'tanggal_selesai' => now()->subDays(10)->toDateString(),
+            'area_audit'      => 'Processing Plant & Heavy Equipment Workshop',
+            'status'          => 'selesai',
+            'skor_akhir'      => 0.00,
         ]);
 
         foreach ($kriterias as $index => $kriteria) {

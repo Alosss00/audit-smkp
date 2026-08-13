@@ -24,6 +24,7 @@
                 <tr>
                     <th>Nama Lengkap</th>
                     <th>Username</th>
+                    <th>Area Kerja</th>
                     <th>Email</th>
                     <th>Role / Akses</th>
                     <th class="text-center">Status Akun</th>
@@ -42,6 +43,7 @@
                             </div>
                         </td>
                         <td><code>{{ $u->username }}</code></td>
+                        <td><span class="badge bg-light text-dark border">{{ $u->area ?? '-' }}</span></td>
                         <td class="text-muted">{{ $u->email ?? '-' }}</td>
                         <td>
                             @if($u->role === 'admin')
@@ -185,9 +187,14 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Role / Hak Akses</label>
                             <select name="role" class="form-select" required>
-                                <option value="auditor" {{ $u->role === 'auditor' ? 'selected' : '' }}>Auditor</option>
-                                <option value="admin" {{ $u->role === 'admin' ? 'selected' : '' }}>Administrator</option>
+                                <option value="auditor" {{ $u->role === 'auditor' ? 'selected' : '' }}>Auditor (Auditee / PIC Area)</option>
+                                <option value="admin" {{ $u->role === 'admin' ? 'selected' : '' }}>Administrator (Lead Auditor)</option>
                             </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Area Kerja (Khusus Auditor / PIC Area)</label>
+                            <input type="text" name="area" class="form-control" placeholder="Contoh: Pit A / Bengkel Utama" value="{{ $u->area }}">
+                            <small class="text-muted" style="font-size: 0.75rem;">Digunakan untuk memfilter temuan PICA & sesi audit area</small>
                         </div>
                         <div class="mb-3">
                             <div class="form-check form-switch">
@@ -238,9 +245,14 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Role / Hak Akses</label>
                         <select name="role" class="form-select" required>
-                            <option value="auditor">Auditor</option>
-                            <option value="admin">Administrator</option>
+                            <option value="auditor">Auditor (Auditee / PIC Area)</option>
+                            <option value="admin">Administrator (Lead Auditor)</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Area Kerja (Khusus Auditor / PIC Area)</label>
+                        <input type="text" name="area" class="form-control" placeholder="Contoh: Pit A / Bengkel Utama">
+                        <small class="text-muted" style="font-size: 0.75rem;">Digunakan untuk memfilter temuan PICA & sesi audit area</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Password</label>

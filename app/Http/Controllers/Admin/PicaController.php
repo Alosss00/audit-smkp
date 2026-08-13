@@ -38,7 +38,7 @@ class PicaController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        // Filter by Search Query (area_audit or deskripsi_temuan / pic / akar_masalah / auditor name)
+        // Filter by Search Query (area_audit or deskripsi_temuan / akar_masalah / auditor name)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -48,7 +48,6 @@ class PicaController extends Controller
                   })
                   ->orWhereHas('auditDetails.pica', function ($qp) use ($search) {
                       $qp->where('deskripsi_temuan', 'like', "%{$search}%")
-                        ->orWhere('pic_perbaikan', 'like', "%{$search}%")
                         ->orWhere('akar_masalah', 'like', "%{$search}%");
                   });
             });
@@ -75,23 +74,23 @@ class PicaController extends Controller
     }
 
     /**
-     * Update PICA record by Administrator.
+     * Update PICA record by Administrator (Lead Auditor).
      */
     public function update(Request $request, $id)
     {
         $pica = Pica::findOrFail($id);
+        $originalData = $pica->getOriginal();
 
         $request->validate([
-            'akar_masalah' => 'nullable|string',
-            'tindakan_koreksi' => 'nullable|string',
-            'tindakan_pencegahan' => 'nullable|string',
-            'tenggat_waktu' => 'nullable|date',
-            'pic_perbaikan' => 'nullable|string|max:255',
-            'status' => 'required|in:open,in_progress,closed',
+            'akar_masalah'               => 'nullable|string',
+            'tindakan_koreksi'           => 'nullable|string',
+            'tindakan_pencegahan'        => 'nullable|string',
+            'tenggat_waktu'              => 'nullable|date',
+            'status'                     => 'required|in:open,in_progress,closed',
             'catatan_verifikasi_auditor' => 'required_if:status,closed|nullable|string',
         ], [
-            'status.required' => 'Status PICA wajib dipilih.',
-            'status.in' => 'Pilihan status tidak valid.',
+            'status.required'                        => 'Status PICA wajib dipilih.',
+            'status.in'                              => 'Pilihan status tidak valid.',
             'catatan_verifikasi_auditor.required_if' => 'Catatan verifikasi auditor wajib diisi saat menutup (closed) PICA.',
         ]);
 
@@ -103,14 +102,24 @@ class PicaController extends Controller
         }
 
         $pica->update([
-            'akar_masalah' => $request->akar_masalah,
-            'tindakan_koreksi' => $request->tindakan_koreksi,
-            'tindakan_pencegahan' => $request->tindakan_pencegahan,
-            'tenggat_waktu' => $request->tenggat_waktu,
-            'pic_perbaikan' => $request->pic_perbaikan,
-            'status' => $status,
+            'akar_masalah'               => $request->akar_masalah,
+            'tindakan_koreksi'           => $request->tindakan_koreksi,
+            'tindakan_pencegahan'        => $request->tindakan_pencegahan,
+            'tenggat_waktu'              => $request->tenggat_waktu,
+            'status'                     => $status,
             'catatan_verifikasi_auditor' => $request->catatan_verifikasi_auditor,
         ]);
+
+        if ($pica->wasChanged()) {
+            \App\Models\AuditLog::create([
+                'user_id'         => auth()->id(),
+                'modul'           => 'PICA',
+                'tindakan'        => "Update PICA #{$pica->id} (Status: {$pica->status})",
+                'data_lama'       => $originalData,
+                'data_baru'       => $pica->getChanges(),
+                'waktu_perubahan' => now(),
+            ]);
+        }
 
         return back()->with('success', 'Data PICA berhasil diperbarui oleh Administrator!');
     }

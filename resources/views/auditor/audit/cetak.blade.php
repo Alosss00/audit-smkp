@@ -82,8 +82,8 @@
                 <tr>
                     <td class="fw-bold bg-light" style="width: 180px;">Area / Lokasi Audit</td>
                     <td class="fw-bold text-uppercase">{{ $sesi->area_audit }}</td>
-                    <td class="fw-bold bg-light" style="width: 180px;">Tanggal Pelaksanaan</td>
-                    <td>{{ $sesi->tanggal_audit->format('d F Y') }}</td>
+                    <td class="fw-bold bg-light" style="width: 180px;">Periode Pelaksanaan</td>
+                    <td>{{ $sesi->tanggal_mulai->format('d F Y') }} s/d {{ $sesi->tanggal_selesai->format('d F Y') }}</td>
                 </tr>
                 <tr>
                     <td class="fw-bold bg-light">Auditor Pelaksana</td>

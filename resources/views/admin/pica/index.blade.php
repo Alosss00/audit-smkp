@@ -158,7 +158,7 @@
                         </td>
                         <td>
                             <strong class="d-block text-slate-800 fs-6">{{ $sesi->area_audit }}</strong>
-                            <small class="text-muted"><i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_audit->format('d M Y') }}</small>
+                            <small class="text-muted"><i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</small>
                         </td>
                         <td>
                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
@@ -227,7 +227,7 @@
                             <i class="bi bi-tools text-danger me-2"></i> Pengawasan PICA — Area: {{ $sesi->area_audit }}
                         </h5>
                         <small class="text-slate-300" style="font-size: 0.8rem; color: #cbd5e1;">
-                            <i class="bi bi-person me-1"></i> Auditor: {{ $auditor ? $auditor->name : '-' }} | <i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_audit->format('d M Y') }} | Total {{ $detailsWithPica->count() }} Temuan PICA
+                            <i class="bi bi-person me-1"></i> Auditor: {{ $auditor ? $auditor->name : '-' }} | <i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }} | Total {{ $detailsWithPica->count() }} Temuan PICA
                         </small>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

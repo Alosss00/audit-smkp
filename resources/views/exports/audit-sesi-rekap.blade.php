@@ -25,8 +25,8 @@
         </tr>
         <tr>
             <td></td>
-            <td style="font-weight: bold;" colspan="2">Tanggal Audit:</td>
-            <td colspan="11">{{ $sesi->tanggal_audit->format('d F Y') }}</td>
+            <td style="font-weight: bold;" colspan="2">Periode Audit:</td>
+            <td colspan="11">{{ $sesi->tanggal_mulai->format('d F Y') }} - {{ $sesi->tanggal_selesai->format('d F Y') }}</td>
         </tr>
         <tr>
             <td></td>

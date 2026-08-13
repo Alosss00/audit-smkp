@@ -62,7 +62,7 @@
                     @foreach($auditSesis as $index => $sesi)
                         <tr>
                             <td>{{ $auditSesis->firstItem() + $index }}</td>
-                            <td>{{ $sesi->tanggal_audit->format('d M Y') }}</td>
+                            <td>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</td>
                             <td class="fw-bold text-slate-800">{{ $sesi->area_audit }}</td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">

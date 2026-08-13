@@ -67,21 +67,19 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::resource('users', UserController::class);
     });
 
-    // Auditor Routes
+    // Auditor Routes (Auditee / PIC Area)
     Route::middleware('role:auditor')->prefix('auditor')->as('auditor.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'auditor'])->name('dashboard');
 
-        // Audit Session & Matrix Assessment Lifecycle
-        Route::get('/audit-sesi/{id}/matrix', [AuditSesiController::class, 'matrix'])->name('audit-sesi.matrix');
-        Route::post('/audit-sesi/{id}/matrix', [AuditSesiController::class, 'updateMatrix'])->name('audit-sesi.matrix.update');
+        // Audit Session Read-Only Views
+        Route::get('/audit-sesi', [AuditSesiController::class, 'index'])->name('audit-sesi.index');
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiController::class, 'rekap'])->name('audit-sesi.rekap');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('audit-sesi.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
-        Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
-        Route::resource('audit-sesi', AuditSesiController::class);
 
-        // Modul PICA (Problem Identification and Corrective Action)
+        // Modul PICA (Tindak Lanjut oleh Auditee / PIC Area)
         Route::get('/pica', [PicaController::class, 'index'])->name('pica.index');
+        Route::get('/pica/{id}/edit', [PicaController::class, 'edit'])->name('pica.edit');
         Route::put('/pica/{id}', [PicaController::class, 'update'])->name('pica.update');
     });
 });

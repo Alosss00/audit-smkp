@@ -17,7 +17,7 @@
                     <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Sesi
                 </a>
                 <h3 class="fw-bold text-slate-800 mb-1 mt-1">Matriks Penilaian Audit Internal SMKP</h3>
-                <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Tanggal: <strong>{{ $sesi->tanggal_audit->format('d M Y') }}</strong> | Status: <span class="badge bg-warning text-dark text-uppercase">{{ $sesi->status }}</span></p>
+                <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Periode: <strong>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</strong> | Status: <span class="badge bg-warning text-dark text-uppercase">{{ $sesi->status }}</span></p>
             </div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary rounded-3 px-3">
@@ -104,15 +104,26 @@
                                                 </td>
                                                 <td class="text-center fw-bold align-top pt-3">
                                                     <span class="badge bg-light text-dark border font-monospace fs-6 px-2 py-1">
-                                                        {{ number_format($kriteria->nilai_maksimal, 2) }}
+                                                        {{ (int) $kriteria->nilai_maksimal }}
                                                     </span>
                                                 </td>
                                                 <td class="text-center align-top pt-2">
-                                                    <input type="number" step="0.01" min="0" max="{{ $kriteria->nilai_maksimal }}" 
+                                                    @php
+                                                        $pedomanJson = json_encode([
+                                                            '0' => $kriteria->pedoman_nilai_0 ?? '0: Tidak dilaksanakan / tidak ada bukti.',
+                                                            '1' => $kriteria->pedoman_nilai_1 ?? '1: Ada draft / belum disahkan.',
+                                                            '2' => $kriteria->pedoman_nilai_2 ?? '2: Terdokumentasi / penerapan terbatas.',
+                                                            '3' => $kriteria->pedoman_nilai_3 ?? '3: Diterapkan penuh / belum dievaluasi.',
+                                                            '4' => $kriteria->pedoman_nilai_4 ?? '4: Diterapkan 100% & dievaluasi berkala.'
+                                                        ]);
+                                                    @endphp
+                                                    <input type="number" step="1" min="0" max="{{ (int) $kriteria->nilai_maksimal }}" 
                                                         name="details[{{ $detailId }}][nilai]" 
                                                         class="form-control text-center fw-bold font-monospace input-score" 
-                                                        value="{{ $nilaiVal }}" 
+                                                        value="{{ (int) $nilaiVal }}" 
+                                                        data-pedoman="{{ e($pedomanJson) }}"
                                                         {{ $isNa || $sesi->status === 'selesai' ? 'disabled' : '' }}>
+                                                    <div class="pedoman-hint small text-muted text-start mt-1 d-none bg-light p-1 rounded border" style="font-size: 0.75rem;"></div>
                                                 </td>
                                                 <td class="text-center align-top pt-3">
                                                     <div class="form-check form-switch d-flex justify-content-center">
@@ -270,6 +281,35 @@
                 } else {
                     scoreInput.disabled = false;
                 }
+        // Score Input Pedoman Focus & Input Listener
+        const scoreInputs = document.querySelectorAll('.input-score');
+        scoreInputs.forEach(function(input) {
+            function updateHint() {
+                const hintDiv = input.parentElement.querySelector('.pedoman-hint');
+                if (!hintDiv) return;
+
+                try {
+                    const pedoman = JSON.parse(input.getAttribute('data-pedoman') || '{}');
+                    const val = input.value !== '' ? String(Math.floor(Number(input.value))) : '';
+                    if (pedoman[val]) {
+                        hintDiv.textContent = pedoman[val];
+                        hintDiv.classList.remove('d-none');
+                    } else if (Object.keys(pedoman).length > 0) {
+                        hintDiv.textContent = 'Acuan (0-4): ' + (pedoman['0'] || '');
+                        hintDiv.classList.remove('d-none');
+                    } else {
+                        hintDiv.classList.add('d-none');
+                    }
+                } catch(e) {
+                    hintDiv.classList.add('d-none');
+                }
+            }
+
+            input.addEventListener('focus', updateHint);
+            input.addEventListener('input', updateHint);
+            input.addEventListener('blur', function() {
+                const hintDiv = input.parentElement.querySelector('.pedoman-hint');
+                if (hintDiv) hintDiv.classList.add('d-none');
             });
         });
     });

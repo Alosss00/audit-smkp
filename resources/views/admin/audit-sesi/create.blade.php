@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Buat Sesi Audit Baru — Admin SMKP Minerba')
 
@@ -31,11 +31,20 @@
             @endif
             <form action="{{ route('admin.audit-sesi.store') }}" method="POST">
                 @csrf
-                <div class="mb-4">
-                    <label for="tanggal_audit" class="form-label fw-semibold small text-secondary">Tanggal Pelaksanaan Audit</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="bi bi-calendar3"></i></span>
-                        <input type="date" name="tanggal_audit" id="tanggal_audit" class="form-control" value="{{ old('tanggal_audit', date('Y-m-d')) }}" required>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="tanggal_mulai" class="form-label fw-semibold small text-secondary">Tanggal Mulai Periode</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-calendar3"></i></span>
+                            <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="form-control" value="{{ old('tanggal_mulai', date('Y-m-d')) }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tanggal_selesai" class="form-label fw-semibold small text-secondary">Tanggal Selesai Periode</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-calendar3"></i></span>
+                            <input type="date" name="tanggal_selesai" id="tanggal_selesai" class="form-control" value="{{ old('tanggal_selesai', date('Y-m-d')) }}" required>
+                        </div>
                     </div>
                 </div>
                 <div class="mb-4">

@@ -19,13 +19,13 @@ class DashboardController extends Controller
     public function admin()
     {
         $stats = [
-            'total_elemens' => Elemen::count(),
+            'total_elemens'     => Elemen::count(),
             'total_sub_elemens' => SubElemen::count(),
-            'total_kriterias' => Kriteria::count(),
-            'total_users' => User::count(),
-            'total_audits' => AuditSesi::count(),
-            'audits_selesai' => AuditSesi::where('status', 'selesai')->count(),
-            'audits_berjalan' => AuditSesi::where('status', 'berjalan')->count(),
+            'total_kriterias'   => Kriteria::count(),
+            'total_users'       => User::count(),
+            'total_audits'      => AuditSesi::count(),
+            'audits_selesai'    => AuditSesi::where('status', 'selesai')->count(),
+            'audits_berjalan'   => AuditSesi::where('status', 'berjalan')->count(),
         ];
 
         $elemens = Elemen::orderBy('kode_elemen')->get();
@@ -70,8 +70,8 @@ class DashboardController extends Controller
             $findingCounts[] = $count;
 
             $findingsPerElemen[] = [
-                'kode_elemen' => $el->kode_elemen,
-                'nama_elemen' => $el->nama_elemen,
+                'kode_elemen'    => $el->kode_elemen,
+                'nama_elemen'    => $el->nama_elemen,
                 'total_findings' => $count,
             ];
         }
@@ -94,27 +94,35 @@ class DashboardController extends Controller
     }
 
     /**
-     * Auditor Dashboard with area audit score comparison & personal audit findings breakdown.
+     * Auditor (Auditee / PIC Area) Dashboard scoped to user's assigned area.
      */
     public function auditor()
     {
-        $userId = auth()->id();
+        $userArea = auth()->user()->area;
+
+        // Base AuditSesi query filtered by user's assigned area (if area is set)
+        $auditQuery = AuditSesi::query();
+        if (!empty($userArea)) {
+            $auditQuery->where('area_audit', $userArea);
+        }
+
+        $recentAudits = (clone $auditQuery)->latest()->take(5)->get();
+        $allAuditorSessions = (clone $auditQuery)->latest()->get();
+
+        // Base Pica query filtered by user's area
+        $picaQuery = \App\Models\Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
+            if (!empty($userArea)) {
+                $q->where('area_audit', $userArea);
+            }
+        });
 
         $stats = [
-            'total_sesi' => AuditSesi::where('user_id', $userId)->count(),
-            'draft' => AuditSesi::where('user_id', $userId)->where('status', 'draft')->count(),
-            'berjalan' => AuditSesi::where('user_id', $userId)->where('status', 'berjalan')->count(),
-            'selesai' => AuditSesi::where('user_id', $userId)->where('status', 'selesai')->count(),
+            'total_sesi'  => (clone $auditQuery)->count(),
+            'total_pica'  => (clone $picaQuery)->count(),
+            'open_pica'   => (clone $picaQuery)->where('status', 'open')->count(),
+            'in_progress' => (clone $picaQuery)->where('status', 'in_progress')->count(),
+            'closed_pica' => (clone $picaQuery)->where('status', 'closed')->count(),
         ];
-
-        $recentAudits = AuditSesi::where('user_id', $userId)
-            ->latest()
-            ->take(5)
-            ->get();
-
-        $allAuditorSessions = AuditSesi::where('user_id', $userId)
-            ->latest()
-            ->get();
 
         $areaLabels = [];
         $areaScores = [];
@@ -126,11 +134,11 @@ class DashboardController extends Controller
             $areaScores[] = round($skor, 2);
 
             if ($skor >= 80) {
-                $areaColors[] = 'rgba(34, 197, 94, 0.75)'; // Green (>= 80%)
+                $areaColors[] = 'rgba(34, 197, 94, 0.75)';
             } elseif ($skor >= 70) {
-                $areaColors[] = 'rgba(234, 179, 8, 0.75)'; // Yellow (70-79%)
+                $areaColors[] = 'rgba(234, 179, 8, 0.75)';
             } else {
-                $areaColors[] = 'rgba(239, 68, 68, 0.75)'; // Red (< 70%)
+                $areaColors[] = 'rgba(239, 68, 68, 0.75)';
             }
         }
 
@@ -138,13 +146,14 @@ class DashboardController extends Controller
         $findingLabels = [];
         $findingCounts = [];
 
-        // Auditor Findings Frequency per Elemen
         $findingsPerElemen = [];
         foreach ($elemens as $el) {
             $findingLabels[] = 'Elemen ' . $el->kode_elemen;
 
-            $count = AuditDetail::whereHas('auditSesi', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
+            $count = AuditDetail::whereHas('auditSesi', function ($q) use ($userArea) {
+                if (!empty($userArea)) {
+                    $q->where('area_audit', $userArea);
+                }
             })
             ->whereHas('kriteria.subElemen', function ($q) use ($el) {
                 $q->where('elemen_id', $el->id);
@@ -159,8 +168,8 @@ class DashboardController extends Controller
             $findingCounts[] = $count;
 
             $findingsPerElemen[] = [
-                'kode_elemen' => $el->kode_elemen,
-                'nama_elemen' => $el->nama_elemen,
+                'kode_elemen'    => $el->kode_elemen,
+                'nama_elemen'    => $el->nama_elemen,
                 'total_findings' => $count,
             ];
         }
@@ -179,7 +188,8 @@ class DashboardController extends Controller
             'areaColors',
             'findingLabels',
             'findingCounts',
-            'topFindings'
+            'topFindings',
+            'userArea'
         ));
     }
 }

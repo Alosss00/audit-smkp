@@ -25,22 +25,24 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'     => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username',
-            'email' => 'nullable|email|unique:users,email',
-            'role' => 'required|in:admin,auditor',
+            'email'    => 'nullable|email|unique:users,email',
+            'role'     => 'required|in:admin,auditor',
+            'area'     => 'nullable|string|max:255',
             'password' => 'required|string|min:6',
         ], [
             'username.unique' => 'Username sudah digunakan.',
-            'password.min' => 'Password minimal 6 karakter.',
+            'password.min'    => 'Password minimal 6 karakter.',
         ]);
 
         User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'role' => $request->role,
-            'password' => Hash::make($request->password),
+            'name'      => $request->name,
+            'username'  => $request->username,
+            'email'     => $request->email,
+            'role'      => $request->role,
+            'area'      => $request->area,
+            'password'  => Hash::make($request->password),
             'is_active' => true,
         ]);
 
@@ -56,20 +58,22 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'     => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,' . $user->id,
-            'email' => 'nullable|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:admin,auditor',
+            'email'    => 'nullable|email|unique:users,email,' . $user->id,
+            'role'     => 'required|in:admin,auditor',
+            'area'     => 'nullable|string|max:255',
             'password' => 'nullable|string|min:6',
         ]);
 
         $isActive = $request->has('is_active') ? true : false;
 
         $data = [
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'role' => $request->role,
+            'name'      => $request->name,
+            'username'  => $request->username,
+            'email'     => $request->email,
+            'role'      => $request->role,
+            'area'      => $request->area,
             'is_active' => $isActive,
         ];
 
