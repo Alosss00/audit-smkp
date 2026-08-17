@@ -41,8 +41,9 @@ class AuditOversightController extends Controller
     {
         $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
         $rekap = $sesi->getRekapPerElemen();
+        $hierarki = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->skor_akhir ?? $sesi->hitungSkorAkhir();
 
-        return view('admin.audits.show', compact('sesi', 'rekap', 'skorAkhir'));
+        return view('admin.audits.show', compact('sesi', 'rekap', 'hierarki', 'skorAkhir'));
     }
 }

@@ -149,6 +149,95 @@ class AuditSesi extends Model
     }
 
     /**
+     * Get multi-level hierarchical breakdown (Elemen -> Sub-Elemen -> Sub-Sub Elemen / Kriteria).
+     *
+     * @return array
+     */
+    public function getRekapHierarkis(): array
+    {
+        $details = $this->relationLoaded('auditDetails')
+            ? $this->auditDetails
+            : $this->auditDetails()->with('kriteria.subElemen.elemen')->get();
+
+        $elemens = Elemen::with(['subElemens.kriterias'])->orderBy('kode_elemen')->get();
+
+        $hierarkis = [];
+
+        foreach ($elemens as $elemen) {
+            $elAktual = 0;
+            $elMaks   = 0;
+            $subList  = [];
+
+            foreach ($elemen->subElemens as $sub) {
+                $subAktual = 0;
+                $subMaks   = 0;
+                $subDetails = [];
+
+                // Filter details for this sub-element
+                $matchedDetails = $details->filter(function ($d) use ($sub) {
+                    return $d->kriteria && $d->kriteria->sub_elemen_id == $sub->id;
+                });
+
+                foreach ($matchedDetails as $d) {
+                    if (!$d->is_na) {
+                        $subAktual += (float) $d->nilai;
+                        $subMaks   += (float) ($d->kriteria->nilai_maksimal ?? 4);
+                    }
+
+                    $subDetails[] = [
+                        'id'             => $d->id,
+                        'kriteria_id'    => $d->kriteria_id,
+                        'kode_kriteria'  => $d->kriteria->kode_kriteria ?? '-',
+                        'deskripsi'      => $d->kriteria->deskripsi ?? '-',
+                        'nilai'          => (float) $d->nilai,
+                        'nilai_maksimal' => (float) ($d->kriteria->nilai_maksimal ?? 4),
+                        'is_na'          => (bool) $d->is_na,
+                        'catatan'        => $d->catatan,
+                        'lampiran_url'   => $d->lampiran_url,
+                    ];
+                }
+
+                $subPct = $subMaks > 0 ? ($subAktual / $subMaks) * 100 : 0;
+
+                $elAktual += $subAktual;
+                $elMaks   += $subMaks;
+
+                $subList[] = [
+                    'sub_elemen_id'            => $sub->id,
+                    'kode_sub'                 => $sub->kode_sub,
+                    'nama_sub'                 => $sub->nama_sub,
+                    'total_nilai_aktual'       => round($subAktual, 2),
+                    'total_nilai_maks_efektif' => round($subMaks, 2),
+                    'persentase'               => round($subPct, 2),
+                    'details'                  => $subDetails,
+                ];
+            }
+
+            if ($elMaks > 0) {
+                $persentase = ($elAktual / $elMaks) * 100;
+                $skorElemen = ($elAktual / $elMaks) * (float) $elemen->bobot;
+            } else {
+                $persentase = 0;
+                $skorElemen = 0;
+            }
+
+            $hierarkis[] = [
+                'elemen_id'                => $elemen->id,
+                'kode_elemen'              => $elemen->kode_elemen,
+                'nama_elemen'              => $elemen->nama_elemen,
+                'bobot'                    => (float) $elemen->bobot,
+                'total_nilai_aktual'       => round($elAktual, 2),
+                'total_nilai_maks_efektif' => round($elMaks, 2),
+                'persentase'               => round($persentase, 2),
+                'skor_elemen'              => round($skorElemen, 2),
+                'sub_elemens'              => $subList,
+            ];
+        }
+
+        return $hierarkis;
+    }
+
+    /**
      * Recalculate and update `skor_akhir` on the audit session.
      *
      * @return float

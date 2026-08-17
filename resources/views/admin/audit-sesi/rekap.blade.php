@@ -82,43 +82,112 @@
     </div>
 </div>
 
-<!-- Detailed Rekap Table per Elemen -->
+<!-- Detailed Rekap Table per Elemen, Sub-Elemen, & Kriteria (Multi-Level Breakdown) -->
 <div class="card card-custom p-4 mb-4">
-    <h5 class="fw-bold mb-3"><i class="bi bi-table me-2 text-primary"></i>Rincian Nilai per Elemen</h5>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0">
+            <i class="bi bi-diagram-3-fill me-2 text-primary"></i>Rincian Nilai per Elemen, Sub-Elemen, & Sub-sub Elemen (Kriteria)
+        </h5>
+        <button class="btn btn-sm btn-outline-primary rounded-3" id="toggleAllHierarkiBtn">
+            <i class="bi bi-arrows-collapse me-1"></i> Buka / Tutup Semua Rincian
+        </button>
+    </div>
 
     <div class="table-responsive">
         <table class="table table-bordered align-middle mb-0">
             <thead class="table-dark">
                 <tr>
-                    <th style="width: 100px;">Elemen</th>
-                    <th>Nama Elemen</th>
-                    <th class="text-center">Total Aktual</th>
-                    <th class="text-center">Total Maks Efektif</th>
-                    <th class="text-center">Persentase (%)</th>
-                    <th class="text-center">Bobot Elemen</th>
-                    <th class="text-center">Skor Akhir Elemen</th>
+                    <th style="width: 40px;" class="text-center">#</th>
+                    <th style="width: 140px;">Kode</th>
+                    <th>Nama Elemen / Sub-Elemen / Pertanyaan Kriteria</th>
+                    <th class="text-center" style="width: 110px;">Total Aktual</th>
+                    <th class="text-center" style="width: 120px;">Maks Efektif</th>
+                    <th class="text-center" style="width: 120px;">Pencapaian (%)</th>
+                    <th class="text-center" style="width: 100px;">Bobot (%)</th>
+                    <th class="text-center" style="width: 120px;">Skor Elemen</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($rekap as $row)
-                    <tr>
-                        <td class="fw-bold text-center">Elemen {{ $row['kode_elemen'] }}</td>
-                        <td class="fw-semibold">{{ $row['nama_elemen'] }}</td>
-                        <td class="text-center fw-bold text-slate-800">{{ number_format($row['total_nilai_aktual'], 2) }}</td>
-                        <td class="text-center text-muted">{{ number_format($row['total_nilai_maks_efektif'], 2) }}</td>
+                @foreach($hierarki as $el)
+                    <!-- Level 1: Elemen Utama -->
+                    <tr class="table-primary fw-bold text-slate-900 border-top border-2 border-primary" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target=".el-collapse-{{ $el['elemen_id'] }}">
+                        <td class="text-center text-primary"><i class="bi bi-chevron-down toggle-icon fs-6"></i></td>
+                        <td><span class="badge bg-primary px-2.5 py-1.5 fs-6">Elemen {{ $el['kode_elemen'] }}</span></td>
+                        <td class="fs-6 text-slate-800">{{ $el['nama_elemen'] }}</td>
+                        <td class="text-center font-monospace fs-6 text-dark fw-bold">{{ number_format($el['total_nilai_aktual'], 2) }}</td>
+                        <td class="text-center font-monospace text-muted">{{ number_format($el['total_nilai_maks_efektif'], 2) }}</td>
                         <td class="text-center">
-                            <span class="badge bg-info text-dark font-monospace fs-6 py-1 px-3">
-                                {{ number_format($row['persentase'], 2) }}%
+                            <span class="badge bg-info text-dark font-monospace fs-6 px-3 py-1">
+                                {{ number_format($el['persentase'], 2) }}%
                             </span>
                         </td>
-                        <td class="text-center text-muted">{{ number_format($row['bobot'], 2) }}%</td>
-                        <td class="text-center fw-bold text-primary fs-6">{{ number_format($row['skor_elemen'], 2) }}%</td>
+                        <td class="text-center text-muted font-monospace">{{ number_format($el['bobot'], 2) }}%</td>
+                        <td class="text-center text-primary fs-6 font-monospace fw-bold">{{ number_format($el['skor_elemen'], 2) }}%</td>
                     </tr>
+
+                    <!-- Level 2: Sub-Elemen -->
+                    @foreach($el['sub_elemens'] as $sub)
+                        <tr class="collapse show el-collapse-{{ $el['elemen_id'] }} bg-light sub-collapse-row" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target=".sub-collapse-{{ $sub['sub_elemen_id'] }}">
+                            <td class="text-center text-secondary"><i class="bi bi-arrow-return-right"></i></td>
+                            <td><span class="badge bg-secondary text-white font-monospace ms-2">{{ $sub['kode_sub'] }}</span></td>
+                            <td class="fw-semibold text-slate-800 ps-3">{{ $sub['nama_sub'] }}</td>
+                            <td class="text-center font-monospace small fw-bold">{{ number_format($sub['total_nilai_aktual'], 2) }}</td>
+                            <td class="text-center font-monospace small text-muted">{{ number_format($sub['total_nilai_maks_efektif'], 2) }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-white text-dark border font-monospace">
+                                    {{ number_format($sub['persentase'], 2) }}%
+                                </span>
+                            </td>
+                            <td class="text-center text-muted small">-</td>
+                            <td class="text-center text-muted small">-</td>
+                        </tr>
+
+                        <!-- Level 3: Sub-sub Elemen / Kriteria Pertanyaan Penilaian -->
+                        @foreach($sub['details'] as $d)
+                            <tr class="collapse show el-collapse-{{ $el['elemen_id'] }} sub-collapse-{{ $sub['sub_elemen_id'] }} bg-white">
+                                <td></td>
+                                <td><code class="small text-secondary ms-4">{{ $d['kode_kriteria'] }}</code></td>
+                                <td class="small text-slate-700 ps-4">
+                                    <div>{{ $d['deskripsi'] }}</div>
+                                    @if($d['catatan'])
+                                        <div class="mt-1 small text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Temuan: {{ $d['catatan'] }}</div>
+                                    @endif
+                                </td>
+                                <td class="text-center font-monospace small">
+                                    @if($d['is_na'])
+                                        <span class="badge bg-secondary">N/A</span>
+                                    @else
+                                        <span class="fw-bold {{ $d['nilai'] < $d['nilai_maksimal'] ? 'text-danger' : 'text-success' }}">{{ number_format($d['nilai'], 0) }}</span>
+                                    @endif
+                                </td>
+                                <td class="text-center font-monospace small text-muted">{{ number_format($d['nilai_maksimal'], 0) }}</td>
+                                <td class="text-center font-monospace small">
+                                    @if($d['is_na'])
+                                        <span class="text-muted">-</span>
+                                    @else
+                                        <span class="badge bg-light text-dark border">
+                                            {{ number_format(($d['nilai'] / max($d['nilai_maksimal'], 1)) * 100, 1) }}%
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="text-center text-muted small">-</td>
+                                <td class="text-center">
+                                    @if($d['lampiran_url'])
+                                        <a href="{{ $d['lampiran_url'] }}" target="_blank" class="btn btn-sm btn-outline-info text-dark py-0 px-2" style="font-size: 0.75rem;">
+                                            <i class="bi bi-paperclip me-1"></i> Bukti
+                                        </a>
+                                    @else
+                                        <span class="text-muted small">-</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    @endforeach
                 @endforeach
             </tbody>
             <tfoot class="table-light">
                 <tr class="fw-bold fs-6">
-                    <td colspan="4" class="text-end text-uppercase">Total Pencapaian Keseluruhan:</td>
+                    <td colspan="5" class="text-end text-uppercase">Total Pencapaian Keseluruhan:</td>
                     <td class="text-center text-primary fs-5">{{ number_format(array_sum(array_column($rekap, 'persentase')) / max(count($rekap), 1), 2) }}%</td>
                     <td class="text-center">{{ number_format(array_sum(array_column($rekap, 'bobot')), 2) }}%</td>
                     <td class="text-center text-success fs-5">{{ number_format($skorAkhir, 2) }}%</td>
@@ -127,6 +196,32 @@
         </table>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggleAllHierarkiBtn');
+        let isExpanded = true;
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                const collapses = document.querySelectorAll('.collapse');
+                collapses.forEach(el => {
+                    if (isExpanded) {
+                        el.classList.remove('show');
+                    } else {
+                        el.classList.add('show');
+                    }
+                });
+                isExpanded = !isExpanded;
+                toggleBtn.innerHTML = isExpanded 
+                    ? '<i class="bi bi-arrows-collapse me-1"></i> Tutup Semua Rincian' 
+                    : '<i class="bi bi-arrows-expand me-1"></i> Buka Semua Rincian';
+            });
+        }
+    });
+</script>
+@endpush
 
 <!-- Finding Notes & Proof Attachments List -->
 <div class="card card-custom p-4">

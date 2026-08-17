@@ -308,6 +308,11 @@
                         <i class="bi bi-people"></i>
                         <span>Kelola User</span>
                     </a>
+
+                    <a href="{{ route('admin.audit-logs.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Log Aktivitas & Audit File</span>
+                    </a>
                 @endif
             </div>
 

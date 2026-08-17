@@ -67,9 +67,10 @@ class AuditSesiController extends Controller
 
         $sesi = $query->findOrFail($id);
         $rekap = $sesi->getRekapPerElemen();
+        $hierarki = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->skor_akhir ?? $sesi->hitungSkorAkhir();
 
-        return view('auditor.audit.rekap', compact('sesi', 'rekap', 'skorAkhir'));
+        return view('auditor.audit.rekap', compact('sesi', 'rekap', 'hierarki', 'skorAkhir'));
     }
 
     /**

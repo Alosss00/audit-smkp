@@ -54,6 +54,15 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
+            \App\Models\AuditLog::create([
+                'user_id'         => $user->id,
+                'modul'           => 'Autentikasi',
+                'tindakan'        => "User '{$user->name}' ({$user->username}) berhasil login ke sistem",
+                'data_lama'       => null,
+                'data_baru'       => ['ip' => $request->ip(), 'user_agent' => substr($request->userAgent(), 0, 150)],
+                'waktu_perubahan' => now(),
+            ]);
+
             if ($user->role === 'admin') {
                 return redirect()->intended(route('admin.dashboard'))
                     ->with('success', 'Selamat datang kembali, Administrator!');
@@ -73,6 +82,17 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        if (Auth::check()) {
+            \App\Models\AuditLog::create([
+                'user_id'         => Auth::id(),
+                'modul'           => 'Autentikasi',
+                'tindakan'        => "User '" . Auth::user()->name . "' logout dari sistem",
+                'data_lama'       => null,
+                'data_baru'       => null,
+                'waktu_perubahan' => now(),
+            ]);
+        }
+
         Auth::logout();
 
         $request->session()->flush();

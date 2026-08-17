@@ -63,6 +63,9 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::resource('elemens', ElemenController::class);
         Route::resource('sub-elemens', SubElemenController::class);
         Route::resource('kriterias', KriteriaController::class);
+        // Log Aktivitas User & Audit Trail Perubahan File
+        Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
+
         Route::patch('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::resource('users', UserController::class);
     });

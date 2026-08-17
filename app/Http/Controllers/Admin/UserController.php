@@ -37,7 +37,7 @@ class UserController extends Controller
             'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor (Auditee / PIC Area).',
         ]);
 
-        User::create([
+        $newUser = User::create([
             'name'      => $request->name,
             'username'  => $request->username,
             'email'     => $request->email,
@@ -45,6 +45,15 @@ class UserController extends Controller
             'area'      => $request->area,
             'password'  => Hash::make($request->password),
             'is_active' => true,
+        ]);
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Manajemen User',
+            'tindakan'        => "Membuat akun user baru: {$newUser->name} ({$newUser->username})",
+            'data_lama'       => null,
+            'data_baru'       => ['name' => $newUser->name, 'username' => $newUser->username, 'role' => $newUser->role, 'area' => $newUser->area],
+            'waktu_perubahan' => now(),
         ]);
 
         return redirect()->route('admin.users.index')
@@ -69,6 +78,7 @@ class UserController extends Controller
             'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor (Auditee / PIC Area).',
         ]);
 
+        $originalData = ['name' => $user->name, 'username' => $user->username, 'email' => $user->email, 'role' => $user->role, 'area' => $user->area, 'is_active' => $user->is_active];
         $isActive = $request->has('is_active') ? true : false;
 
         $data = [
@@ -85,6 +95,15 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Manajemen User',
+            'tindakan'        => "Mengubah data user: {$user->name} ({$user->username})",
+            'data_lama'       => $originalData,
+            'data_baru'       => ['name' => $user->name, 'username' => $user->username, 'email' => $user->email, 'role' => $user->role, 'area' => $user->area, 'is_active' => $user->is_active],
+            'waktu_perubahan' => now(),
+        ]);
 
         // Force logout active session if deactivated
         if (!$user->is_active) {
@@ -106,8 +125,18 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat mengubah status aktif akun Anda sendiri.');
         }
 
+        $oldStatus = $user->is_active;
         $user->is_active = !$user->is_active;
         $user->save();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Manajemen User',
+            'tindakan'        => "Mengubah status akun '{$user->name}': " . ($user->is_active ? 'Aktif' : 'Nonaktif'),
+            'data_lama'       => ['is_active' => $oldStatus],
+            'data_baru'       => ['is_active' => $user->is_active],
+            'waktu_perubahan' => now(),
+        ]);
 
         // Force logout active session if deactivated
         if (!$user->is_active) {
@@ -131,7 +160,17 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
+        $deletedInfo = ['id' => $user->id, 'name' => $user->name, 'username' => $user->username];
         $user->delete();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Manajemen User',
+            'tindakan'        => "Menghapus akun user: {$deletedInfo['name']} ({$deletedInfo['username']})",
+            'data_lama'       => $deletedInfo,
+            'data_baru'       => null,
+            'waktu_perubahan' => now(),
+        ]);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil dihapus.');

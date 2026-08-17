@@ -18,11 +18,11 @@ use Maatwebsite\Excel\Facades\Excel;
 class AuditSesiAdminController extends AuditorAuditSesiController
 {
     /**
-     * Display listing of audit sessions owned by the admin user.
+     * Display listing of all audit sessions for Administrator.
      */
     public function index(Request $request)
     {
-        $query = AuditSesi::where('user_id', auth()->id())->latest();
+        $query = AuditSesi::with('user')->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -104,7 +104,7 @@ class AuditSesiAdminController extends AuditorAuditSesiController
      */
     public function matrix($id)
     {
-        $sesi = AuditSesi::where('user_id', auth()->id())->findOrFail($id);
+        $sesi = AuditSesi::with('user')->findOrFail($id);
 
         $elemens = Elemen::with(['subElemens.kriterias' => function ($query) use ($sesi) {
             $query->with(['auditDetails' => function ($q) use ($sesi) {
@@ -122,7 +122,7 @@ class AuditSesiAdminController extends AuditorAuditSesiController
      */
     public function updateMatrix(Request $request, $id)
     {
-        $sesi = AuditSesi::where('user_id', auth()->id())->findOrFail($id);
+        $sesi = AuditSesi::findOrFail($id);
 
         if ($sesi->status === 'selesai') {
             return back()->with('error', 'Sesi audit ini telah difinalisasi dan tidak dapat diubah lagi.');
@@ -241,11 +241,12 @@ class AuditSesiAdminController extends AuditorAuditSesiController
      */
     public function rekap($id)
     {
-        $sesi      = AuditSesi::where('user_id', auth()->id())->findOrFail($id);
+        $sesi      = AuditSesi::with('user')->findOrFail($id);
         $rekap     = $sesi->getRekapPerElemen();
+        $hierarki  = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->hitungSkorAkhir();
 
-        return view('admin.audit-sesi.rekap', compact('sesi', 'rekap', 'skorAkhir'));
+        return view('admin.audit-sesi.rekap', compact('sesi', 'rekap', 'hierarki', 'skorAkhir'));
     }
 
     /**
@@ -254,11 +255,6 @@ class AuditSesiAdminController extends AuditorAuditSesiController
     public function cetak($id)
     {
         $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
-
-        if (!auth()->user()->isAdmin() && $sesi->user_id !== auth()->id()) {
-            abort(403, 'Akses ditolak.');
-        }
-
         $rekap     = $sesi->getRekapPerElemen();
         $skorAkhir = $sesi->skor_akhir ?? $sesi->hitungSkorAkhir();
 
@@ -271,11 +267,6 @@ class AuditSesiAdminController extends AuditorAuditSesiController
     public function exportExcel($id)
     {
         $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
-
-        if (!auth()->user()->isAdmin() && $sesi->user_id !== auth()->id()) {
-            abort(403, 'Akses ditolak.');
-        }
-
         $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . str_replace(' ', '_', $sesi->area_audit) . '_' . $sesi->tanggal_mulai->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new AuditSesiExport($sesi), $fileName);
@@ -286,7 +277,7 @@ class AuditSesiAdminController extends AuditorAuditSesiController
      */
     public function finalisasi($id)
     {
-        $sesi = AuditSesi::where('user_id', auth()->id())->findOrFail($id);
+        $sesi = AuditSesi::findOrFail($id);
 
         if ($sesi->status === 'selesai') {
             return back()->with('info', 'Sesi audit ini sudah dalam status selesai.');
@@ -315,7 +306,7 @@ class AuditSesiAdminController extends AuditorAuditSesiController
      */
     public function destroy($id)
     {
-        $sesi = AuditSesi::where('user_id', auth()->id())->findOrFail($id);
+        $sesi = AuditSesi::findOrFail($id);
 
         if ($sesi->status === 'selesai') {
             return back()->with('error', 'Sesi audit yang sudah selesai tidak dapat dihapus.');
