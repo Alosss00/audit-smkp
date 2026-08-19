@@ -13,6 +13,8 @@ class AuditSesi extends Model
 
     protected $fillable = [
         'user_id',
+        'perusahaan_id',
+        'departemen_id',
         'tanggal_mulai',
         'tanggal_selesai',
         'area_audit',
@@ -32,6 +34,22 @@ class AuditSesi extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Relationship to Perusahaan.
+     */
+    public function perusahaan()
+    {
+        return $this->belongsTo(Perusahaan::class, 'perusahaan_id');
+    }
+
+    /**
+     * Relationship to Departemen.
+     */
+    public function departemen()
+    {
+        return $this->belongsTo(Departemen::class, 'departemen_id');
     }
 
     /**
@@ -253,5 +271,24 @@ class AuditSesi extends Model
         $this->save();
 
         return $finalScore;
+    }
+
+    /**
+     * Path #1 klasifikasi Mayor: persentase nilai sub elemen < 50% dari maksimalnya.
+     * PENTING: pakai strict less-than, bukan <=. Nilai tepat 50% = Minor (dikonfirmasi
+     * dari contoh resmi materi Kepdirjen 185: 10/20 = 50% dikategorikan Minor).
+     */
+    public function hitungKategoriMayorPath1(int $subElemenId): string
+    {
+        $rekapSubElemen = $this->getRekapPerSubElemen();
+        $data = $rekapSubElemen[$subElemenId] ?? null;
+
+        if (!$data || $data['total_nilai_maks_efektif'] <= 0) {
+            return 'minor';
+        }
+
+        $persentase = $data['total_nilai_aktual'] / $data['total_nilai_maks_efektif'];
+
+        return $persentase < 0.5 ? 'mayor' : 'minor';
     }
 }

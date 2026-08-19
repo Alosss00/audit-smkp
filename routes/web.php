@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AuditSesiAdminController;
 use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
 use App\Http\Controllers\Admin\PicaController as AdminPicaController;
+use App\Http\Controllers\Admin\PerusahaanController;
+use App\Http\Controllers\Admin\DepartemenController;
 use App\Http\Controllers\Admin\SubElemenController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auditor\AuditSesiController;
@@ -63,6 +65,13 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::resource('elemens', ElemenController::class);
         Route::resource('sub-elemens', SubElemenController::class);
         Route::resource('kriterias', KriteriaController::class);
+        
+        Route::patch('/perusahaans/{id}/toggle-status', [PerusahaanController::class, 'toggleStatus'])->name('perusahaans.toggle-status');
+        Route::resource('perusahaans', PerusahaanController::class);
+
+        Route::patch('/departemens/{id}/toggle-status', [DepartemenController::class, 'toggleStatus'])->name('departemens.toggle-status');
+        Route::resource('departemens', DepartemenController::class);
+
         // Log Aktivitas User & Audit Trail Perubahan File
         Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
 

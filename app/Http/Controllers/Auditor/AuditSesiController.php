@@ -30,7 +30,7 @@ class AuditSesiController extends Controller
             $userArea = null;
         }
 
-        $query = AuditSesi::query()->latest();
+        $query = AuditSesi::with(['user', 'perusahaan'])->latest();
 
         if (!empty($userArea)) {
             $query->where('area_audit', $userArea);
@@ -40,9 +40,14 @@ class AuditSesiController extends Controller
             $query->where('status', $request->status);
         }
 
-        $auditSesis = $query->paginate(10);
+        if ($request->filled('perusahaan_id')) {
+            $query->where('perusahaan_id', $request->perusahaan_id);
+        }
 
-        return view('auditor.audit.index', compact('auditSesis', 'userArea'));
+        $auditSesis = $query->paginate(10);
+        $perusahaans = \App\Models\Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
+
+        return view('auditor.audit.index', compact('auditSesis', 'userArea', 'perusahaans'));
     }
 
     /**

@@ -176,8 +176,13 @@
     </div>
 
     @if($auditSesis->hasPages())
-        <div class="card-footer bg-white border-0 py-3">
-            {{ $auditSesis->links() }}
+        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="small text-muted">
+                Menampilkan {{ $auditSesis->firstItem() ?? 0 }} - {{ $auditSesis->lastItem() ?? 0 }} dari total {{ $auditSesis->total() }} sesi PICA
+            </div>
+            <div>
+                {{ $auditSesis->links('pagination::bootstrap-5') }}
+            </div>
         </div>
     @endif
 </div>
@@ -223,16 +228,23 @@
                                                 </strong>
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
-                                                @if($isOverdue)
-                                                    <span class="badge bg-danger">Overdue</span>
-                                                @endif
-                                                @if($pica->status === 'open')
-                                                    <span class="badge bg-danger rounded-pill px-3 py-1">Open</span>
-                                                @elseif($pica->status === 'in_progress')
-                                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1">In Progress</span>
-                                                @else
-                                                    <span class="badge bg-success rounded-pill px-3 py-1">Closed</span>
-                                                @endif
+                                                 @if($pica->kategori_temuan === 'kritikal')
+                                                     <span class="badge bg-danger rounded-pill px-3 py-1"><i class="bi bi-shield-exclamation me-1"></i> Kritikal</span>
+                                                 @elseif($pica->kategori_temuan === 'mayor')
+                                                     <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Mayor</span>
+                                                 @else
+                                                     <span class="badge bg-info text-white rounded-pill px-3 py-1"><i class="bi bi-info-circle-fill me-1"></i> Minor</span>
+                                                 @endif
+                                                 @if($isOverdue)
+                                                     <span class="badge bg-danger">Overdue</span>
+                                                 @endif
+                                                 @if($pica->status === 'open')
+                                                     <span class="badge bg-danger rounded-pill px-3 py-1">Open</span>
+                                                 @elseif($pica->status === 'in_progress')
+                                                     <span class="badge bg-warning text-dark rounded-pill px-3 py-1">In Progress</span>
+                                                 @else
+                                                     <span class="badge bg-success rounded-pill px-3 py-1">Closed</span>
+                                                 @endif
                                             </div>
                                         </div>
                                     </button>
@@ -280,16 +292,26 @@
                                                          <div class="p-2 bg-light rounded border text-muted small">Belum ada file bukti perbaikan</div>
                                                      @endif
                                                  </div>
-                                                 <div class="col-md-4">
-                                                     <small class="text-muted d-block fw-semibold">Tenggat Waktu (Lead Auditor):</small>
-                                                     <strong class="text-slate-800">{{ $pica->tenggat_waktu ? $pica->tenggat_waktu->format('d M Y') : 'Belum ditentukan' }}</strong>
+                                                 <div class="col-md-3">
+                                                     <small class="text-muted d-block fw-semibold">Kategori Temuan:</small>
+                                                     @if($pica->kategori_temuan === 'kritikal')
+                                                         <span class="badge bg-danger rounded-pill px-2 py-1">Kritikal</span>
+                                                     @elseif($pica->kategori_temuan === 'mayor')
+                                                         <span class="badge bg-warning text-dark rounded-pill px-2 py-1">Mayor</span>
+                                                     @else
+                                                         <span class="badge bg-info text-white rounded-pill px-2 py-1">Minor</span>
+                                                     @endif
                                                  </div>
-                                                 <div class="col-md-4">
+                                                 <div class="col-md-3">
+                                                     <small class="text-muted d-block fw-semibold">Tenggat Waktu:</small>
+                                                     <strong class="text-slate-800 small">{{ $pica->tenggat_waktu ? $pica->tenggat_waktu->format('d M Y') : 'Belum ditentukan' }}</strong>
+                                                 </div>
+                                                 <div class="col-md-3">
                                                      <small class="text-muted d-block fw-semibold">Status Saat Ini:</small>
                                                      <span class="badge bg-{{ $pica->status === 'closed' ? 'success' : ($pica->status === 'in_progress' ? 'warning text-dark' : 'danger') }} text-uppercase">{{ $pica->status }}</span>
                                                  </div>
-                                                 <div class="col-md-4">
-                                                     <small class="text-muted d-block fw-semibold">Catatan Verifikasi Auditor:</small>
+                                                 <div class="col-md-3">
+                                                     <small class="text-muted d-block fw-semibold">Catatan Verifikasi:</small>
                                                      <span class="small text-slate-700">{{ $pica->catatan_verifikasi_auditor ?? '-' }}</span>
                                                  </div>
                                              </div>

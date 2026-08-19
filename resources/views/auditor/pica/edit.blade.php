@@ -25,7 +25,15 @@
                         </p>
                     </div>
                 </div>
-                <div>
+                <div class="d-flex align-items-center gap-2">
+                    @if($pica->kategori_temuan === 'kritikal')
+                        <span class="badge bg-danger badge-role fs-6"><i class="bi bi-shield-exclamation me-1"></i> KRITIKAL</span>
+                    @elseif($pica->kategori_temuan === 'mayor')
+                        <span class="badge bg-warning text-dark badge-role fs-6"><i class="bi bi-exclamation-triangle-fill me-1"></i> MAYOR</span>
+                    @else
+                        <span class="badge bg-info text-white badge-role fs-6"><i class="bi bi-info-circle-fill me-1"></i> MINOR</span>
+                    @endif
+
                     @if($pica->status === 'open')
                         <span class="badge bg-danger badge-role fs-6">Status: OPEN</span>
                     @elseif($pica->status === 'in_progress')
@@ -40,6 +48,11 @@
             <div class="p-3 bg-light rounded-3 border mb-4">
                 <h6 class="fw-bold text-slate-800 mb-1"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Deskripsi Temuan Audit (Assessor / Lead Auditor):</h6>
                 <p class="text-slate-800 mb-0 small">{{ $pica->deskripsi_temuan }}</p>
+                @if($pica->justifikasi_kategori)
+                    <div class="mt-2 text-muted small">
+                        <strong>Justifikasi Kategori:</strong> {{ $pica->justifikasi_kategori }}
+                    </div>
+                @endif
             </div>
 
             <!-- Audit Trail / Last Log Info -->
@@ -91,12 +104,17 @@
                     <h6 class="fw-bold text-muted mb-3"><i class="bi bi-lock-fill me-1"></i>Otoritas Lead Auditor / Admin (Read-Only)</h6>
 
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small text-secondary">Kategori Temuan</label>
+                            <input type="text" class="form-control bg-light text-muted text-uppercase fw-bold" value="{{ $pica->kategori_temuan }} {{ $pica->kategori_ditetapkan_manual ? '(Manual)' : '(Otomatis)' }}" disabled>
+                            <small class="text-muted" style="font-size: 0.75rem;">Ditentukan oleh Lead Auditor / Sistem</small>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold small text-secondary">Tenggat Waktu (Deadline)</label>
                             <input type="text" class="form-control bg-light text-muted" value="{{ $pica->tenggat_waktu ? $pica->tenggat_waktu->format('d M Y') : 'Belum Ditentukan' }}" disabled>
                             <small class="text-muted" style="font-size: 0.75rem;">Ditentukan oleh Lead Auditor</small>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold small text-secondary">Status PICA</label>
                             <input type="text" class="form-control bg-light text-muted text-uppercase fw-bold" value="{{ $pica->status }}" disabled>
                             <small class="text-muted" style="font-size: 0.75rem;">Status diubah oleh Lead Auditor saat verifikasi</small>

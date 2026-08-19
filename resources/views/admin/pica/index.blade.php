@@ -206,8 +206,13 @@
     </div>
 
     @if($auditSesis->hasPages())
-        <div class="card-footer bg-white border-0 py-3">
-            {{ $auditSesis->links() }}
+        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="small text-muted">
+                Menampilkan {{ $auditSesis->firstItem() ?? 0 }} - {{ $auditSesis->lastItem() ?? 0 }} dari total {{ $auditSesis->total() }} sesi PICA
+            </div>
+            <div>
+                {{ $auditSesis->links('pagination::bootstrap-5') }}
+            </div>
         </div>
     @endif
 </div>
@@ -254,6 +259,16 @@
                                                 </strong>
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
+                                                @if($pica->kategori_temuan === 'kritikal')
+                                                    <span class="badge bg-danger rounded-pill px-3 py-1"><i class="bi bi-shield-exclamation me-1"></i> Kritikal</span>
+                                                @elseif($pica->kategori_temuan === 'mayor')
+                                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Mayor</span>
+                                                @else
+                                                    <span class="badge bg-info text-white rounded-pill px-3 py-1"><i class="bi bi-info-circle-fill me-1"></i> Minor</span>
+                                                @endif
+                                                @if($pica->kategori_ditetapkan_manual)
+                                                    <span class="badge bg-dark rounded-pill px-2 py-1" style="font-size: 0.65rem;" title="Kategori ditetapkan secara manual oleh Lead Auditor">Manual</span>
+                                                @endif
                                                 @if($isOverdue)
                                                     <span class="badge bg-danger">Overdue</span>
                                                 @endif
@@ -298,6 +313,25 @@
                                             </div>
 
                                             <div class="row g-3">
+                                                <!-- Penetapan Kategori Temuan & Justifikasi -->
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-semibold small text-secondary">Kategori Temuan Audit <span class="text-danger">*</span></label>
+                                                    <select name="kategori_temuan" class="form-select bg-light fw-bold" id="kategoriSelect{{ $pica->id }}" onchange="toggleJustifikasi({{ $pica->id }})">
+                                                        <option value="kritikal" {{ old('kategori_temuan', $pica->kategori_temuan) == 'kritikal' ? 'selected' : '' }}>🔴 Kritikal (Potensi Fatality)</option>
+                                                        <option value="mayor" {{ old('kategori_temuan', $pica->kategori_temuan) == 'mayor' ? 'selected' : '' }}>🟠 Mayor (Sub Elemen < 50% / >30% Lokasi)</option>
+                                                        <option value="minor" {{ old('kategori_temuan', $pica->kategori_temuan) == 'minor' ? 'selected' : '' }}>🔵 Minor (Ketidaksesuaian Standard)</option>
+                                                    </select>
+                                                    <small class="text-muted d-block mt-1" style="font-size: 0.725rem;">
+                                                        * Mayor Jalur 1 dihitung otomatis (< 50% Sub Elemen). Kritikal & Mayor Jalur 2 memerlukan penetapan manual Lead Auditor.
+                                                    </small>
+                                                </div>
+
+                                                <div class="col-md-6" id="justifikasiContainer{{ $pica->id }}" style="{{ old('kategori_temuan', $pica->kategori_temuan) == 'kritikal' || $pica->kategori_ditetapkan_manual ? '' : 'display: none;' }}">
+                                                    <label class="form-label fw-semibold small text-secondary">Justifikasi Penetapan Kategori <span class="text-danger" id="justifikasiReqLabel{{ $pica->id }}">*</span></label>
+                                                    <textarea name="justifikasi_kategori" rows="2" class="form-control bg-light" 
+                                                        placeholder="Alasan penetapan kategori manual (wajib diisi untuk Kritikal)...">{{ old('justifikasi_kategori', $pica->justifikasi_kategori) }}</textarea>
+                                                </div>
+
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold small text-secondary">Akar Masalah (Root Cause) <span class="text-danger">*</span></label>
                                                     <textarea name="akar_masalah" rows="2" class="form-control bg-light" 
@@ -366,4 +400,20 @@
         </div>
     </div>
 @endforeach
+
+@push('scripts')
+<script>
+    function toggleJustifikasi(picaId) {
+        const select = document.getElementById('kategoriSelect' + picaId);
+        const container = document.getElementById('justifikasiContainer' + picaId);
+        if (select && container) {
+            if (select.value === 'kritikal') {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'block'; // keep visible for optional manual justification or toggle as preferred
+            }
+        }
+    }
+</script>
+@endpush
 @endsection

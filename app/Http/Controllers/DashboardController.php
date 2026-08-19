@@ -30,6 +30,9 @@ class DashboardController extends Controller
             'open_pica'          => \App\Models\Pica::where('status', 'open')->count(),
             'in_progress_pica'   => \App\Models\Pica::where('status', 'in_progress')->count(),
             'closed_pica'        => \App\Models\Pica::where('status', 'closed')->count(),
+            'kritikal_pica'      => \App\Models\Pica::where('kategori_temuan', 'kritikal')->count(),
+            'mayor_pica'         => \App\Models\Pica::where('kategori_temuan', 'mayor')->count(),
+            'minor_pica'         => \App\Models\Pica::where('kategori_temuan', 'minor')->count(),
         ];
 
         $elemens = Elemen::orderBy('kode_elemen')->get();
@@ -124,11 +127,14 @@ class DashboardController extends Controller
         });
 
         $stats = [
-            'total_sesi'  => (clone $auditQuery)->count(),
-            'total_pica'  => (clone $picaQuery)->count(),
-            'open_pica'   => (clone $picaQuery)->where('status', 'open')->count(),
-            'in_progress' => (clone $picaQuery)->where('status', 'in_progress')->count(),
-            'closed_pica' => (clone $picaQuery)->where('status', 'closed')->count(),
+            'total_sesi'    => (clone $auditQuery)->count(),
+            'total_pica'    => (clone $picaQuery)->count(),
+            'open_pica'     => (clone $picaQuery)->where('status', 'open')->count(),
+            'in_progress'   => (clone $picaQuery)->where('status', 'in_progress')->count(),
+            'closed_pica'   => (clone $picaQuery)->where('status', 'closed')->count(),
+            'kritikal_pica' => (clone $picaQuery)->where('kategori_temuan', 'kritikal')->count(),
+            'mayor_pica'    => (clone $picaQuery)->where('kategori_temuan', 'mayor')->count(),
+            'minor_pica'    => (clone $picaQuery)->where('kategori_temuan', 'minor')->count(),
         ];
 
         $areaLabels = [];

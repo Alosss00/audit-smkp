@@ -47,11 +47,34 @@
                         </div>
                     </div>
                 </div>
-                <div class="mb-4">
-                    <label for="area_audit" class="form-label fw-semibold small text-secondary">Area / Lokasi Audit</label>
+                <div class="mb-3">
+                    <label for="area_selection" class="form-label fw-semibold small text-secondary">Pilih Area Audit <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="bi bi-geo-alt"></i></span>
-                        <input type="text" name="area_audit" id="area_audit" class="form-control" placeholder="Contoh: Pit A / Processing Plant / Bengkel Utama" value="{{ old('area_audit') }}" required>
+                        <span class="input-group-text bg-light"><i class="bi bi-geo-alt-fill text-primary"></i></span>
+                        <select name="area_selection" id="area_selection" class="form-select fw-semibold" required>
+                            <option value="">-- Pilih Perusahaan atau Departemen Ter-audit --</option>
+                            <optgroup label="🏢 PERUSAHAAN TER-AUDIT (42 Data)">
+                                @foreach($perusahaans as $comp)
+                                    <option value="p:{{ $comp->id }}" {{ old('area_selection') == 'p:'.$comp->id ? 'selected' : '' }}>
+                                        {{ $comp->nama_perusahaan }} ({{ $comp->kategori }})
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="🏭 DEPARTEMEN TER-AUDIT (27 Data)">
+                                @foreach($departemens as $dept)
+                                    <option value="d:{{ $dept->id }}" {{ old('area_selection') == 'd:'.$dept->id ? 'selected' : '' }}>
+                                        {{ $dept->nama_departemen }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="detail_area" class="form-label fw-semibold small text-secondary">Spesifikasi Detail Lokasi / Sub-Area (Opsional)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-pin-map"></i></span>
+                        <input type="text" name="detail_area" id="detail_area" class="form-control" placeholder="Contoh: Pit West / Workshop Utama / Dermaga 1" value="{{ old('detail_area') }}">
                     </div>
                 </div>
                 <div class="d-flex align-items-center justify-content-end gap-2 mt-4 pt-3 border-top">

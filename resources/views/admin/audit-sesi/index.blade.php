@@ -19,6 +19,25 @@
 
 <div class="card card-custom p-3 mb-4">
     <form method="GET" action="{{ route('admin.audit-sesi.index') }}" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <select name="area_selection" class="form-select rounded-3" onchange="this.form.submit()">
+                <option value="">-- Pilih Area Audit (Semua) --</option>
+                <optgroup label="🏢 Perusahaan Ter-audit">
+                    @foreach($perusahaans as $comp)
+                        <option value="p:{{ $comp->id }}" {{ request('area_selection') == 'p:'.$comp->id ? 'selected' : '' }}>
+                            {{ $comp->nama_perusahaan }}
+                        </option>
+                    @endforeach
+                </optgroup>
+                <optgroup label="🏭 Departemen Ter-audit">
+                    @foreach($departemens as $dept)
+                        <option value="d:{{ $dept->id }}" {{ request('area_selection') == 'd:'.$dept->id ? 'selected' : '' }}>
+                            {{ $dept->nama_departemen }}
+                        </option>
+                    @endforeach
+                </optgroup>
+            </select>
+        </div>
         <div class="col-md-4">
             <select name="status" class="form-select rounded-3" onchange="this.form.submit()">
                 <option value="">-- Semua Status Sesi --</option>
@@ -27,7 +46,7 @@
                 <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
             </select>
         </div>
-        @if(request()->filled('status'))
+        @if(request()->filled('status') || request()->filled('area_selection'))
             <div class="col-md-2">
                 <a href="{{ route('admin.audit-sesi.index') }}" class="btn btn-outline-secondary rounded-3 w-100">Reset</a>
             </div>
@@ -104,7 +123,14 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-4">{{ $auditSesis->links() }}</div>
+        <div class="mt-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="small text-muted">
+                Menampilkan {{ $auditSesis->firstItem() ?? 0 }} - {{ $auditSesis->lastItem() ?? 0 }} dari total {{ $auditSesis->total() }} sesi audit
+            </div>
+            <div>
+                {{ $auditSesis->links('pagination::bootstrap-5') }}
+            </div>
+        </div>
     @endif
 </div>
 @endsection

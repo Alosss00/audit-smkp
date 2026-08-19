@@ -25,6 +25,7 @@ class PicaController extends Controller
             ->where('area_audit', $userArea)
             ->with([
                 'user',
+                'perusahaan',
                 'auditDetails' => function ($q) {
                     $q->whereHas('pica');
                 },
@@ -132,7 +133,7 @@ class PicaController extends Controller
             $updatePayload['status'] = 'in_progress';
         }
 
-        // Note: status, tenggat_waktu, catatan_verifikasi_auditor are EXPLICITLY NOT in $updatePayload!
+        // Note: status, tenggat_waktu, catatan_verifikasi_auditor, kategori_temuan, kategori_ditetapkan_manual, justifikasi_kategori are EXPLICITLY NOT in $updatePayload!
 
         $pica->update($updatePayload);
 

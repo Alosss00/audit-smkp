@@ -12,6 +12,9 @@ class Pica extends Model
     protected $fillable = [
         'audit_detail_id',
         'deskripsi_temuan',
+        'kategori_temuan',
+        'kategori_ditetapkan_manual',
+        'justifikasi_kategori',
         'akar_masalah',
         'tindakan_koreksi',
         'tindakan_pencegahan',
@@ -22,7 +25,8 @@ class Pica extends Model
     ];
 
     protected $casts = [
-        'tenggat_waktu' => 'date',
+        'tenggat_waktu'              => 'date',
+        'kategori_ditetapkan_manual' => 'boolean',
     ];
 
     protected $appends = ['bukti_perbaikan_url'];

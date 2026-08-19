@@ -136,8 +136,13 @@
             </table>
         </div>
 
-        <div class="mt-4">
-            {{ $logs->links() }}
+        <div class="mt-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="small text-muted">
+                Menampilkan {{ $logs->firstItem() ?? 0 }} - {{ $logs->lastItem() ?? 0 }} dari total {{ $logs->total() }} log aktivitas
+            </div>
+            <div>
+                {{ $logs->links('pagination::bootstrap-5') }}
+            </div>
         </div>
     @endif
 </div>

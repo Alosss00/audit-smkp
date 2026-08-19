@@ -3,34 +3,47 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Exports\AuditSesiExport;
-use App\Http\Controllers\Auditor\AuditSesiController as AuditorAuditSesiController;
+use App\Http\Controllers\Controller;
 use App\Models\AuditDetail;
 use App\Models\AuditLog;
 use App\Models\AuditSesi;
+use App\Models\Departemen;
 use App\Models\Elemen;
 use App\Models\Kriteria;
+use App\Models\Perusahaan;
 use App\Models\Pica;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
-class AuditSesiAdminController extends AuditorAuditSesiController
+class AuditSesiAdminController extends Controller
 {
     /**
      * Display listing of all audit sessions for Administrator.
      */
     public function index(Request $request)
     {
-        $query = AuditSesi::with('user')->latest();
+        $query = AuditSesi::with(['user', 'perusahaan', 'departemen'])->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $auditSesis = $query->paginate(10);
+        if ($request->filled('area_selection')) {
+            $sel = $request->area_selection;
+            if (str_starts_with($sel, 'p:')) {
+                $query->where('perusahaan_id', substr($sel, 2));
+            } elseif (str_starts_with($sel, 'd:')) {
+                $query->where('departemen_id', substr($sel, 2));
+            }
+        }
 
-        return view('admin.audit-sesi.index', compact('auditSesis'));
+        $auditSesis = $query->paginate(10);
+        $perusahaans = Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
+        $departemens = Departemen::where('is_active', true)->orderBy('nama_departemen')->get();
+
+        return view('admin.audit-sesi.index', compact('auditSesis', 'perusahaans', 'departemens'));
     }
 
     /**
@@ -38,7 +51,9 @@ class AuditSesiAdminController extends AuditorAuditSesiController
      */
     public function create()
     {
-        return view('admin.audit-sesi.create');
+        $perusahaans = Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
+        $departemens = Departemen::where('is_active', true)->orderBy('nama_departemen')->get();
+        return view('admin.audit-sesi.create', compact('perusahaans', 'departemens'));
     }
 
     /**
@@ -47,23 +62,45 @@ class AuditSesiAdminController extends AuditorAuditSesiController
     public function store(Request $request)
     {
         $request->validate([
+            'area_selection'  => 'required|string',
             'tanggal_mulai'   => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'area_audit'      => 'required|string|max:255',
         ], [
+            'area_selection.required'          => 'Pilihan area audit wajib dipilih.',
             'tanggal_mulai.required'           => 'Tanggal mulai wajib diisi.',
             'tanggal_selesai.required'         => 'Tanggal selesai wajib diisi.',
             'tanggal_selesai.after_or_equal'   => 'Tanggal selesai harus sama atau setelah tanggal mulai.',
-            'area_audit.required'              => 'Area audit wajib diisi.',
         ]);
+
+        $perusahaanId = null;
+        $departemenId = null;
+        $areaAudit = '';
+
+        if (str_starts_with($request->area_selection, 'p:')) {
+            $perusahaanId = (int) substr($request->area_selection, 2);
+            $perusahaan = Perusahaan::find($perusahaanId);
+            $areaAudit = $perusahaan ? $perusahaan->nama_perusahaan : 'Perusahaan Audit';
+        } elseif (str_starts_with($request->area_selection, 'd:')) {
+            $departemenId = (int) substr($request->area_selection, 2);
+            $departemen = Departemen::find($departemenId);
+            $areaAudit = $departemen ? $departemen->nama_departemen : 'Departemen Audit';
+        } else {
+            $areaAudit = $request->area_selection;
+        }
+
+        if ($request->filled('detail_area')) {
+            $areaAudit .= ' (' . trim($request->detail_area) . ')';
+        }
 
         DB::beginTransaction();
         try {
             $sesi = AuditSesi::create([
                 'user_id'         => auth()->id(),
+                'perusahaan_id'   => $perusahaanId,
+                'departemen_id'   => $departemenId,
                 'tanggal_mulai'   => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
-                'area_audit'      => $request->area_audit,
+                'area_audit'      => $areaAudit,
                 'status'          => 'draft',
                 'skor_akhir'      => 0,
             ]);
@@ -208,6 +245,30 @@ class AuditSesiAdminController extends AuditorAuditSesiController
 
             if ($sesi->status === 'draft') {
                 $sesi->status = 'berjalan';
+            }
+
+            // Refresh session details to ensure rekap calculation reflects updated values
+            $sesi->unsetRelation('auditDetails');
+
+            // Tahap 2: Auto-Klasifikasi PICA (Jalur Mayor #1) per Sub-Elemen
+            // Dilakukan setelah seluruh detail ter-update agar persentase sub-elemen akurat
+            $subElemenIds = Pica::whereHas('auditDetail', function ($q) use ($sesi) {
+                    $q->where('audit_sesi_id', $sesi->id);
+                })
+                ->whereIn('status', ['open', 'in_progress'])
+                ->where('kategori_ditetapkan_manual', false)
+                ->get()
+                ->pluck('auditDetail.kriteria.sub_elemen_id')
+                ->filter()
+                ->unique();
+
+            foreach ($subElemenIds as $subElemenId) {
+                $kategoriMayor = $sesi->hitungKategoriMayorPath1($subElemenId);
+
+                Pica::whereHas('auditDetail.kriteria', fn ($q) => $q->where('sub_elemen_id', $subElemenId))
+                    ->whereHas('auditDetail', fn ($q) => $q->where('audit_sesi_id', $sesi->id))
+                    ->where('kategori_ditetapkan_manual', false)
+                    ->update(['kategori_temuan' => $kategoriMayor]);
             }
 
             $sesi->hitungSkorAkhir();

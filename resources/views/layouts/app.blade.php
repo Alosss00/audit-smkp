@@ -64,6 +64,39 @@
             letter-spacing: 0.5px;
         }
 
+        /* Pagination Styling & SVG Constraint Fix */
+        .pagination svg,
+        .page-link svg,
+        svg.w-5,
+        svg.h-5,
+        nav svg {
+            width: 1rem !important;
+            height: 1rem !important;
+            max-width: 16px !important;
+            max-height: 16px !important;
+            display: inline-block !important;
+        }
+
+        .pagination {
+            margin-bottom: 0;
+            gap: 4px;
+        }
+
+        .page-item .page-link {
+            border-radius: 8px !important;
+            color: #0284c7;
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+        }
+
+        .page-item.active .page-link {
+            background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+            border-color: #0284c7 !important;
+            color: #ffffff !important;
+        }
+
         .sidebar-nav {
             padding: 16px 12px;
             flex-grow: 1;
@@ -288,6 +321,16 @@
                 <!-- Section Master Data (Admin Only) -->
                 @if(auth()->user()->isAdmin())
                     <div class="nav-section-title">Pengelolaan Master Data</div>
+
+                    <a href="{{ route('admin.perusahaans.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.perusahaans.*') ? 'active' : '' }}">
+                        <i class="bi bi-building"></i>
+                        <span>Master Perusahaan</span>
+                    </a>
+
+                    <a href="{{ route('admin.departemens.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.departemens.*') ? 'active' : '' }}">
+                        <i class="bi bi-diagram-3-fill"></i>
+                        <span>Master Departemen</span>
+                    </a>
 
                     <a href="{{ route('admin.elemens.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.elemens.*') ? 'active' : '' }}">
                         <i class="bi bi-folder"></i>
