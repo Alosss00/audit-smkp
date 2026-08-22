@@ -91,12 +91,19 @@
                                                 $catatanVal = $detail ? $detail->catatan : '';
                                                 $lampiranUrl = $detail ? $detail->lampiran_url : null;
                                             @endphp
-                                            <tr>
+                                            <tr class="kriteria-row"
+                                                data-kriteria-id="{{ $kriteria->id }}"
+                                                data-dependency-id="{{ $kriteria->dependency_id ?? '' }}"
+                                                data-nilai-maksimal="{{ (int) $kriteria->nilai_maksimal }}"
+                                                data-dependency-note="{{ e($kriteria->dependency_note ?? '') }}">
                                                 <td class="fw-bold align-top pt-3">
                                                     <span class="badge bg-dark font-monospace fs-6 py-1 px-2">{{ $kriteria->kode_kriteria }}</span>
                                                 </td>
                                                 <td class="align-top pt-3">
-                                                    <div class="fw-semibold text-slate-800 mb-1">{{ $kriteria->deskripsi }}</div>
+                                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                                        <div class="fw-semibold text-slate-800">{{ $kriteria->deskripsi }}</div>
+                                                        <span class="peringatan-konsistensi badge bg-warning text-dark px-2 py-1 flex-shrink-0" style="display:none;" title="" data-bs-toggle="tooltip"></span>
+                                                    </div>
 
                                                     <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2 py-0" data-bs-toggle="modal" data-bs-target="#rubricModal{{ $kriteria->id }}">
                                                         <i class="bi bi-info-circle me-1"></i> Pedoman Penilaian & Bukti Dokumen
@@ -119,17 +126,19 @@
                                                     @endphp
                                                     <input type="number" step="1" min="0" max="{{ (int) $kriteria->nilai_maksimal }}" 
                                                         name="details[{{ $detailId }}][nilai]" 
-                                                        class="form-control text-center fw-bold font-monospace input-score" 
+                                                        class="form-control text-center fw-bold font-monospace input-score nilai-input" 
                                                         value="{{ (int) $nilaiVal }}" 
+                                                        data-kriteria-id="{{ $kriteria->id }}"
                                                         data-pedoman="{{ e($pedomanJson) }}"
                                                         {{ $isNa || $sesi->status === 'selesai' ? 'disabled' : '' }}>
                                                     <div class="pedoman-hint small text-muted text-start mt-1 d-none bg-light p-1 rounded border" style="font-size: 0.75rem;"></div>
                                                 </td>
                                                 <td class="text-center align-top pt-3">
                                                     <div class="form-check form-switch d-flex justify-content-center">
-                                                        <input class="form-check-input check-na" type="checkbox" 
+                                                        <input class="form-check-input check-na na-checkbox" type="checkbox" 
                                                             name="details[{{ $detailId }}][is_na]" 
                                                             value="1" 
+                                                            data-kriteria-id="{{ $kriteria->id }}"
                                                             {{ $isNa ? 'checked' : '' }}
                                                             {{ $sesi->status === 'selesai' ? 'disabled' : '' }}>
                                                     </div>
@@ -281,6 +290,10 @@
                 } else {
                     scoreInput.disabled = false;
                 }
+                cekKonsistensi();
+            });
+        });
+
         // Score Input Pedoman Focus & Input Listener
         const scoreInputs = document.querySelectorAll('.input-score');
         scoreInputs.forEach(function(input) {
@@ -306,12 +319,75 @@
             }
 
             input.addEventListener('focus', updateHint);
-            input.addEventListener('input', updateHint);
+            input.addEventListener('input', function() {
+                updateHint();
+                cekKonsistensi();
+            });
+            input.addEventListener('change', function() {
+                cekKonsistensi();
+            });
             input.addEventListener('blur', function() {
                 const hintDiv = input.parentElement.querySelector('.pedoman-hint');
                 if (hintDiv) hintDiv.classList.add('d-none');
             });
         });
+
+        // Logic Peringatan Konsistensi Antar-Kriteria (Advisory Visual Client-Side)
+        function cekKonsistensi() {
+            document.querySelectorAll('.kriteria-row[data-dependency-id]').forEach(function(row) {
+                const depId = row.dataset.dependencyId;
+                if (!depId || depId === 'null' || depId === '') {
+                    return;
+                }
+
+                const depRow = document.querySelector(`.kriteria-row[data-kriteria-id="${depId}"]`);
+                if (!depRow) return;
+
+                const depNaInput = depRow.querySelector('.na-checkbox');
+                const depIsNa = depNaInput ? depNaInput.checked : false;
+
+                const thisNaInput = row.querySelector('.na-checkbox');
+                const thisIsNa = thisNaInput ? thisNaInput.checked : false;
+
+                const thisNilaiInput = row.querySelector('.nilai-input');
+                const thisNilai = parseFloat(thisNilaiInput ? thisNilaiInput.value : 0) || 0;
+                const thisMax = parseFloat(row.dataset.nilaiMaksimal) || 0;
+                const warningEl = row.querySelector('.peringatan-konsistensi');
+
+                if (!warningEl) return;
+
+                let pesan = null;
+
+                if (depIsNa && !thisIsNa && thisNilai > 0) {
+                    pesan = 'Kriteria prasyarat berstatus N/A — periksa apakah penilaian ini masih relevan.';
+                } else if (!depIsNa) {
+                    const depNilaiInput = depRow.querySelector('.nilai-input');
+                    const depNilai = parseFloat(depNilaiInput ? depNilaiInput.value : 0) || 0;
+                    const depMax = parseFloat(depRow.dataset.nilaiMaksimal) || 0;
+
+                    if (depMax > 0 && thisMax > 0) {
+                        const depPersen = depNilai / depMax;
+                        const thisPersen = thisNilai / thisMax;
+
+                        if (depPersen < 0.5 && thisPersen >= 0.75) {
+                            pesan = 'Nilai kriteria ini cukup tinggi, tapi kriteria prasyaratnya bernilai rendah (di bawah 50%) — periksa konsistensi.';
+                        }
+                    }
+                }
+
+                if (pesan) {
+                    const note = row.dataset.dependencyNote ? (' | Catatan: ' + row.dataset.dependencyNote) : '';
+                    warningEl.textContent = '⚠ ' + pesan;
+                    warningEl.title = pesan + note;
+                    warningEl.style.display = 'inline-block';
+                } else {
+                    warningEl.style.display = 'none';
+                }
+            });
+        }
+
+        // Jalankan pengecekan konsistensi saat halaman dimuat
+        cekKonsistensi();
     });
 </script>
 @endpush

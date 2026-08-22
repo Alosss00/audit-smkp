@@ -15,10 +15,10 @@ class SubElemenController extends Controller
      */
     public function index()
     {
-        $subElemens = SubElemen::with('elemen')->withCount('kriterias')->orderBy('kode_sub')->get();
-        $elemens = Elemen::orderBy('kode_elemen')->get();
+        $elemens = Elemen::with(['subElemens.kriterias'])->orderBy('kode_elemen')->get();
+        $subElemens = SubElemen::with(['elemen', 'kriterias'])->withCount('kriterias')->orderBy('kode_sub')->get();
 
-        return view('admin.sub_elemens.index', compact('subElemens', 'elemens'));
+        return view('admin.sub_elemens.index', compact('elemens', 'subElemens'));
     }
 
     /**

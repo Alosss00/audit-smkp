@@ -38,8 +38,16 @@
                         <td>
                             <div class="fw-bold text-slate-800 fs-6 mb-1">{{ $kriteria->deskripsi }}</div>
                             @if($kriteria->persyaratan_dokumen)
-                                <div class="small text-muted bg-light p-2 rounded border">
+                                <div class="small text-muted bg-light p-2 rounded border mb-1">
                                     <i class="bi bi-file-earmark-text text-primary me-1"></i><strong>Dokumen Wajib:</strong> {{ Str::limit($kriteria->persyaratan_dokumen, 90) }}
+                                </div>
+                            @endif
+                            @if($kriteria->dependency)
+                                <div class="small text-dark bg-warning bg-opacity-10 p-2 rounded border border-warning border-opacity-50">
+                                    <i class="bi bi-link-45deg text-warning me-1 fw-bold"></i><strong>Prasyarat:</strong> {{ $kriteria->dependency->kode_kriteria }} - {{ Str::limit($kriteria->dependency->deskripsi, 60) }}
+                                    @if($kriteria->dependency_note)
+                                        <div class="fst-italic text-muted small mt-1"><i class="bi bi-info-circle me-1"></i>{{ $kriteria->dependency_note }}</div>
+                                    @endif
                                 </div>
                             @endif
                         </td>
@@ -120,6 +128,30 @@
 
                             <div class="col-12">
                                 <hr class="my-2">
+                                <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-link-45deg text-warning me-1"></i>Hubungan Prasyarat Antar-Kriteria (Opsional)</h6>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Kriteria Prasyarat (Opsional)</label>
+                                <select name="dependency_id" class="form-select">
+                                    <option value="">-- Tanpa Kriteria Prasyarat --</option>
+                                    @foreach($kriterias as $other)
+                                        @if($other->id !== $kriteria->id)
+                                            <option value="{{ $other->id }}" {{ $kriteria->dependency_id == $other->id ? 'selected' : '' }}>
+                                                {{ $other->kode_kriteria }} - {{ Str::limit($other->deskripsi, 50) }}
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Catatan Hubungan Prasyarat</label>
+                                <input type="text" name="dependency_note" class="form-control" value="{{ $kriteria->dependency_note }}" placeholder="Penjelasan relasi (mis. Nilai fisik unit bergantung pada dokumen...)">
+                            </div>
+
+                            <div class="col-12">
+                                <hr class="my-2">
                                 <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-bookmark-star-fill text-warning me-1"></i>Rubrik Pedoman Penilaian (Nilai 0 s/d 4)</h6>
                             </div>
 
@@ -191,6 +223,28 @@
                         <div class="col-12">
                             <label class="form-label fw-semibold small text-primary">Persyaratan Dokumen & Bukti Fisik</label>
                             <textarea name="persyaratan_dokumen" class="form-control" rows="2" placeholder="Sebutkan dokumen wajib yang harus diverifikasi..."></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <hr class="my-2">
+                            <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-link-45deg text-warning me-1"></i>Hubungan Prasyarat Antar-Kriteria (Opsional)</h6>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Kriteria Prasyarat (Opsional)</label>
+                            <select name="dependency_id" class="form-select">
+                                <option value="">-- Tanpa Kriteria Prasyarat --</option>
+                                @foreach($kriterias as $other)
+                                    <option value="{{ $other->id }}">
+                                        {{ $other->kode_kriteria }} - {{ Str::limit($other->deskripsi, 50) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Catatan Hubungan Prasyarat</label>
+                            <input type="text" name="dependency_note" class="form-control" placeholder="Penjelasan relasi (mis. Nilai fisik unit bergantung pada dokumen...)">
                         </div>
 
                         <div class="col-12">

@@ -14,10 +14,37 @@ class KriteriaController extends Controller
      */
     public function index()
     {
-        $kriterias = Kriteria::with('subElemen.elemen')->latest()->get();
+        $kriterias = Kriteria::with(['subElemen.elemen', 'dependency'])->latest()->get();
         $subElemens = SubElemen::with('elemen')->orderBy('kode_sub')->get();
 
         return view('admin.kriterias.index', compact('kriterias', 'subElemens'));
+    }
+
+    /**
+     * Check if assigning newDependencyId to targetKriteria creates a dependency cycle.
+     */
+    public function wouldCreateCycle(?int $targetKriteriaId, ?int $newDependencyId): bool
+    {
+        if (!$targetKriteriaId || !$newDependencyId) {
+            return false;
+        }
+
+        if ($targetKriteriaId === $newDependencyId) {
+            return true;
+        }
+
+        $visited = [$targetKriteriaId];
+        $currentId = $newDependencyId;
+
+        while ($currentId !== null) {
+            if (in_array($currentId, $visited)) {
+                return true; // Siklus terdeteksi
+            }
+            $visited[] = $currentId;
+            $currentId = Kriteria::find($currentId)?->dependency_id;
+        }
+
+        return false;
     }
 
     /**
@@ -36,6 +63,8 @@ class KriteriaController extends Controller
             'pedoman_nilai_2' => 'nullable|string',
             'pedoman_nilai_3' => 'nullable|string',
             'pedoman_nilai_4' => 'nullable|string',
+            'dependency_id' => 'nullable|exists:kriterias,id',
+            'dependency_note' => 'nullable|string',
         ]);
 
         Kriteria::create($request->all());
@@ -62,7 +91,18 @@ class KriteriaController extends Controller
             'pedoman_nilai_2' => 'nullable|string',
             'pedoman_nilai_3' => 'nullable|string',
             'pedoman_nilai_4' => 'nullable|string',
+            'dependency_id' => 'nullable|exists:kriterias,id',
+            'dependency_note' => 'nullable|string',
         ]);
+
+        if ($request->filled('dependency_id')) {
+            $newDepId = (int) $request->dependency_id;
+            if ($this->wouldCreateCycle($kriteria->id, $newDepId)) {
+                return back()->withInput()->withErrors([
+                    'dependency_id' => 'Kriteria prasyarat yang dipilih akan membentuk siklus dependensi (A bergantung ke B, B bergantung ke A). Pilih kriteria lain.'
+                ]);
+            }
+        }
 
         $kriteria->update($request->all());
 
