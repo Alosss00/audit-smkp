@@ -16,6 +16,13 @@ class SubElemen extends Model
         'elemen_id',
         'kode_sub',
         'nama_sub',
+        'nilai_maksimal',
+        'is_na',
+    ];
+
+    protected $casts = [
+        'nilai_maksimal' => 'float',
+        'is_na'          => 'boolean',
     ];
 
     /**
@@ -32,5 +39,19 @@ class SubElemen extends Model
     public function kriterias()
     {
         return $this->hasMany(Kriteria::class, 'sub_elemen_id');
+    }
+
+    /**
+     * Automatically sync the SubElemen's nilai_maksimal to equal the sum of
+     * all active child Kriterias' (Sub-sub Elemen) max scores.
+     */
+    public function syncNilaiMaksimalFromKriterias(): void
+    {
+        if ($this->kriterias()->count() > 0) {
+            $sum = (float) $this->kriterias()->sum('nilai_maksimal');
+            if ((float) $this->nilai_maksimal !== $sum) {
+                $this->update(['nilai_maksimal' => $sum]);
+            }
+        }
     }
 }

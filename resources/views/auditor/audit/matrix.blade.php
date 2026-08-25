@@ -75,8 +75,8 @@
                                         <tr>
                                             <th style="width: 100px;">Kode</th>
                                             <th>Pertanyaan / Kriteria & Pedoman Kepdirjen 185</th>
-                                            <th style="width: 110px;" class="text-center">Nilai Maks</th>
-                                            <th style="width: 130px;" class="text-center">Nilai Audit</th>
+                                            <th style="width: 100px;" class="text-center">Nilai Maks</th>
+                                            <th style="width: 220px;" class="text-center">Nilai Audit</th>
                                             <th style="width: 90px;" class="text-center">N/A</th>
                                             <th style="width: 250px;">Catatan Temuan & Bukti Lampiran</th>
                                         </tr>
@@ -114,24 +114,42 @@
                                                         {{ (int) $kriteria->nilai_maksimal }}
                                                     </span>
                                                 </td>
-                                                <td class="text-center align-top pt-2">
+                                                <td class="text-center align-top pt-2" style="width: 220px;">
                                                     @php
                                                         $pedomanJson = json_encode([
-                                                            '0' => $kriteria->pedoman_nilai_0 ?? '0: Tidak dilaksanakan / tidak ada bukti.',
-                                                            '1' => $kriteria->pedoman_nilai_1 ?? '1: Ada draft / belum disahkan.',
-                                                            '2' => $kriteria->pedoman_nilai_2 ?? '2: Terdokumentasi / penerapan terbatas.',
-                                                            '3' => $kriteria->pedoman_nilai_3 ?? '3: Diterapkan penuh / belum dievaluasi.',
-                                                            '4' => $kriteria->pedoman_nilai_4 ?? '4: Diterapkan 100% & dievaluasi berkala.'
+                                                            '0' => $kriteria->pedoman_nilai_0 ?? 'Nilai 0: Tidak ada dokumen, tidak dilaksanakan, dan tidak ada bukti fisik.',
+                                                            '1' => $kriteria->pedoman_nilai_1 ?? 'Nilai 1: Ada draft/wacana tetapi belum disahkan atau belum disosialisasikan.',
+                                                            '2' => $kriteria->pedoman_nilai_2 ?? 'Nilai 2: Terdokumentasi secara resmi tetapi penerapan di lapangan masih terbatas.',
+                                                            '3' => $kriteria->pedoman_nilai_3 ?? 'Nilai 3: Terdokumentasi dan diterapkan penuh tetapi belum dievaluasi secara berkala.',
+                                                            '4' => $kriteria->pedoman_nilai_4 ?? 'Nilai 4: Terdokumentasi resmi, diterapkan 100%, dievaluasi berkala, dan ditindaklanjuti.'
                                                         ]);
+                                                        $maxScore = (int) $kriteria->nilai_maksimal;
                                                     @endphp
-                                                    <input type="number" step="1" min="0" max="{{ (int) $kriteria->nilai_maksimal }}" 
+
+                                                    <!-- Quick Score Selection Buttons (0-4) -->
+                                                    <div class="btn-group btn-group-sm mb-1 w-100 score-btn-group" role="group">
+                                                        @for($s = 0; $s <= $maxScore; $s++)
+                                                            <button type="button" 
+                                                                class="btn btn-outline-secondary btn-score-quick py-0 px-1 {{ (int)$nilaiVal === $s && !$isNa ? 'active btn-primary text-white fw-bold' : '' }}" 
+                                                                data-score="{{ $s }}"
+                                                                {{ $isNa || $sesi->status === 'selesai' ? 'disabled' : '' }}>
+                                                                {{ $s }}
+                                                            </button>
+                                                        @endfor
+                                                    </div>
+
+                                                    <!-- Score Input -->
+                                                    <input type="number" step="1" min="0" max="{{ $maxScore }}" 
                                                         name="details[{{ $detailId }}][nilai]" 
                                                         class="form-control text-center fw-bold font-monospace input-score nilai-input" 
                                                         value="{{ (int) $nilaiVal }}" 
                                                         data-kriteria-id="{{ $kriteria->id }}"
                                                         data-pedoman="{{ e($pedomanJson) }}"
+                                                        data-dokumen="{{ e($kriteria->persyaratan_dokumen ?? '') }}"
                                                         {{ $isNa || $sesi->status === 'selesai' ? 'disabled' : '' }}>
-                                                    <div class="pedoman-hint small text-muted text-start mt-1 d-none bg-light p-1 rounded border" style="font-size: 0.75rem;"></div>
+
+                                                    <!-- Live Pedoman & Bukti Dokumen Card -->
+                                                    <div class="pedoman-hint mt-2 p-2 rounded-3 border text-start shadow-sm d-none" style="font-size: 0.78rem;"></div>
                                                 </td>
                                                 <td class="text-center align-top pt-3">
                                                     <div class="form-check form-switch d-flex justify-content-center">
@@ -290,46 +308,136 @@
                 } else {
                     scoreInput.disabled = false;
                 }
+
+                scoreInput.dispatchEvent(new Event('input'));
                 cekKonsistensi();
             });
         });
 
-        // Score Input Pedoman Focus & Input Listener
+        // Score Input Pedoman & Document Proof Live Preview Listener
         const scoreInputs = document.querySelectorAll('.input-score');
         scoreInputs.forEach(function(input) {
+            const row = input.closest('tr');
+            const btnGroup = row.querySelector('.score-btn-group');
+
             function updateHint() {
                 const hintDiv = input.parentElement.querySelector('.pedoman-hint');
                 if (!hintDiv) return;
 
-                try {
-                    const pedoman = JSON.parse(input.getAttribute('data-pedoman') || '{}');
-                    const val = input.value !== '' ? String(Math.floor(Number(input.value))) : '';
-                    if (pedoman[val]) {
-                        hintDiv.textContent = pedoman[val];
-                        hintDiv.classList.remove('d-none');
-                    } else if (Object.keys(pedoman).length > 0) {
-                        hintDiv.textContent = 'Acuan (0-4): ' + (pedoman['0'] || '');
-                        hintDiv.classList.remove('d-none');
-                    } else {
-                        hintDiv.classList.add('d-none');
+                const isNa = input.disabled && row.querySelector('.na-checkbox')?.checked;
+
+                if (isNa) {
+                    hintDiv.innerHTML = `<span class="badge bg-secondary mb-1">N/A (Tidak Berlaku)</span><div class="small text-muted">Kriteria ini tidak dinilai pada sesi ini.</div>`;
+                    hintDiv.className = 'pedoman-hint mt-2 p-2 rounded-3 border bg-light text-start shadow-sm';
+                    hintDiv.classList.remove('d-none');
+
+                    if (btnGroup) {
+                        btnGroup.querySelectorAll('.btn-score-quick').forEach(b => {
+                            b.classList.remove('active', 'btn-primary', 'text-white');
+                            b.classList.add('btn-outline-secondary');
+                        });
                     }
-                } catch(e) {
+                    return;
+                }
+
+                const rawVal = input.value !== '' ? String(Math.floor(Number(input.value))) : '';
+
+                if (rawVal === '') {
                     hintDiv.classList.add('d-none');
+                    if (btnGroup) {
+                        btnGroup.querySelectorAll('.btn-score-quick').forEach(b => {
+                            b.classList.remove('active', 'btn-primary', 'text-white');
+                            b.classList.add('btn-outline-secondary');
+                        });
+                    }
+                    return;
+                }
+
+                // Update quick buttons active state
+                if (btnGroup) {
+                    btnGroup.querySelectorAll('.btn-score-quick').forEach(b => {
+                        if (b.dataset.score === rawVal) {
+                            b.classList.add('active', 'btn-primary', 'text-white', 'fw-bold');
+                            b.classList.remove('btn-outline-secondary');
+                        } else {
+                            b.classList.remove('active', 'btn-primary', 'text-white', 'fw-bold');
+                            b.classList.add('btn-outline-secondary');
+                        }
+                    });
+                }
+
+                let pedoman = {};
+                try {
+                    pedoman = JSON.parse(input.getAttribute('data-pedoman') || '{}');
+                } catch(e) {}
+
+                const dokumen = input.getAttribute('data-dokumen') || '';
+
+                const badges = {
+                    '0': { class: 'bg-danger text-white', label: 'Nilai 0 (0% - Tidak Memenuhi)' },
+                    '1': { class: 'bg-warning text-dark', label: 'Nilai 1 (25% - Draft / Wacana)' },
+                    '2': { class: 'bg-info text-dark', label: 'Nilai 2 (50% - Terbatas)' },
+                    '3': { class: 'bg-primary text-white', label: 'Nilai 3 (75% - Diterapkan Penuh)' },
+                    '4': { class: 'bg-success text-white', label: 'Nilai 4 (100% - Sempurna & Dievaluasi)' }
+                };
+
+                const badgeInfo = badges[rawVal] || { class: 'bg-secondary text-white', label: 'Nilai ' + rawVal };
+                const textDesc = pedoman[rawVal] || ('Acuan Nilai ' + rawVal);
+
+                let html = `<div class="d-flex align-items-center gap-1 mb-1"><span class="badge ${badgeInfo.class} px-2 py-1">${badgeInfo.label}</span></div>`;
+                html += `<div class="fw-semibold text-slate-800 mb-1" style="line-height: 1.35;">${textDesc}</div>`;
+
+                if (dokumen.trim() !== '') {
+                    html += `<div class="border-top pt-1 mt-1 text-slate-700" style="font-size: 0.74rem;">`;
+                    html += `<i class="bi bi-file-earmark-check-fill text-primary me-1"></i><strong>Bukti Dokumen Wajib:</strong> ${dokumen}`;
+                    html += `</div>`;
+                }
+
+                hintDiv.innerHTML = html;
+                hintDiv.className = 'pedoman-hint mt-2 p-2 rounded-3 border bg-white text-start shadow-sm border-primary border-opacity-25';
+                hintDiv.classList.remove('d-none');
+            }
+
+            // Quick Score Button Click Handler
+            if (btnGroup) {
+                btnGroup.querySelectorAll('.btn-score-quick').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        if (input.disabled) return;
+                        input.value = this.dataset.score;
+                        updateHint();
+                        fillCatatanTextarea();
+                        cekKonsistensi();
+                    });
+                });
+            }
+
+            function fillCatatanTextarea() {
+                const catatanTextarea = row.querySelector('textarea[name*="[catatan]"]');
+                if (!catatanTextarea || input.disabled) return;
+                const rawVal = input.value !== '' ? String(Math.floor(Number(input.value))) : '';
+                if (rawVal !== '') {
+                    let pedoman = {};
+                    try { pedoman = JSON.parse(input.getAttribute('data-pedoman') || '{}'); } catch(e) {}
+                    if (pedoman[rawVal]) {
+                        catatanTextarea.value = pedoman[rawVal];
+                    }
                 }
             }
 
-            input.addEventListener('focus', updateHint);
+            input.addEventListener('focus', function() { updateHint(); });
             input.addEventListener('input', function() {
                 updateHint();
+                fillCatatanTextarea();
                 cekKonsistensi();
             });
             input.addEventListener('change', function() {
+                updateHint();
+                fillCatatanTextarea();
                 cekKonsistensi();
             });
-            input.addEventListener('blur', function() {
-                const hintDiv = input.parentElement.querySelector('.pedoman-hint');
-                if (hintDiv) hintDiv.classList.add('d-none');
-            });
+
+            // Initial update on page load
+            updateHint();
         });
 
         // Logic Peringatan Konsistensi Antar-Kriteria (Advisory Visual Client-Side)

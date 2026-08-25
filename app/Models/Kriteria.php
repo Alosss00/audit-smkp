@@ -23,11 +23,13 @@ class Kriteria extends Model
         'pedoman_nilai_4',
         'dependency_id',
         'dependency_note',
+        'is_na',
     ];
 
     protected $casts = [
-        'nilai_maksimal' => 'integer',
+        'nilai_maksimal' => 'float',
         'dependency_id'  => 'integer',
+        'is_na'          => 'boolean',
     ];
 
     /**

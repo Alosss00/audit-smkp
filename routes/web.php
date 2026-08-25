@@ -63,7 +63,11 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::post('/elemens/{id}/restore', [ElemenController::class, 'restore'])->name('elemens.restore');
         Route::delete('/elemens/{id}/force-delete', [ElemenController::class, 'forceDelete'])->name('elemens.force-delete');
         Route::resource('elemens', ElemenController::class);
+
+        Route::patch('/sub-elemens/{id}/toggle-na', [SubElemenController::class, 'toggleNa'])->name('sub-elemens.toggle-na');
         Route::resource('sub-elemens', SubElemenController::class);
+
+        Route::patch('/kriterias/{id}/toggle-na', [KriteriaController::class, 'toggleNa'])->name('kriterias.toggle-na');
         Route::resource('kriterias', KriteriaController::class);
         
         Route::patch('/perusahaans/{id}/toggle-status', [PerusahaanController::class, 'toggleStatus'])->name('perusahaans.toggle-status');

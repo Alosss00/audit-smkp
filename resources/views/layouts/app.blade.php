@@ -21,6 +21,9 @@
     <!-- Chart.js 4.4 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
+    <!-- Tom Select CSS (Searchable Dropdowns) -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+
     <style>
         :root {
             --smkp-sidebar-width: 260px;
@@ -245,6 +248,68 @@
                 margin-left: 0;
             }
         }
+
+        /* Tom Select Custom Styling & Bootstrap Input Group Compatibility */
+        .ts-control {
+            border-radius: 10px !important;
+            padding: 8px 12px !important;
+            font-family: inherit !important;
+            font-size: 0.9rem !important;
+            border-color: #cbd5e1 !important;
+            background-color: #ffffff !important;
+            box-shadow: none !important;
+        }
+        .ts-wrapper.single .ts-control {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23475569' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 0.75rem center !important;
+            background-size: 16px 12px !important;
+        }
+        .ts-wrapper.focus .ts-control {
+            border-color: #0284c7 !important;
+            box-shadow: 0 0 0 0.2rem rgba(2, 132, 199, 0.25) !important;
+        }
+        .ts-dropdown {
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid #e2e8f0 !important;
+            font-size: 0.9rem !important;
+            z-index: 9999 !important;
+        }
+        .ts-dropdown .optgroup-header {
+            font-weight: 700 !important;
+            color: #475569 !important;
+            background: #f8fafc !important;
+            padding: 6px 12px !important;
+            font-size: 0.78rem !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ts-dropdown .active {
+            background-color: #0284c7 !important;
+            color: #ffffff !important;
+        }
+        .input-group > .ts-wrapper {
+            flex: 1 1 auto;
+            width: 1%;
+        }
+        .input-group > .ts-wrapper .ts-control {
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+        }
+        .modal-body, .modal-content {
+            overflow: visible !important;
+        }
+        .ts-wrapper {
+            position: relative !important;
+        }
+        .ts-dropdown {
+            z-index: 1065 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid #e2e8f0 !important;
+            font-size: 0.9rem !important;
+        }
     </style>
 
     @stack('styles')
@@ -427,6 +492,18 @@
                     </div>
                 @endif
 
+                @if($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+                        <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i> Terjadi kesalahan input:</div>
+                        <ul class="mb-0 ps-3">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
                 @if(session('info'))
                     <div class="alert alert-info alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
                         <i class="bi bi-info-circle-fill me-2"></i> {{ session('info') }}
@@ -457,8 +534,47 @@
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Sidebar Mobile Toggle Script -->
+    <!-- Tom Select JS for Searchable Dropdowns -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+    <!-- Sidebar & Searchable Select Script -->
     <script>
+        function initSearchableSelects(container = document) {
+            if (typeof TomSelect === 'undefined') return;
+
+            container.querySelectorAll('select.select-searchable, select[data-searchable="true"]').forEach(function(selectEl) {
+                if (selectEl.tomselect) return; // avoid duplicate initialization
+
+                const allowCreate = selectEl.dataset.allowCreate === 'true';
+                const hasOnChange = selectEl.getAttribute('onchange') && selectEl.getAttribute('onchange').includes('submit');
+
+                const ts = new TomSelect(selectEl, {
+                    create: allowCreate,
+                    plugins: ['dropdown_input'],
+                    placeholder: selectEl.getAttribute('placeholder') || '-- Ketik untuk mencari --',
+                    maxOptions: 1000,
+                    render: {
+                        no_results: function(data, escape) {
+                            return '<div class="no-results p-2 text-muted small"><i class="bi bi-search me-1"></i> Tidak ada hasil untuk "' + escape(data.input) + '"</div>';
+                        }
+                    }
+                });
+
+                if (hasOnChange) {
+                    ts.on('change', function() {
+                        if (selectEl.form) selectEl.form.submit();
+                    });
+                }
+            });
+        }
+
+        // Prevent Bootstrap 5 modal focus-trap from stealing focus from Tom Select elements
+        document.addEventListener('focusin', function(e) {
+            if (e.target && (e.target.closest('.ts-wrapper') || e.target.closest('.ts-dropdown'))) {
+                e.stopPropagation();
+            }
+        }, true);
+
         document.addEventListener('DOMContentLoaded', function() {
             const sidebarWrapper = document.getElementById('sidebarWrapper');
             const sidebarOpenBtn = document.getElementById('sidebarOpenBtn');
@@ -475,6 +591,14 @@
                     sidebarWrapper.classList.remove('show');
                 });
             }
+
+            // Initialize searchable dropdowns on page load
+            initSearchableSelects();
+        });
+
+        // Auto-initialize searchable dropdowns when any Bootstrap modal opens
+        document.addEventListener('shown.bs.modal', function(event) {
+            initSearchableSelects(event.target);
         });
     </script>
 

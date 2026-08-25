@@ -105,13 +105,14 @@ class AuditSesiAdminController extends Controller
                 'skor_akhir'      => 0,
             ]);
 
-            $kriterias = Kriteria::all();
+            $kriterias = Kriteria::with('subElemen')->get();
             foreach ($kriterias as $kriteria) {
+                $isNaDefault = (bool) ($kriteria->is_na || ($kriteria->subElemen && $kriteria->subElemen->is_na));
                 AuditDetail::create([
                     'audit_sesi_id' => $sesi->id,
                     'kriteria_id'   => $kriteria->id,
                     'nilai'         => 0,
-                    'is_na'         => false,
+                    'is_na'         => $isNaDefault,
                     'catatan'       => null,
                     'lampiran'      => null,
                 ]);

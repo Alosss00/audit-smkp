@@ -200,24 +200,35 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold small">Induk Sub-Elemen</label>
-                            <select name="sub_elemen_id" class="form-select" required>
-                                <option value="">-- Pilih Induk Sub-Elemen --</option>
-                                @foreach($subElemens as $sub)
-                                    <option value="{{ $sub->id }}">Sub {{ $sub->kode_sub }} - {{ $sub->nama_sub }}</option>
-                                @endforeach
+                            <label class="form-label fw-semibold small">Induk Sub / Sub-sub Elemen <span class="text-danger">*</span></label>
+                            <select name="sub_elemen_id" class="form-select select-searchable select-induk-kriteria" required>
+                                <option value="">-- Pilih Induk Sub atau Sub-sub Elemen --</option>
+                                <optgroup label="DAFTAR SUB-ELEMEN (Sub Kriteria)">
+                                    @foreach($subElemens as $sub)
+                                        <option value="{{ $sub->id }}" data-max-score="{{ $sub->nilai_maksimal ?? 4.00 }}">
+                                            Sub {{ $sub->kode_sub }} - {{ $sub->nama_sub }} (Max: {{ number_format($sub->nilai_maksimal ?? 4, 2) }})
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="DAFTAR SUB-SUB ELEMEN (Kriteria)">
+                                    @foreach($kriterias as $otherK)
+                                        <option value="{{ $otherK->sub_elemen_id }}" data-max-score="{{ $otherK->nilai_maksimal ?? 4.00 }}">
+                                            Kriteria {{ $otherK->kode_kriteria }} - {{ Str::limit($otherK->deskripsi, 45) }} (Max: {{ number_format($otherK->nilai_maksimal, 2) }})
+                                        </option>
+                                    @endforeach
+                                </optgroup>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Kode Kriteria</label>
-                            <input type="text" name="kode_kriteria" class="form-control" placeholder="Contoh: I.1.1" required>
+                            <label class="form-label fw-semibold small">Kode Kriteria <span class="text-danger">*</span></label>
+                            <input type="text" name="kode_kriteria" class="form-control font-monospace" placeholder="Contoh: I.1.1" required>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Nilai Maksimal</label>
-                            <input type="number" step="0.01" min="0.01" max="100" name="nilai_maksimal" class="form-control" value="4.00" required>
+                            <label class="form-label fw-semibold small">Nilai Maksimal <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" min="0.01" max="100" name="nilai_maksimal" class="form-control input-nilai-max" value="4.00" required>
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold small">Deskripsi Pertanyaan Kriteria</label>
+                            <label class="form-label fw-semibold small">Deskripsi Pertanyaan Kriteria <span class="text-danger">*</span></label>
                             <textarea name="deskripsi" class="form-control" rows="2" placeholder="Tuliskan kriteria penilaian..." required></textarea>
                         </div>
                         <div class="col-12">
@@ -232,7 +243,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Kriteria Prasyarat (Opsional)</label>
-                            <select name="dependency_id" class="form-select">
+                            <select name="dependency_id" class="form-select select-searchable">
                                 <option value="">-- Tanpa Kriteria Prasyarat --</option>
                                 @foreach($kriterias as $other)
                                     <option value="{{ $other->id }}">
@@ -253,23 +264,23 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-danger">Pedoman Nilai 0</label>
+                            <label class="form-label fw-semibold small text-danger label-rubrik-0">Pedoman Nilai 0 (0%)</label>
                             <textarea name="pedoman_nilai_0" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 0..."></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-warning">Pedoman Nilai 1</label>
+                            <label class="form-label fw-semibold small text-warning label-rubrik-1">Pedoman Nilai 1 (25%)</label>
                             <textarea name="pedoman_nilai_1" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 1..."></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-info">Pedoman Nilai 2</label>
+                            <label class="form-label fw-semibold small text-info label-rubrik-2">Pedoman Nilai 2 (50%)</label>
                             <textarea name="pedoman_nilai_2" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 2..."></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-primary">Pedoman Nilai 3</label>
+                            <label class="form-label fw-semibold small text-primary label-rubrik-3">Pedoman Nilai 3 (75%)</label>
                             <textarea name="pedoman_nilai_3" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 3..."></textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold small text-success">Pedoman Nilai 4</label>
+                            <label class="form-label fw-semibold small text-success label-rubrik-4">Pedoman Nilai 4 (100%)</label>
                             <textarea name="pedoman_nilai_4" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 4..."></textarea>
                         </div>
                     </div>
@@ -282,4 +293,58 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.modal').forEach(function(modal) {
+            const indukSelect = modal.querySelector('.select-induk-kriteria');
+            const nilaiMaxInput = modal.querySelector('.input-nilai-max') || modal.querySelector('input[name="nilai_maksimal"]');
+            const rubrikLabels = {
+                0: modal.querySelector('.label-rubrik-0'),
+                1: modal.querySelector('.label-rubrik-1'),
+                2: modal.querySelector('.label-rubrik-2'),
+                3: modal.querySelector('.label-rubrik-3'),
+                4: modal.querySelector('.label-rubrik-4')
+            };
+
+            function updateRubrikLabels() {
+                const maxVal = parseFloat(nilaiMaxInput ? nilaiMaxInput.value : 4) || 4;
+                const percentages = { 0: 0, 1: 0.25, 2: 0.50, 3: 0.75, 4: 1.00 };
+                const descs = {
+                    0: 'Tidak Memenuhi',
+                    1: 'Draft / Wacana',
+                    2: 'Pelaksanaan Terbatas',
+                    3: 'Diterapkan Penuh',
+                    4: 'Sempurna & Dievaluasi'
+                };
+
+                for (let i = 0; i <= 4; i++) {
+                    if (rubrikLabels[i]) {
+                        const scoreCalc = (maxVal * percentages[i]).toFixed(2);
+                        rubrikLabels[i].innerHTML = `Pedoman Nilai ${i} (${percentages[i]*100}% = ${scoreCalc}) — <small class="fw-normal">${descs[i]}</small>`;
+                    }
+                }
+            }
+
+            if (indukSelect && nilaiMaxInput) {
+                indukSelect.addEventListener('change', function() {
+                    const selectedOpt = this.options[this.selectedIndex];
+                    if (selectedOpt && selectedOpt.dataset.maxScore) {
+                        nilaiMaxInput.value = parseFloat(selectedOpt.dataset.maxScore).toFixed(2);
+                        updateRubrikLabels();
+                    }
+                });
+            }
+
+            if (nilaiMaxInput) {
+                nilaiMaxInput.addEventListener('input', updateRubrikLabels);
+                nilaiMaxInput.addEventListener('change', updateRubrikLabels);
+            }
+
+            updateRubrikLabels();
+        });
+    });
+</script>
+@endpush
 @endsection

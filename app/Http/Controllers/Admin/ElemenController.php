@@ -13,8 +13,8 @@ class ElemenController extends Controller
      */
     public function index()
     {
-        $elemens = Elemen::withCount(['subElemens'])->orderBy('kode_elemen')->get();
-        $trashedElemens = Elemen::onlyTrashed()->withCount(['subElemens'])->orderBy('kode_elemen')->get();
+        $elemens = Elemen::withCount(['subElemens'])->with(['subElemens'])->orderBy('kode_elemen')->get();
+        $trashedElemens = Elemen::onlyTrashed()->withCount(['subElemens'])->with(['subElemens'])->orderBy('kode_elemen')->get();
         
         $totalBobot = (float) Elemen::sum('bobot');
 
@@ -42,14 +42,17 @@ class ElemenController extends Controller
             'kode_elemen' => 'required|string|unique:elemens,kode_elemen',
             'nama_elemen' => 'required|string|max:255',
             'bobot' => 'required|numeric|min:0|max:100',
+            'total_nilai_sub_elemen' => 'nullable|numeric|min:0',
         ], [
             'kode_elemen.required' => 'Kode elemen wajib diisi.',
             'kode_elemen.unique' => 'Kode elemen sudah digunakan.',
             'nama_elemen.required' => 'Nama elemen wajib diisi.',
             'bobot.required' => 'Bobot elemen wajib diisi.',
+            'total_nilai_sub_elemen.numeric' => 'Total Nilai Sub-Elemen harus berupa angka.',
+            'total_nilai_sub_elemen.min' => 'Total Nilai Sub-Elemen minimal 0.',
         ]);
 
-        Elemen::create($request->only(['kode_elemen', 'nama_elemen', 'bobot']));
+        Elemen::create($request->only(['kode_elemen', 'nama_elemen', 'bobot', 'total_nilai_sub_elemen']));
 
         return redirect()->route('admin.elemens.index')
             ->with('success', 'Master Elemen baru berhasil ditambahkan!');
@@ -66,9 +69,13 @@ class ElemenController extends Controller
             'kode_elemen' => 'required|string|unique:elemens,kode_elemen,' . $elemen->id,
             'nama_elemen' => 'required|string|max:255',
             'bobot' => 'required|numeric|min:0|max:100',
+            'total_nilai_sub_elemen' => 'nullable|numeric|min:0',
+        ], [
+            'total_nilai_sub_elemen.numeric' => 'Total Nilai Sub-Elemen harus berupa angka.',
+            'total_nilai_sub_elemen.min' => 'Total Nilai Sub-Elemen minimal 0.',
         ]);
 
-        $elemen->update($request->only(['kode_elemen', 'nama_elemen', 'bobot']));
+        $elemen->update($request->only(['kode_elemen', 'nama_elemen', 'bobot', 'total_nilai_sub_elemen']));
 
         return redirect()->route('admin.elemens.index')
             ->with('success', 'Master Elemen berhasil diperbarui!');

@@ -51,16 +51,16 @@
                     <label for="area_selection" class="form-label fw-semibold small text-secondary">Pilih Area Audit <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="bi bi-geo-alt-fill text-primary"></i></span>
-                        <select name="area_selection" id="area_selection" class="form-select fw-semibold" required>
+                        <select name="area_selection" id="area_selection" class="form-select select-searchable fw-semibold" placeholder="-- Cari perusahaan / departemen --" required>
                             <option value="">-- Pilih Perusahaan atau Departemen Ter-audit --</option>
-                            <optgroup label="🏢 PERUSAHAAN TER-AUDIT (42 Data)">
+                            <optgroup label="PERUSAHAAN TER-AUDIT (42 Data)">
                                 @foreach($perusahaans as $comp)
                                     <option value="p:{{ $comp->id }}" {{ old('area_selection') == 'p:'.$comp->id ? 'selected' : '' }}>
                                         {{ $comp->nama_perusahaan }} ({{ $comp->kategori }})
                                     </option>
                                 @endforeach
                             </optgroup>
-                            <optgroup label="🏭 DEPARTEMEN TER-AUDIT (27 Data)">
+                            <optgroup label="DEPARTEMEN TER-AUDIT (27 Data)">
                                 @foreach($departemens as $dept)
                                     <option value="d:{{ $dept->id }}" {{ old('area_selection') == 'd:'.$dept->id ? 'selected' : '' }}>
                                         {{ $dept->nama_departemen }}

@@ -16,11 +16,21 @@ class Elemen extends Model
         'kode_elemen',
         'nama_elemen',
         'bobot',
+        'total_nilai_sub_elemen',
     ];
 
     protected $casts = [
         'bobot' => 'decimal:2',
+        'total_nilai_sub_elemen' => 'float',
     ];
+
+    /**
+     * Get total accumulated max score of all active sub-elemens under this elemen.
+     */
+    public function getTotalNilaiSubTerpakaiAttribute(): float
+    {
+        return (float) $this->subElemens->sum('nilai_maksimal');
+    }
 
     /**
      * Relationship to SubElemen.

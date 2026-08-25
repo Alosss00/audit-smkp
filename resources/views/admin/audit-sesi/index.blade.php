@@ -20,16 +20,16 @@
 <div class="card card-custom p-3 mb-4">
     <form method="GET" action="{{ route('admin.audit-sesi.index') }}" class="row g-2 align-items-center">
         <div class="col-md-5">
-            <select name="area_selection" class="form-select rounded-3" onchange="this.form.submit()">
+            <select name="area_selection" class="form-select select-searchable rounded-3" placeholder="-- Ketik untuk mencari area audit --" onchange="this.form.submit()">
                 <option value="">-- Pilih Area Audit (Semua) --</option>
-                <optgroup label="🏢 Perusahaan Ter-audit">
+                <optgroup label="Perusahaan Ter-audit">
                     @foreach($perusahaans as $comp)
                         <option value="p:{{ $comp->id }}" {{ request('area_selection') == 'p:'.$comp->id ? 'selected' : '' }}>
                             {{ $comp->nama_perusahaan }}
                         </option>
                     @endforeach
                 </optgroup>
-                <optgroup label="🏭 Departemen Ter-audit">
+                <optgroup label="Departemen Ter-audit">
                     @foreach($departemens as $dept)
                         <option value="d:{{ $dept->id }}" {{ request('area_selection') == 'd:'.$dept->id ? 'selected' : '' }}>
                             {{ $dept->nama_departemen }}

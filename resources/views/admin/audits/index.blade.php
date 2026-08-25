@@ -22,16 +22,16 @@
             </div>
         </div>
         <div class="col-md-4">
-            <select name="area_selection" class="form-select" onchange="this.form.submit()">
+            <select name="area_selection" class="form-select select-searchable" placeholder="-- Ketik untuk mencari area audit --" onchange="this.form.submit()">
                 <option value="">-- Pilih Area Audit (Semua) --</option>
-                <optgroup label="🏢 Perusahaan Ter-audit">
+                <optgroup label="Perusahaan Ter-audit">
                     @foreach($perusahaans as $comp)
                         <option value="p:{{ $comp->id }}" {{ request('area_selection') == 'p:'.$comp->id ? 'selected' : '' }}>
                             {{ $comp->nama_perusahaan }}
                         </option>
                     @endforeach
                 </optgroup>
-                <optgroup label="🏭 Departemen Ter-audit">
+                <optgroup label="Departemen Ter-audit">
                     @foreach($departemens as $dept)
                         <option value="d:{{ $dept->id }}" {{ request('area_selection') == 'd:'.$dept->id ? 'selected' : '' }}>
                             {{ $dept->nama_departemen }}

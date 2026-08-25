@@ -67,6 +67,7 @@
                             <th style="width: 100px;">Kode</th>
                             <th>Nama Elemen</th>
                             <th class="text-center">Bobot (%)</th>
+                            <th class="text-center">Total Nilai Sub</th>
                             <th class="text-center">Jumlah Sub-Elemen</th>
                             <th class="text-end">Aksi</th>
                         </tr>
@@ -84,6 +85,22 @@
                                     <span class="badge bg-light text-primary border font-monospace fs-6 py-2 px-3">
                                         {{ number_format($elemen->bobot, 2) }}%
                                     </span>
+                                </td>
+                                <td class="text-center">
+                                    @if($elemen->total_nilai_sub_elemen > 0)
+                                        @php
+                                            $terpakai = $elemen->total_nilai_sub_terpakai;
+                                            $maxSub = $elemen->total_nilai_sub_elemen;
+                                            $isOver = $terpakai > $maxSub;
+                                        @endphp
+                                        <span class="badge {{ $isOver ? 'bg-danger' : 'bg-light text-dark' }} border font-monospace fs-6 py-2 px-3">
+                                            {{ number_format($terpakai, 2) }} / {{ number_format($maxSub, 2) }}
+                                        </span>
+                                    @else
+                                        <span class="badge bg-light text-muted border font-monospace fs-6 py-2 px-3">
+                                            Bebas
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-secondary rounded-pill px-3">{{ $elemen->sub_elemens_count }} Sub-Elemen</span>
@@ -110,7 +127,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">Belum ada data elemen aktif.</td>
+                                <td colspan="6" class="text-center py-4 text-muted">Belum ada data elemen aktif.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -191,6 +208,11 @@
                             <label class="form-label fw-semibold small">Bobot Persentase (%)</label>
                             <input type="number" step="0.01" min="0" max="100" name="bobot" class="form-control" value="{{ $elemen->bobot }}" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Total Nilai Sub-Elemen (Batas Maksimal Sub-Elemen)</label>
+                            <input type="number" step="0.01" min="0" name="total_nilai_sub_elemen" class="form-control" value="{{ $elemen->total_nilai_sub_elemen }}" placeholder="Contoh: 100.00">
+                            <div class="form-text text-muted">Batas maksimal total jumlah nilai dari seluruh Sub-Elemen turunan. Kosongkan/0 jika tidak dibatasi.</div>
+                        </div>
                     </div>
                     <div class="modal-footer border-top">
                         <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Batal</button>
@@ -224,6 +246,11 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Bobot Persentase (%)</label>
                         <input type="number" step="0.01" min="0" max="100" name="bobot" class="form-control" placeholder="Contoh: 15.00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Total Nilai Sub-Elemen (Batas Maksimal Sub-Elemen)</label>
+                        <input type="number" step="0.01" min="0" name="total_nilai_sub_elemen" class="form-control" placeholder="Contoh: 100.00">
+                        <div class="form-text text-muted">Batas maksimal total jumlah nilai dari seluruh Sub-Elemen turunan. Kosongkan/0 jika tidak dibatasi.</div>
                     </div>
                 </div>
                 <div class="modal-footer border-top">
