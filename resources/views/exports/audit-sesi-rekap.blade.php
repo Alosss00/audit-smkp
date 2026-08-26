@@ -77,11 +77,11 @@
                     <td style="border: 1px solid #000000; font-weight: bold;" colspan="2">ELEMEN {{ $elemen->kode_elemen }}: {{ $elemen->nama_elemen }}</td>
                     <td style="border: 1px solid #000000;">-</td>
                     <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($elemen->bobot, 2) }}%</td>
-                    <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($elemenData['total_nilai_maks_efektif'] ?? 0, 2) }}</td>
+                    <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($elemenData['total_nilai_maks_efektif'] ?? 0, 0) }}</td>
                     <td style="border: 1px solid #000000;">-</td>
                     <td style="border: 1px solid #000000;">-</td>
                     <td style="border: 1px solid #000000;">-</td>
-                    <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($elemenData['total_nilai_aktual'] ?? 0, 2) }}</td>
+                    <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($elemenData['total_nilai_aktual'] ?? 0, 0) }}</td>
                     <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($elemenData['persentase'] ?? 0, 2) }}%</td>
                     <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">ELEMEN</td>
                     <td style="border: 1px solid #000000;">-</td>
@@ -99,9 +99,9 @@
                         <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">{{ $sub->kode_sub }}</td>
                         <td style="border: 1px solid #000000;">-</td>
                         <td style="border: 1px solid #000000;">-</td>
-                        <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_maks_efektif'] ?? 0, 2) }}</td>
+                        <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_maks_efektif'] ?? 0, 0) }}</td>
                         <td style="border: 1px solid #000000;">-</td>
-                        <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_aktual'] ?? 0, 2) }}</td>
+                        <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_aktual'] ?? 0, 0) }}</td>
                         <td style="border: 1px solid #000000;">-</td>
                         <td style="border: 1px solid #000000;">-</td>
                         <td style="border: 1px solid #000000;">-</td>
@@ -125,9 +125,9 @@
                             <td style="border: 1px solid #000000;">{{ $kriteria->deskripsi }}</td>
                             <td style="border: 1px solid #000000;">-</td>
                             <td style="border: 1px solid #000000;">-</td>
-                            <td style="text-align: right; border: 1px solid #000000;">{{ number_format($kriteria->nilai_maksimal, 2) }}</td>
+                            <td style="text-align: right; border: 1px solid #000000;">{{ number_format($kriteria->nilai_maksimal, 0) }}</td>
                             <td style="border: 1px solid #000000;">-</td>
-                            <td style="text-align: right; border: 1px solid #000000;">{{ $isNa ? 'N/A' : number_format($nilaiAktual, 2) }}</td>
+                            <td style="text-align: right; border: 1px solid #000000;">{{ $isNa ? 'N/A' : number_format($nilaiAktual, 0) }}</td>
                             <td style="border: 1px solid #000000;">-</td>
                             <td style="border: 1px solid #000000;">-</td>
                             <td style="text-align: center; border: 1px solid #000000;">{{ $isNa ? 'N/A' : 'KRITERIA' }}</td>

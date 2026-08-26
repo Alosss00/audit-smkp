@@ -60,7 +60,7 @@
                                         </div>
                                     </div>
                                     <span class="badge bg-white text-success border font-monospace px-3 py-2 text-nowrap">
-                                        Max: {{ number_format($kriteria->nilai_maksimal, 2) }}
+                                        Max: {{ (int) $kriteria->nilai_maksimal }}
                                     </span>
                                 </div>
                             </div>

@@ -57,7 +57,7 @@
                         </td>
                         <td class="text-center">
                             <span class="badge bg-light text-success border font-monospace fs-6 px-3 py-2">
-                                {{ number_format($kriteria->nilai_maksimal, 2) }}
+                                {{ (int) $kriteria->nilai_maksimal }}
                             </span>
                         </td>
                         <td class="text-end">
@@ -93,93 +93,47 @@
                 <form action="{{ route('admin.kriterias.update', $kriteria->id) }}" method="POST">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="from_edit_modal" value="1">
+                    <input type="hidden" name="sub_elemen_id" value="{{ $kriteria->sub_elemen_id }}">
                     <div class="modal-header border-bottom">
-                        <h5 class="modal-title fw-bold">Edit Kriteria & Pedoman Nilai {{ $kriteria->kode_kriteria }}</h5>
+                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Edit Rubrik Pedoman Penilaian — <span class="badge bg-dark font-monospace">{{ $kriteria->kode_kriteria }}</span></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        <!-- Summary Card Info -->
+                        <div class="p-3 bg-light rounded-3 border mb-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="badge bg-secondary font-monospace">Sub {{ $kriteria->subElemen ? $kriteria->subElemen->kode_sub : '-' }}</span>
+                                <span class="badge bg-success font-monospace">Nilai Max: {{ (int) $kriteria->nilai_maksimal }}</span>
+                            </div>
+                            <div class="fw-bold text-slate-800 small">{{ $kriteria->subElemen ? $kriteria->subElemen->nama_sub : '' }}</div>
+                            <div class="text-muted small mt-1"><i class="bi bi-card-text me-1"></i>{{ $kriteria->deskripsi }}</div>
+                        </div>
+
+                        <div class="mb-2">
+                            <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-bookmark-star-fill text-warning me-1"></i>Isi Rubrik Pedoman Penilaian (Jumlah Nilai Max: {{ (int) $kriteria->nilai_maksimal }})</h6>
+                        </div>
+
+                        @php
+                            $maxValEdit = (int) ceil($kriteria->nilai_maksimal);
+                            $pedomanArr = $kriteria->pedoman_array ?? [];
+                        @endphp
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small">Induk Sub-Elemen</label>
-                                <select name="sub_elemen_id" class="form-select" required>
-                                    @foreach($subElemens as $sub)
-                                        <option value="{{ $sub->id }}" {{ $kriteria->sub_elemen_id == $sub->id ? 'selected' : '' }}>
-                                            Sub {{ $sub->kode_sub }} - {{ $sub->nama_sub }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small">Kode Kriteria</label>
-                                <input type="text" name="kode_kriteria" class="form-control" value="{{ $kriteria->kode_kriteria }}" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small">Nilai Maksimal</label>
-                                <input type="number" step="0.01" min="0.01" max="100" name="nilai_maksimal" class="form-control" value="{{ $kriteria->nilai_maksimal }}" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-semibold small">Deskripsi Pertanyaan Kriteria</label>
-                                <textarea name="deskripsi" class="form-control" rows="2" required>{{ $kriteria->deskripsi }}</textarea>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-semibold small text-primary">Persyaratan Dokumen & Bukti Fisik Kepdirjen 185</label>
-                                <textarea name="persyaratan_dokumen" class="form-control" rows="2" placeholder="Dokumen, SOP, SK, atau rekaman pelaksanaan yang dipersyaratkan...">{{ $kriteria->persyaratan_dokumen }}</textarea>
-                            </div>
-
-                            <div class="col-12">
-                                <hr class="my-2">
-                                <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-link-45deg text-warning me-1"></i>Hubungan Prasyarat Antar-Kriteria (Opsional)</h6>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small">Kriteria Prasyarat (Opsional)</label>
-                                <select name="dependency_id" class="form-select">
-                                    <option value="">-- Tanpa Kriteria Prasyarat --</option>
-                                    @foreach($kriterias as $other)
-                                        @if($other->id !== $kriteria->id)
-                                            <option value="{{ $other->id }}" {{ $kriteria->dependency_id == $other->id ? 'selected' : '' }}>
-                                                {{ $other->kode_kriteria }} - {{ Str::limit($other->deskripsi, 50) }}
-                                            </option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small">Catatan Hubungan Prasyarat</label>
-                                <input type="text" name="dependency_note" class="form-control" value="{{ $kriteria->dependency_note }}" placeholder="Penjelasan relasi (mis. Nilai fisik unit bergantung pada dokumen...)">
-                            </div>
-
-                            <div class="col-12">
-                                <hr class="my-2">
-                                <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-bookmark-star-fill text-warning me-1"></i>Rubrik Pedoman Penilaian (Nilai 0 s/d 4)</h6>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-danger">Pedoman Nilai 0 (0%)</label>
-                                <textarea name="pedoman_nilai_0" class="form-control" rows="2">{{ $kriteria->pedoman_nilai_0 }}</textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-warning">Pedoman Nilai 1 (25%)</label>
-                                <textarea name="pedoman_nilai_1" class="form-control" rows="2">{{ $kriteria->pedoman_nilai_1 }}</textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-info">Pedoman Nilai 2 (50%)</label>
-                                <textarea name="pedoman_nilai_2" class="form-control" rows="2">{{ $kriteria->pedoman_nilai_2 }}</textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-primary">Pedoman Nilai 3 (75%)</label>
-                                <textarea name="pedoman_nilai_3" class="form-control" rows="2">{{ $kriteria->pedoman_nilai_3 }}</textarea>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-semibold small text-success">Pedoman Nilai 4 (100% Sempurna)</label>
-                                <textarea name="pedoman_nilai_4" class="form-control" rows="2">{{ $kriteria->pedoman_nilai_4 }}</textarea>
-                            </div>
+                            @for($i = 0; $i <= $maxValEdit; $i++)
+                                @php
+                                    $pctEdit = $maxValEdit > 0 ? round(($i / $maxValEdit) * 100) : 0;
+                                    $colSizeEdit = ($maxValEdit > 4) ? 'col-md-6' : 'col-12';
+                                @endphp
+                                <div class="{{ $colSizeEdit }}">
+                                    <label class="form-label fw-semibold small text-dark">Pedoman Nilai {{ $i }} ({{ $pctEdit }}% dari Max {{ $maxValEdit }})</label>
+                                    <textarea name="pedoman_nilai[{{ $i }}]" class="form-control" rows="2" placeholder="Acuan pemberian Nilai {{ $i }}...">{{ $pedomanArr[(string)$i] ?? ($kriteria->{"pedoman_nilai_$i"} ?? '') }}</textarea>
+                                </div>
+                            @endfor
                         </div>
                     </div>
                     <div class="modal-footer border-top">
                         <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary rounded-3">Simpan Perubahan</button>
+                        <button type="submit" class="btn btn-primary rounded-3"><i class="bi bi-check-lg me-1"></i>Simpan Perubahan Rubrik</button>
                     </div>
                 </form>
             </div>
@@ -199,89 +153,29 @@
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small">Induk Sub / Sub-sub Elemen <span class="text-danger">*</span></label>
-                            <select name="sub_elemen_id" class="form-select select-searchable select-induk-kriteria" required>
-                                <option value="">-- Pilih Induk Sub atau Sub-sub Elemen --</option>
-                                <optgroup label="DAFTAR SUB-ELEMEN (Sub Kriteria)">
-                                    @foreach($subElemens as $sub)
-                                        <option value="{{ $sub->id }}" data-max-score="{{ $sub->nilai_maksimal ?? 4.00 }}">
-                                            Sub {{ $sub->kode_sub }} - {{ $sub->nama_sub }} (Max: {{ number_format($sub->nilai_maksimal ?? 4, 2) }})
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                                <optgroup label="DAFTAR SUB-SUB ELEMEN (Kriteria)">
-                                    @foreach($kriterias as $otherK)
-                                        <option value="{{ $otherK->sub_elemen_id }}" data-max-score="{{ $otherK->nilai_maksimal ?? 4.00 }}">
-                                            Kriteria {{ $otherK->kode_kriteria }} - {{ Str::limit($otherK->deskripsi, 45) }} (Max: {{ number_format($otherK->nilai_maksimal, 2) }})
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Kode Kriteria <span class="text-danger">*</span></label>
-                            <input type="text" name="kode_kriteria" class="form-control font-monospace" placeholder="Contoh: I.1.1" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Nilai Maksimal <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0.01" max="100" name="nilai_maksimal" class="form-control input-nilai-max" value="4.00" required>
-                        </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold small">Deskripsi Pertanyaan Kriteria <span class="text-danger">*</span></label>
-                            <textarea name="deskripsi" class="form-control" rows="2" placeholder="Tuliskan kriteria penilaian..." required></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold small text-primary">Persyaratan Dokumen & Bukti Fisik</label>
-                            <textarea name="persyaratan_dokumen" class="form-control" rows="2" placeholder="Sebutkan dokumen wajib yang harus diverifikasi..."></textarea>
-                        </div>
-
-                        <div class="col-12">
-                            <hr class="my-2">
-                            <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-link-45deg text-warning me-1"></i>Hubungan Prasyarat Antar-Kriteria (Opsional)</h6>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small">Kriteria Prasyarat (Opsional)</label>
-                            <select name="dependency_id" class="form-select select-searchable">
-                                <option value="">-- Tanpa Kriteria Prasyarat --</option>
-                                @foreach($kriterias as $other)
-                                    <option value="{{ $other->id }}">
-                                        {{ $other->kode_kriteria }} - {{ Str::limit($other->deskripsi, 50) }}
+                            <label class="form-label fw-semibold">Pilih Induk Sub-Elemen <span class="text-danger">*</span></label>
+                            <select name="sub_elemen_id" id="createSubElemenSelect" class="form-select select-searchable select-induk-kriteria" required>
+                                <option value="">-- Pilih Induk Sub-Elemen --</option>
+                                @foreach($subElemens as $sub)
+                                    <option value="{{ $sub->id }}" data-max-score="{{ (int) ($sub->nilai_maksimal ?? 4) }}" data-kode="{{ $sub->kode_sub }}" data-nama="{{ $sub->nama_sub }}">
+                                        Sub {{ $sub->kode_sub }} - {{ $sub->nama_sub }} (Nilai Max: {{ (int) ($sub->nilai_maksimal ?? 4) }})
                                     </option>
                                 @endforeach
                             </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small">Catatan Hubungan Prasyarat</label>
-                            <input type="text" name="dependency_note" class="form-control" placeholder="Penjelasan relasi (mis. Nilai fisik unit bergantung pada dokumen...)">
+                            <div class="form-text text-muted">
+                                Setelah memilih induk sub-elemen, isi rubrik pedoman nilai di bawah (jumlah rubrik disesuaikan secara otomatis dengan Nilai Max).
+                            </div>
                         </div>
 
                         <div class="col-12">
                             <hr class="my-2">
-                            <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-bookmark-star-fill text-warning me-1"></i>Rubrik Pedoman Penilaian (Nilai 0 s/d 4)</h6>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-danger label-rubrik-0">Pedoman Nilai 0 (0%)</label>
-                            <textarea name="pedoman_nilai_0" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 0..."></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-warning label-rubrik-1">Pedoman Nilai 1 (25%)</label>
-                            <textarea name="pedoman_nilai_1" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 1..."></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-info label-rubrik-2">Pedoman Nilai 2 (50%)</label>
-                            <textarea name="pedoman_nilai_2" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 2..."></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small text-primary label-rubrik-3">Pedoman Nilai 3 (75%)</label>
-                            <textarea name="pedoman_nilai_3" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 3..."></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold small text-success label-rubrik-4">Pedoman Nilai 4 (100%)</label>
-                            <textarea name="pedoman_nilai_4" class="form-control" rows="2" placeholder="Acuan pemberian Nilai 4..."></textarea>
+                            <h6 class="fw-bold text-slate-800 mb-2"><i class="bi bi-bookmark-star-fill text-warning me-2"></i>Rubrik Pedoman Penilaian (Acuan Pemberian Nilai)</h6>
+                            <div id="dynamicRubrikContainer" class="row g-3">
+                                <div class="col-12 text-muted small italic p-3 bg-light rounded text-center">
+                                    Silakan pilih Induk Sub-Elemen di atas terlebih dahulu untuk menampilkan rubrik pedoman nilai.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -297,53 +191,49 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.modal').forEach(function(modal) {
-            const indukSelect = modal.querySelector('.select-induk-kriteria');
-            const nilaiMaxInput = modal.querySelector('.input-nilai-max') || modal.querySelector('input[name="nilai_maksimal"]');
-            const rubrikLabels = {
-                0: modal.querySelector('.label-rubrik-0'),
-                1: modal.querySelector('.label-rubrik-1'),
-                2: modal.querySelector('.label-rubrik-2'),
-                3: modal.querySelector('.label-rubrik-3'),
-                4: modal.querySelector('.label-rubrik-4')
-            };
+        const createModal = document.getElementById('createKriteriaModal');
+        if (createModal) {
+            const selectEl = createModal.querySelector('#createSubElemenSelect');
+            const rubrikContainer = createModal.querySelector('#dynamicRubrikContainer');
 
-            function updateRubrikLabels() {
-                const maxVal = parseFloat(nilaiMaxInput ? nilaiMaxInput.value : 4) || 4;
-                const percentages = { 0: 0, 1: 0.25, 2: 0.50, 3: 0.75, 4: 1.00 };
-                const descs = {
-                    0: 'Tidak Memenuhi',
-                    1: 'Draft / Wacana',
-                    2: 'Pelaksanaan Terbatas',
-                    3: 'Diterapkan Penuh',
-                    4: 'Sempurna & Dievaluasi'
-                };
+            function renderRubrikFields() {
+                if (!selectEl || !rubrikContainer) return;
 
-                for (let i = 0; i <= 4; i++) {
-                    if (rubrikLabels[i]) {
-                        const scoreCalc = (maxVal * percentages[i]).toFixed(2);
-                        rubrikLabels[i].innerHTML = `Pedoman Nilai ${i} (${percentages[i]*100}% = ${scoreCalc}) — <small class="fw-normal">${descs[i]}</small>`;
-                    }
+                const selectedOpt = selectEl.options[selectEl.selectedIndex];
+                if (!selectedOpt || !selectedOpt.value) {
+                    rubrikContainer.innerHTML = `<div class="col-12 text-muted small italic p-3 bg-light rounded text-center">
+                        Silakan pilih Induk Sub-Elemen di atas terlebih dahulu untuk menampilkan rubrik pedoman nilai.
+                    </div>`;
+                    return;
                 }
+
+                const maxScoreFloat = parseFloat(selectedOpt.dataset.maxScore) || 4;
+                const maxScoreInt = Math.ceil(maxScoreFloat);
+
+                let html = '';
+                for (let i = 0; i <= maxScoreInt; i++) {
+                    const pct = maxScoreInt > 0 ? Math.round((i / maxScoreInt) * 100) : 0;
+                    let colorClass = 'text-danger';
+                    if (pct >= 100) colorClass = 'text-success';
+                    else if (pct >= 75) colorClass = 'text-primary';
+                    else if (pct >= 50) colorClass = 'text-info';
+                    else if (pct >= 25) colorClass = 'text-warning';
+
+                    const colSize = (maxScoreInt > 4) ? 'col-md-6' : 'col-12';
+
+                    html += `<div class="${colSize}">
+                        <label class="form-label fw-semibold small ${colorClass}">
+                            Pedoman Nilai ${i} (${pct}% dari Max ${maxScoreFloat})
+                        </label>
+                        <textarea name="pedoman_nilai[${i}]" class="form-control" rows="2" placeholder="Acuan pemberian Nilai ${i}..."></textarea>
+                    </div>`;
+                }
+
+                rubrikContainer.innerHTML = html;
             }
 
-            if (indukSelect && nilaiMaxInput) {
-                indukSelect.addEventListener('change', function() {
-                    const selectedOpt = this.options[this.selectedIndex];
-                    if (selectedOpt && selectedOpt.dataset.maxScore) {
-                        nilaiMaxInput.value = parseFloat(selectedOpt.dataset.maxScore).toFixed(2);
-                        updateRubrikLabels();
-                    }
-                });
-            }
-
-            if (nilaiMaxInput) {
-                nilaiMaxInput.addEventListener('input', updateRubrikLabels);
-                nilaiMaxInput.addEventListener('change', updateRubrikLabels);
-            }
-
-            updateRubrikLabels();
-        });
+            selectEl.addEventListener('change', renderRubrikFields);
+        }
     });
 </script>
 @endpush

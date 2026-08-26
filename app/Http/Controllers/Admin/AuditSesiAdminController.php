@@ -105,6 +105,11 @@ class AuditSesiAdminController extends Controller
                 'skor_akhir'      => 0,
             ]);
 
+            $subElemens = \App\Models\SubElemen::all();
+            foreach ($subElemens as $sub) {
+                $sub->syncDefaultKriteria();
+            }
+
             $kriterias = Kriteria::with('subElemen')->get();
             foreach ($kriterias as $kriteria) {
                 $isNaDefault = (bool) ($kriteria->is_na || ($kriteria->subElemen && $kriteria->subElemen->is_na));
@@ -143,6 +148,25 @@ class AuditSesiAdminController extends Controller
     public function matrix($id)
     {
         $sesi = AuditSesi::with('user')->findOrFail($id);
+
+        $subElemens = \App\Models\SubElemen::all();
+        foreach ($subElemens as $sub) {
+            $sub->syncDefaultKriteria();
+        }
+
+        $existingDetailKriteriaIds = AuditDetail::where('audit_sesi_id', $sesi->id)->pluck('kriteria_id')->toArray();
+        $missingKriterias = Kriteria::whereNotIn('id', $existingDetailKriteriaIds)->get();
+        foreach ($missingKriterias as $k) {
+            $isNaDefault = (bool) ($k->is_na || ($k->subElemen && $k->subElemen->is_na));
+            AuditDetail::create([
+                'audit_sesi_id' => $sesi->id,
+                'kriteria_id'   => $k->id,
+                'nilai'         => 0,
+                'is_na'         => $isNaDefault,
+                'catatan'       => null,
+                'lampiran'      => null,
+            ]);
+        }
 
         $elemens = Elemen::with(['subElemens.kriterias' => function ($query) use ($sesi) {
             $query->with(['auditDetails' => function ($q) use ($sesi) {

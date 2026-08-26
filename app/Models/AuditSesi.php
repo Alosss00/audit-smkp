@@ -108,14 +108,14 @@ class AuditSesi extends Model
             }
 
             $rekap[] = [
-                'elemen_id' => $elemen->id,
-                'kode_elemen' => $elemen->kode_elemen,
-                'nama_elemen' => $elemen->nama_elemen,
-                'bobot' => (float) $elemen->bobot,
-                'total_nilai_aktual' => round($totalNilaiAktual, 2),
-                'total_nilai_maks_efektif' => round($totalNilaiMaksEfektif, 2),
-                'persentase' => round($persentase, 2),
-                'skor_elemen' => round($skorElemen, 2),
+                'elemen_id'                => $elemen->id,
+                'kode_elemen'              => $elemen->kode_elemen,
+                'nama_elemen'              => $elemen->nama_elemen,
+                'bobot'                    => (float) $elemen->bobot,
+                'total_nilai_aktual'       => (int) round($totalNilaiAktual),
+                'total_nilai_maks_efektif' => (int) round($totalNilaiMaksEfektif),
+                'persentase'               => round($persentase, 2),
+                'skor_elemen'              => round($skorElemen, 2),
             ];
         }
 
@@ -154,12 +154,12 @@ class AuditSesi extends Model
             $persentase = $totalNilaiMaksEfektif > 0 ? ($totalNilaiAktual / $totalNilaiMaksEfektif) * 100 : 0;
 
             $rekap[$sub->id] = [
-                'sub_elemen_id' => $sub->id,
-                'kode_sub' => $sub->kode_sub,
-                'nama_sub' => $sub->nama_sub,
-                'total_nilai_aktual' => round($totalNilaiAktual, 2),
-                'total_nilai_maks_efektif' => round($totalNilaiMaksEfektif, 2),
-                'persentase' => round($persentase, 2),
+                'sub_elemen_id'            => $sub->id,
+                'kode_sub'                 => $sub->kode_sub,
+                'nama_sub'                 => $sub->nama_sub,
+                'total_nilai_aktual'       => (int) round($totalNilaiAktual),
+                'total_nilai_maks_efektif' => (int) round($totalNilaiMaksEfektif),
+                'persentase'               => round($persentase, 2),
             ];
         }
 
@@ -207,8 +207,8 @@ class AuditSesi extends Model
                         'kriteria_id'    => $d->kriteria_id,
                         'kode_kriteria'  => $d->kriteria->kode_kriteria ?? '-',
                         'deskripsi'      => $d->kriteria->deskripsi ?? '-',
-                        'nilai'          => (float) $d->nilai,
-                        'nilai_maksimal' => (float) ($d->kriteria->nilai_maksimal ?? 4),
+                        'nilai'          => (int) round($d->nilai),
+                        'nilai_maksimal' => (int) round($d->kriteria->nilai_maksimal ?? 4),
                         'is_na'          => (bool) $d->is_na,
                         'catatan'        => $d->catatan,
                         'lampiran_url'   => $d->lampiran_url,
@@ -224,8 +224,8 @@ class AuditSesi extends Model
                     'sub_elemen_id'            => $sub->id,
                     'kode_sub'                 => $sub->kode_sub,
                     'nama_sub'                 => $sub->nama_sub,
-                    'total_nilai_aktual'       => round($subAktual, 2),
-                    'total_nilai_maks_efektif' => round($subMaks, 2),
+                    'total_nilai_aktual'       => (int) round($subAktual),
+                    'total_nilai_maks_efektif' => (int) round($subMaks),
                     'persentase'               => round($subPct, 2),
                     'details'                  => $subDetails,
                 ];
@@ -244,8 +244,8 @@ class AuditSesi extends Model
                 'kode_elemen'              => $elemen->kode_elemen,
                 'nama_elemen'              => $elemen->nama_elemen,
                 'bobot'                    => (float) $elemen->bobot,
-                'total_nilai_aktual'       => round($elAktual, 2),
-                'total_nilai_maks_efektif' => round($elMaks, 2),
+                'total_nilai_aktual'       => (int) round($elAktual),
+                'total_nilai_maks_efektif' => (int) round($elMaks),
                 'persentase'               => round($persentase, 2),
                 'skor_elemen'              => round($skorElemen, 2),
                 'sub_elemens'              => $subList,

@@ -180,7 +180,7 @@
                         <td class="text-center text-muted">-</td>
                         <td class="text-center text-muted bg-blue-input" style="opacity: 0.6;">-</td>
                         <td class="text-center text-muted">-</td>
-                        <td class="bg-green-total text-center">{{ number_format($el['total_nilai_aktual'], 2) }}</td>
+                        <td class="bg-green-total text-center">{{ number_format($el['total_nilai_aktual'], 0) }}</td>
                         <td class="text-center fw-bold">{{ number_format($el['persentase'], 2) }}%</td>
                         <td class="text-center fw-bold small">ELEMEN</td>
                     </tr>
@@ -195,7 +195,7 @@
                             <td class="text-center font-monospace fw-bold">{{ number_format($sub['total_nilai_maks_efektif'], 0) }}</td>
                             <td class="text-center text-muted">-</td>
                             <!-- Cetak Nilai Hasil Audit HANYA di kolom Nilai Sub Elemen (kolom ke-7, biru) -->
-                            <td class="bg-blue-input font-monospace">{{ number_format($sub['total_nilai_aktual'], 2) }}</td>
+                            <td class="bg-blue-input font-monospace">{{ number_format($sub['total_nilai_aktual'], 0) }}</td>
                             <td class="text-center text-muted">-</td>
                             <td class="text-center text-muted">-</td>
                             <td class="text-center text-muted">-</td>

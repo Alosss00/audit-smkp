@@ -113,8 +113,8 @@
                     <tr>
                         <td class="text-center fw-bold">{{ $row['kode_elemen'] }}</td>
                         <td>{{ $row['nama_elemen'] }}</td>
-                        <td class="text-center fw-bold">{{ number_format($row['total_nilai_aktual'], 2) }}</td>
-                        <td class="text-center text-muted">{{ number_format($row['total_nilai_maks_efektif'], 2) }}</td>
+                        <td class="text-center fw-bold">{{ number_format($row['total_nilai_aktual'], 0) }}</td>
+                        <td class="text-center text-muted">{{ number_format($row['total_nilai_maks_efektif'], 0) }}</td>
                         <td class="text-center fw-bold">{{ number_format($row['persentase'], 2) }}%</td>
                         <td class="text-center text-muted">{{ number_format($row['bobot'], 2) }}%</td>
                         <td class="text-center fw-bold text-primary">{{ number_format($row['skor_elemen'], 2) }}%</td>

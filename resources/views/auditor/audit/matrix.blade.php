@@ -66,7 +66,13 @@
                                     <span class="badge bg-secondary me-2">Sub {{ $sub->kode_sub }}</span>
                                     <span>{{ $sub->nama_sub }}</span>
                                 </div>
-                                <small class="text-muted font-monospace">{{ $sub->kriterias->count() }} Kriteria</small>
+                                <small class="text-muted font-monospace">
+                                    @if($sub->kriterias->count() === 1 && $sub->kriterias->first()->kode_kriteria === $sub->kode_sub)
+                                        <span class="badge bg-info text-dark">Penilaian Langsung</span>
+                                    @else
+                                        {{ $sub->kriterias->count() }} Kriteria
+                                    @endif
+                                </small>
                             </div>
 
                             <div class="table-responsive">
@@ -116,13 +122,7 @@
                                                 </td>
                                                 <td class="text-center align-top pt-2" style="width: 220px;">
                                                     @php
-                                                        $pedomanJson = json_encode([
-                                                            '0' => $kriteria->pedoman_nilai_0 ?? 'Nilai 0: Tidak ada dokumen, tidak dilaksanakan, dan tidak ada bukti fisik.',
-                                                            '1' => $kriteria->pedoman_nilai_1 ?? 'Nilai 1: Ada draft/wacana tetapi belum disahkan atau belum disosialisasikan.',
-                                                            '2' => $kriteria->pedoman_nilai_2 ?? 'Nilai 2: Terdokumentasi secara resmi tetapi penerapan di lapangan masih terbatas.',
-                                                            '3' => $kriteria->pedoman_nilai_3 ?? 'Nilai 3: Terdokumentasi dan diterapkan penuh tetapi belum dievaluasi secara berkala.',
-                                                            '4' => $kriteria->pedoman_nilai_4 ?? 'Nilai 4: Terdokumentasi resmi, diterapkan 100%, dievaluasi berkala, dan ditindaklanjuti.'
-                                                        ]);
+                                                        $pedomanJson = json_encode($kriteria->pedoman_array);
                                                         $maxScore = (int) $kriteria->nilai_maksimal;
                                                     @endphp
 

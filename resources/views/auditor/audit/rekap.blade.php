@@ -101,8 +101,8 @@
                         <td class="text-center text-primary"><i class="bi bi-chevron-down toggle-icon fs-6"></i></td>
                         <td><span class="badge bg-primary px-2.5 py-1.5 fs-6">Elemen {{ $el['kode_elemen'] }}</span></td>
                         <td class="fs-6 text-slate-800">{{ $el['nama_elemen'] }}</td>
-                        <td class="text-center font-monospace fs-6 text-dark fw-bold">{{ number_format($el['total_nilai_aktual'], 2) }}</td>
-                        <td class="text-center font-monospace text-muted">{{ number_format($el['total_nilai_maks_efektif'], 2) }}</td>
+                        <td class="text-center font-monospace fs-6 text-dark fw-bold">{{ number_format($el['total_nilai_aktual'], 0) }}</td>
+                        <td class="text-center font-monospace text-muted">{{ number_format($el['total_nilai_maks_efektif'], 0) }}</td>
                         <td class="text-center">
                             <span class="badge bg-info text-dark font-monospace fs-6 px-3 py-1">
                                 {{ number_format($el['persentase'], 2) }}%
@@ -118,8 +118,8 @@
                             <td class="text-center text-secondary"><i class="bi bi-arrow-return-right"></i></td>
                             <td><span class="badge bg-secondary text-white font-monospace ms-2">{{ $sub['kode_sub'] }}</span></td>
                             <td class="fw-semibold text-slate-800 ps-3">{{ $sub['nama_sub'] }}</td>
-                            <td class="text-center font-monospace small fw-bold">{{ number_format($sub['total_nilai_aktual'], 2) }}</td>
-                            <td class="text-center font-monospace small text-muted">{{ number_format($sub['total_nilai_maks_efektif'], 2) }}</td>
+                            <td class="text-center font-monospace small fw-bold">{{ number_format($sub['total_nilai_aktual'], 0) }}</td>
+                            <td class="text-center font-monospace small text-muted">{{ number_format($sub['total_nilai_maks_efektif'], 0) }}</td>
                             <td class="text-center">
                                 <span class="badge bg-white text-dark border font-monospace">
                                     {{ number_format($sub['persentase'], 2) }}%

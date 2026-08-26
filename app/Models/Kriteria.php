@@ -21,16 +21,38 @@ class Kriteria extends Model
         'pedoman_nilai_2',
         'pedoman_nilai_3',
         'pedoman_nilai_4',
+        'pedoman_nilai_json',
         'dependency_id',
         'dependency_note',
         'is_na',
     ];
 
     protected $casts = [
-        'nilai_maksimal' => 'float',
-        'dependency_id'  => 'integer',
-        'is_na'          => 'boolean',
+        'nilai_maksimal'     => 'float',
+        'dependency_id'      => 'integer',
+        'is_na'              => 'boolean',
+        'pedoman_nilai_json' => 'array',
     ];
+
+    protected $appends = ['pedoman_array'];
+
+    /**
+     * Get unified rubric guidelines array (keyed by score 0..N).
+     */
+    public function getPedomanArrayAttribute(): array
+    {
+        if (!empty($this->pedoman_nilai_json) && is_array($this->pedoman_nilai_json)) {
+            return $this->pedoman_nilai_json;
+        }
+
+        return [
+            '0' => $this->pedoman_nilai_0 ?? 'Nilai 0: Tidak ada dokumen, tidak dilaksanakan, dan tidak ada bukti fisik.',
+            '1' => $this->pedoman_nilai_1 ?? 'Nilai 1: Ada draft/wacana tetapi belum disahkan atau belum disosialisasikan.',
+            '2' => $this->pedoman_nilai_2 ?? 'Nilai 2: Terdokumentasi secara resmi tetapi penerapan di lapangan masih terbatas.',
+            '3' => $this->pedoman_nilai_3 ?? 'Nilai 3: Terdokumentasi dan diterapkan penuh tetapi belum dievaluasi secara berkala.',
+            '4' => $this->pedoman_nilai_4 ?? 'Nilai 4: Terdokumentasi resmi, diterapkan 100%, dievaluasi berkala, dan ditindaklanjuti.',
+        ];
+    }
 
     /**
      * Relationship to prerequisite Kriteria (dependency).

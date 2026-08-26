@@ -68,6 +68,7 @@ class SubElemenController extends Controller
             $data['is_na'] = $request->has('is_na') ? true : false;
             $trashed->restore();
             $trashed->update($data);
+            $trashed->syncDefaultKriteria();
 
             return redirect()->route('admin.sub-elemens.index')
                 ->with('success', 'Master Sub-Elemen berhasil diaktifkan kembali dan diperbarui!');
@@ -75,7 +76,8 @@ class SubElemenController extends Controller
 
         $data = $request->only(['elemen_id', 'kode_sub', 'nama_sub', 'nilai_maksimal']);
         $data['is_na'] = $request->has('is_na') ? true : false;
-        SubElemen::create($data);
+        $subElemen = SubElemen::create($data);
+        $subElemen->syncDefaultKriteria();
 
         return redirect()->route('admin.sub-elemens.index')
             ->with('success', 'Master Sub-Elemen baru berhasil ditambahkan!');
@@ -122,6 +124,7 @@ class SubElemenController extends Controller
         $data = $request->only(['elemen_id', 'kode_sub', 'nama_sub', 'nilai_maksimal']);
         $data['is_na'] = $request->has('is_na') ? true : false;
         $subElemen->update($data);
+        $subElemen->syncDefaultKriteria();
         $subElemen->syncNilaiMaksimalFromKriterias();
 
         return redirect()->route('admin.sub-elemens.index')
@@ -140,6 +143,7 @@ class SubElemenController extends Controller
 
         // Cascading update to all child kriterias under this sub-elemen
         $subElemen->kriterias()->update(['is_na' => $newNaState]);
+        $subElemen->syncDefaultKriteria();
 
         $statusText = $newNaState ? 'di-set N/A (Not Applicable)' : 'diaktifkan kembali (Aktif)';
 
