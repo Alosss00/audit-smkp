@@ -132,4 +132,79 @@ class SubElemenPenilaianStandaloneTest extends TestCase
         $this->assertDatabaseMissing('kriterias', ['kode_kriteria' => 'TEST.3', 'deleted_at' => null]);
         $this->assertDatabaseHas('kriterias', ['kode_kriteria' => 'TEST.3.1']);
     }
+
+    public function test_batch_create_multiple_sub_sub_elemens_at_once()
+    {
+        $sub = SubElemen::create([
+            'elemen_id'      => $this->elemen->id,
+            'kode_sub'       => 'TEST.4',
+            'nama_sub'       => 'Sub Elemen Batch Target',
+            'nilai_maksimal' => 8.00,
+        ]);
+        $sub->syncDefaultKriteria();
+
+        $this->actingAs($this->admin);
+
+        $response = $this->post(route('admin.kriterias.store'), [
+            'sub_elemen_id' => $sub->id,
+            'sub_subs' => [
+                [
+                    'kode_kriteria'       => 'TEST.4.1',
+                    'deskripsi'           => 'Sub-sub Elemen Pertama Batch',
+                    'nilai_maksimal'      => 4.00,
+                    'persyaratan_dokumen' => 'Dokumen SOP 1',
+                    'pedoman_nilai'       => [
+                        '0' => 'Belum ada',
+                        '4' => 'Lengkap dan sesuai standar',
+                    ],
+                ],
+                [
+                    'kode_kriteria'       => 'TEST.4.2',
+                    'deskripsi'           => 'Sub-sub Elemen Kedua Batch',
+                    'nilai_maksimal'      => 4.00,
+                    'persyaratan_dokumen' => 'Dokumen SOP 2',
+                    'pedoman_nilai'       => [
+                        '0' => 'Belum ada',
+                        '4' => 'Sudah ada implementasi',
+                    ],
+                ],
+                [
+                    'kode_kriteria'       => 'TEST.4.3',
+                    'deskripsi'           => 'Sub-sub Elemen Ketiga Batch',
+                    'nilai_maksimal'      => 2.00,
+                    'persyaratan_dokumen' => 'Dokumen SOP 3',
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Standalone TEST.4 should be deleted
+        $this->assertDatabaseMissing('kriterias', ['kode_kriteria' => 'TEST.4', 'deleted_at' => null]);
+
+        // All 3 batch sub-sub elements should exist in database
+        $this->assertDatabaseHas('kriterias', [
+            'sub_elemen_id' => $sub->id,
+            'kode_kriteria' => 'TEST.4.1',
+            'deskripsi'     => 'Sub-sub Elemen Pertama Batch',
+            'nilai_maksimal' => 4.00,
+        ]);
+        $this->assertDatabaseHas('kriterias', [
+            'sub_elemen_id' => $sub->id,
+            'kode_kriteria' => 'TEST.4.2',
+            'deskripsi'     => 'Sub-sub Elemen Kedua Batch',
+            'nilai_maksimal' => 4.00,
+        ]);
+        $this->assertDatabaseHas('kriterias', [
+            'sub_elemen_id' => $sub->id,
+            'kode_kriteria' => 'TEST.4.3',
+            'deskripsi'     => 'Sub-sub Elemen Ketiga Batch',
+            'nilai_maksimal' => 2.00,
+        ]);
+
+        // SubElemen nilai_maksimal should sync to sum of active child criteria (4 + 4 + 2 = 10)
+        $sub->refresh();
+        $this->assertEquals(10.00, (float) $sub->nilai_maksimal);
+    }
 }

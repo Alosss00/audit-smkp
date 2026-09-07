@@ -184,45 +184,102 @@
     </div>
 @endforelse
 
-<!-- Modal General: Tambah Sub-sub Elemen Baru -->
+<!-- Modal General: Tambah Sub-sub Elemen Baru (Multi-Baris Dinamis) -->
 <div class="modal fade" id="createSubSubModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content card-custom border-0">
-            <form action="{{ route('admin.kriterias.store') }}" method="POST">
+            <form action="{{ route('admin.kriterias.store') }}" method="POST" id="formGeneralBatchSubSub">
                 @csrf
                 <div class="modal-header border-bottom">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle text-primary me-2"></i>Tambah Sub-sub Elemen Baru</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle text-primary me-2"></i>Tambah Sub-sub Elemen (Bisa Tambah Lebih dari 1 Sekaligus)</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold small">Induk Sub-Elemen <span class="text-danger">*</span></label>
-                            <select name="sub_elemen_id" class="form-select select-searchable" required>
-                                <option value="">-- Pilih Induk Sub-Elemen --</option>
-                                @foreach($subElemens as $s)
-                                    <option value="{{ $s->id }}">Sub {{ $s->kode_sub }} - {{ $s->nama_sub }}</option>
-                                @endforeach
-                            </select>
+                    <!-- 1. Pilih Induk Sub-Elemen -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pilih Induk Sub-Elemen <span class="text-danger">*</span></label>
+                        <select name="sub_elemen_id" id="generalSubElemenSelect" class="form-select select-searchable" required>
+                            <option value="">-- Pilih Induk Sub-Elemen --</option>
+                            @foreach($subElemens as $s)
+                                <option value="{{ $s->id }}" 
+                                    data-kode="{{ $s->kode_sub }}" 
+                                    data-nama="{{ $s->nama_sub }}" 
+                                    data-max="{{ (float) ($s->nilai_maksimal ?? 4.00) }}"
+                                    data-count="{{ $s->kriterias->where('kode_kriteria', '!=', $s->kode_sub)->count() }}">
+                                    Sub {{ $s->kode_sub }} - {{ $s->nama_sub }} (Nilai Max: {{ number_format($s->nilai_maksimal ?? 4, 2) }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="form-text text-muted">Setelah memilih Sub-Elemen induk, Anda dapat menambahkan 1 atau beberapa Sub-sub Elemen sekaligus di bawah.</div>
+                    </div>
+
+                    <!-- 2. Banner Informasi Induk Sub-Elemen -->
+                    <div id="generalSubElemenInfo" class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 rounded-3 d-none mb-4">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <span class="badge bg-info text-dark font-monospace fs-6 me-2" id="infoKodeSub">Sub -</span>
+                                <strong class="text-slate-800 fs-6" id="infoNamaSub">Nama Sub Elemen</strong>
+                            </div>
+                            <div>
+                                <span class="badge bg-white text-dark border font-monospace px-3 py-2">
+                                    Nilai Max Induk: <span class="fw-bold text-primary" id="infoMaxScore">4.00</span>
+                                </span>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- 3. Dynamic Sub-sub Items Container -->
+                    <div id="generalSubSubRowsContainer" class="d-none">
+                        <div class="d-flex align-items-center justify-content-between mb-3 bg-light p-3 rounded-3 border">
+                            <div>
+                                <h6 class="fw-bold text-slate-800 mb-0">
+                                    <i class="bi bi-list-task text-primary me-2"></i>Daftar Sub-sub Elemen yang akan Ditambahkan
+                                </h6>
+                                <small class="text-muted">Klik tombol <strong>+ Tambah Baris</strong> untuk menambah lebih dari 1 sub-sub elemen.</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary fw-semibold rounded-pill px-3 shadow-sm btn-add-general-row">
+                                <i class="bi bi-plus-lg me-1"></i> Tambah Baris Sub-sub
+                            </button>
+                        </div>
+
+                        <!-- Rows Wrapper -->
+                        <div id="generalSubSubItemsWrapper" class="d-flex flex-column gap-3 mb-3">
+                            <!-- Injected dynamically by JS -->
+                        </div>
+
+                        <!-- Bottom Add Row Button -->
+                        <div class="text-center p-3 border border-dashed rounded-3 bg-light bg-opacity-50">
+                            <button type="button" class="btn btn-sm btn-outline-primary fw-semibold rounded-pill px-4 btn-add-general-row">
+                                <i class="bi bi-plus-circle me-1"></i> Tambah Baris Sub-sub Elemen (+ Baris)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Placeholder when no sub-elemen is selected -->
+                    <div id="generalSelectPlaceholder" class="p-4 text-center text-muted bg-light rounded-3 border">
+                        <i class="bi bi-diagram-3 fs-2 d-block text-secondary mb-2"></i>
+                        Silakan pilih <strong>Induk Sub-Elemen</strong> di atas terlebih dahulu untuk memunculkan formulir input Sub-sub Elemen.
                     </div>
                 </div>
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary rounded-3">Simpan Sub-sub Elemen</button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4 fw-semibold" id="btnSubmitGeneralBatch" disabled>
+                        <i class="bi bi-check-lg me-1"></i> Simpan Semua Sub-sub Elemen
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal Per Sub-Elemen: Tambah Sub-sub Elemen di bawah Sub Tersebut -->
+<!-- Modal Per Sub-Elemen: Tambah Sub-sub Elemen di bawah Sub Tersebut (Multi-Baris Dinamis) -->
 @foreach($subElemens as $sub)
     @php
         $maxInt = ceil($sub->nilai_maksimal ?? 4);
+        $existingCount = $sub->kriterias->where('kode_kriteria', '!=', $sub->kode_sub)->count();
     @endphp
     <div class="modal fade" id="createSubSubForSubModal{{ $sub->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content card-custom border-0">
                 <form action="{{ route('admin.kriterias.store') }}" method="POST">
                     @csrf
@@ -234,33 +291,41 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="alert alert-light border small mb-3">
-                            <strong>Induk Sub-Elemen:</strong> Sub {{ $sub->kode_sub }} - {{ $sub->nama_sub }} (Nilai Max: {{ number_format($sub->nilai_maksimal ?? 4, 2) }})
+                        <div class="alert alert-light border small mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <strong>Induk Sub-Elemen:</strong> Sub {{ $sub->kode_sub }} - {{ $sub->nama_sub }}
+                            </div>
+                            <div>
+                                <span class="badge bg-light text-dark border font-monospace">Nilai Max Induk: {{ number_format($sub->nilai_maksimal ?? 4, 2) }}</span>
+                            </div>
                         </div>
-                        <h6 class="fw-bold text-slate-800 mb-2"><i class="bi bi-bookmark-star-fill text-warning me-2"></i>Rubrik Pedoman Penilaian (Acuan Pemberian Nilai 0 s/d {{ $maxInt }})</h6>
-                        <div class="row g-3">
-                            @for($i = 0; $i <= $maxInt; $i++)
-                                @php
-                                    $pct = $maxInt > 0 ? round(($i / $maxInt) * 100) : 0;
-                                    $colorClass = 'text-danger';
-                                    if ($pct >= 100) $colorClass = 'text-success';
-                                    elseif ($pct >= 75) $colorClass = 'text-primary';
-                                    elseif ($pct >= 50) $colorClass = 'text-info';
-                                    elseif ($pct >= 25) $colorClass = 'text-warning';
-                                    $colSize = ($maxInt > 4) ? 'col-md-6' : 'col-12';
-                                @endphp
-                                <div class="{{ $colSize }}">
-                                    <label class="form-label fw-semibold small {{ $colorClass }}">
-                                        Pedoman Nilai {{ $i }} ({{ $pct }}% dari Max {{ $sub->nilai_maksimal ?? 4 }})
-                                    </label>
-                                    <textarea name="pedoman_nilai[{{ $i }}]" class="form-control" rows="2" placeholder="Acuan pemberian Nilai {{ $i }}..."></textarea>
-                                </div>
-                            @endfor
+
+                        <div class="d-flex align-items-center justify-content-between mb-3 bg-light p-3 rounded-3 border">
+                            <div>
+                                <h6 class="fw-bold text-slate-800 mb-0">
+                                    <i class="bi bi-list-task text-primary me-2"></i>Daftar Sub-sub Elemen yang akan Ditambahkan
+                                </h6>
+                                <small class="text-muted">Tambahkan satu atau lebih Sub-sub Elemen sekaligus di bawah ini.</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-success text-white fw-semibold rounded-pill px-3 shadow-sm btn-add-sub-modal-row" data-target="subSubItemsWrapper{{ $sub->id }}" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (float)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
+                                <i class="bi bi-plus-lg me-1"></i> Tambah Baris Sub-sub
+                            </button>
+                        </div>
+
+                        <!-- Rows Wrapper -->
+                        <div id="subSubItemsWrapper{{ $sub->id }}" class="sub-sub-items-container d-flex flex-column gap-3 mb-3" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (float)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
+                            <!-- Injected dynamically by JS on modal open -->
+                        </div>
+
+                        <div class="text-center p-3 border border-dashed rounded-3 bg-light bg-opacity-50">
+                            <button type="button" class="btn btn-sm btn-outline-success fw-semibold rounded-pill px-4 btn-add-sub-modal-row" data-target="subSubItemsWrapper{{ $sub->id }}" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (float)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
+                                <i class="bi bi-plus-circle me-1"></i> Tambah Baris Sub-sub Elemen (+ Baris)
+                            </button>
                         </div>
                     </div>
                     <div class="modal-footer border-top">
                         <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-success rounded-3 text-white">Simpan Sub-sub Elemen</button>
+                        <button type="submit" class="btn btn-success text-white rounded-3 px-4 fw-semibold"><i class="bi bi-check-lg me-1"></i>Simpan Semua Sub-sub Elemen</button>
                     </div>
                 </form>
             </div>
@@ -466,4 +531,247 @@
         </div>
     </div>
 @endforeach
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentGeneralData = null;
+
+    // Helper to generate Rubrik Pedoman Nilai inputs (0..N)
+    function generateRubrikInputs(index, maxScore) {
+        const maxScoreInt = Math.max(1, Math.ceil(parseFloat(maxScore) || 4));
+        let html = '';
+
+        for (let i = 0; i <= maxScoreInt; i++) {
+            const pct = Math.round((i / maxScoreInt) * 100);
+            let colorClass = 'text-danger';
+            if (pct >= 100) colorClass = 'text-success';
+            else if (pct >= 75) colorClass = 'text-primary';
+            else if (pct >= 50) colorClass = 'text-info';
+            else if (pct >= 25) colorClass = 'text-warning';
+
+            html += `
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold ${colorClass} mb-1">
+                        Pedoman Nilai ${i} (${pct}% dari Max ${maxScore})
+                    </label>
+                    <textarea name="sub_subs[${index}][pedoman_nilai][${i}]" class="form-control form-control-sm" rows="1" placeholder="Acuan penilaian untuk skor ${i}..."></textarea>
+                </div>
+            `;
+        }
+        return html;
+    }
+
+    // Helper to generate a single Sub-sub Elemen Card
+    function createSubSubCardHtml(index, kodeSub, maxScore, existingCount) {
+        const suggestedKode = (kodeSub && kodeSub !== '-') 
+            ? `${kodeSub}.${parseInt(existingCount || 0) + index + 1}` 
+            : '';
+        const uniqueId = 'rubrik_' + Math.random().toString(36).substring(2, 9) + '_' + index;
+        const formattedMax = (parseFloat(maxScore) || 4.00).toFixed(2);
+
+        return `
+            <div class="card card-custom border p-3 shadow-none bg-white sub-sub-item-card position-relative" data-index="${index}">
+                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary rounded-pill px-3 py-1 fs-6 item-index-badge">#${index + 1}</span>
+                        <span class="fw-bold text-slate-800">Sub-sub Elemen</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-remove-sub-row rounded-2 px-2 py-1" title="Hapus Baris Ini">
+                        <i class="bi bi-trash3-fill me-1"></i> <span class="small">Hapus Baris</span>
+                    </button>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-slate-700 mb-1">Kode Sub-sub <span class="text-danger">*</span></label>
+                        <input type="text" name="sub_subs[${index}][kode_kriteria]" class="form-control font-monospace input-kode-kriteria" value="${suggestedKode}" placeholder="Contoh: ${kodeSub || 'I.1'}.1" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-slate-700 mb-1">Deskripsi / Pertanyaan Sub-sub Elemen <span class="text-danger">*</span></label>
+                        <input type="text" name="sub_subs[${index}][deskripsi]" class="form-control input-deskripsi" placeholder="Tulis deskripsi / pertanyaan audit..." required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-slate-700 mb-1">Nilai Maksimal <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" min="0" max="1000" name="sub_subs[${index}][nilai_maksimal]" class="form-control font-monospace input-nilai-max" value="${formattedMax}" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-secondary mb-1">
+                            <i class="bi bi-file-earmark-text text-primary me-1"></i>Dokumen Wajib / Acuan Persyaratan (Opsional)
+                        </label>
+                        <input type="text" name="sub_subs[${index}][persyaratan_dokumen]" class="form-control form-control-sm" placeholder="Contoh: SK KTT, SOP Inspeksi Terkait, Matriks Kompetensi...">
+                    </div>
+
+                    <!-- Accordion Pedoman Nilai -->
+                    <div class="col-12">
+                        <div class="accordion border rounded-3 overflow-hidden" id="acc_${uniqueId}">
+                            <div class="accordion-item border-0">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed py-2 px-3 small bg-light text-slate-700" type="button" data-bs-toggle="collapse" data-bs-target="#col_${uniqueId}">
+                                        <i class="bi bi-bookmark-star text-warning me-2 fs-6"></i>
+                                        <strong>Rubrik Pedoman Penilaian (Opsional - Klik untuk mengisi pedoman nilai 0 s/d ${Math.ceil(parseFloat(maxScore) || 4)})</strong>
+                                    </button>
+                                </h2>
+                                <div id="col_${uniqueId}" class="accordion-collapse collapse" data-bs-parent="#acc_${uniqueId}">
+                                    <div class="accordion-body p-3 bg-white">
+                                        <div class="row g-2 rubrik-inputs-box">
+                                            ${generateRubrikInputs(index, maxScore)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Helper to re-index cards inside a container
+    function reindexContainer(container) {
+        if (!container) return;
+        const cards = container.querySelectorAll('.sub-sub-item-card');
+        cards.forEach((card, newIdx) => {
+            card.dataset.index = newIdx;
+            const badge = card.querySelector('.item-index-badge');
+            if (badge) badge.textContent = `#${newIdx + 1}`;
+
+            // Update inputs name prefixes
+            card.querySelectorAll('[name^="sub_subs["]').forEach(input => {
+                const name = input.getAttribute('name');
+                const updatedName = name.replace(/^sub_subs\[\d+\]/, `sub_subs[${newIdx}]`);
+                input.setAttribute('name', updatedName);
+            });
+        });
+    }
+
+    // Helper to append a new card to a wrapper
+    function appendCardToWrapper(wrapper, kodeSub, maxScore, existingCount) {
+        if (!wrapper) return;
+        const currentCount = wrapper.querySelectorAll('.sub-sub-item-card').length;
+        const cardHtml = createSubSubCardHtml(currentCount, kodeSub, maxScore, existingCount);
+        wrapper.insertAdjacentHTML('beforeend', cardHtml);
+    }
+
+    // 1. Logic for General Modal (#createSubSubModal)
+    const generalSelect = document.getElementById('generalSubElemenSelect');
+    const generalInfo = document.getElementById('generalSubElemenInfo');
+    const generalRowsContainer = document.getElementById('generalSubSubRowsContainer');
+    const generalItemsWrapper = document.getElementById('generalSubSubItemsWrapper');
+    const generalPlaceholder = document.getElementById('generalSelectPlaceholder');
+    const generalSubmitBtn = document.getElementById('btnSubmitGeneralBatch');
+
+    function handleGeneralSelectChange() {
+        if (!generalSelect) return;
+        const selectedVal = generalSelect.value;
+
+        if (!selectedVal) {
+            currentGeneralData = null;
+            if (generalInfo) generalInfo.classList.add('d-none');
+            if (generalRowsContainer) generalRowsContainer.classList.add('d-none');
+            if (generalPlaceholder) generalPlaceholder.classList.remove('d-none');
+            if (generalSubmitBtn) generalSubmitBtn.disabled = true;
+            if (generalItemsWrapper) generalItemsWrapper.innerHTML = '';
+            return;
+        }
+
+        const selectedOpt = generalSelect.querySelector(`option[value="${selectedVal}"]`) || generalSelect.options[generalSelect.selectedIndex];
+        if (!selectedOpt) return;
+
+        const kode = selectedOpt.dataset.kode || '';
+        const nama = selectedOpt.dataset.nama || '';
+        const maxScore = parseFloat(selectedOpt.dataset.max) || 4.0;
+        const count = parseInt(selectedOpt.dataset.count) || 0;
+
+        currentGeneralData = { kode, nama, maxScore, count };
+
+        // Update Info Banner
+        const infoKode = document.getElementById('infoKodeSub');
+        const infoNama = document.getElementById('infoNamaSub');
+        const infoMax = document.getElementById('infoMaxScore');
+
+        if (infoKode) infoKode.textContent = `Sub ${kode}`;
+        if (infoNama) infoNama.textContent = nama;
+        if (infoMax) infoMax.textContent = maxScore.toFixed(2);
+
+        if (generalInfo) generalInfo.classList.remove('d-none');
+        if (generalPlaceholder) generalPlaceholder.classList.add('d-none');
+        if (generalRowsContainer) generalRowsContainer.classList.remove('d-none');
+        if (generalSubmitBtn) generalSubmitBtn.disabled = false;
+
+        // Reset and add 1 initial row
+        if (generalItemsWrapper) {
+            generalItemsWrapper.innerHTML = '';
+            appendCardToWrapper(generalItemsWrapper, kode, maxScore, count);
+        }
+    }
+
+    if (generalSelect) {
+        generalSelect.addEventListener('change', handleGeneralSelectChange);
+
+        // If TomSelect is initialized on generalSelect
+        if (generalSelect.tomselect) {
+            generalSelect.tomselect.on('change', handleGeneralSelectChange);
+        }
+    }
+
+    // Click on "+ Tambah Baris" in General Modal
+    document.querySelectorAll('.btn-add-general-row').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!currentGeneralData || !generalItemsWrapper) return;
+            appendCardToWrapper(generalItemsWrapper, currentGeneralData.kode, currentGeneralData.maxScore, currentGeneralData.count);
+        });
+    });
+
+    // 2. Logic for Per-Sub Modals
+    document.querySelectorAll('.btn-add-sub-modal-row').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const targetWrapper = document.getElementById(targetId);
+            if (!targetWrapper) return;
+
+            const kodeSub = this.dataset.kodeSub || '';
+            const maxScore = parseFloat(this.dataset.maxScore) || 4.0;
+            const existingCount = parseInt(this.dataset.existingCount) || 0;
+
+            appendCardToWrapper(targetWrapper, kodeSub, maxScore, existingCount);
+        });
+    });
+
+    // Auto initialize per-sub modal when opened if empty
+    document.querySelectorAll('[id^="createSubSubForSubModal"]').forEach(modalEl => {
+        modalEl.addEventListener('shown.bs.modal', function() {
+            const wrapper = this.querySelector('.sub-sub-items-container');
+            if (wrapper && wrapper.querySelectorAll('.sub-sub-item-card').length === 0) {
+                const kodeSub = wrapper.dataset.kodeSub || '';
+                const maxScore = parseFloat(wrapper.dataset.maxScore) || 4.0;
+                const existingCount = parseInt(wrapper.dataset.existingCount) || 0;
+                appendCardToWrapper(wrapper, kodeSub, maxScore, existingCount);
+            }
+        });
+    });
+
+    // 3. Global Event Delegation for "Hapus Baris"
+    document.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.btn-remove-sub-row');
+        if (!removeBtn) return;
+
+        const card = removeBtn.closest('.sub-sub-item-card');
+        if (!card) return;
+
+        const container = card.closest('.d-flex.flex-column');
+        if (!container) return;
+
+        const allCards = container.querySelectorAll('.sub-sub-item-card');
+        if (allCards.length <= 1) {
+            alert('Minimal harus ada 1 baris Sub-sub Elemen.');
+            return;
+        }
+
+        card.remove();
+        reindexContainer(container);
+    });
+});
+</script>
+@endpush
 @endsection
