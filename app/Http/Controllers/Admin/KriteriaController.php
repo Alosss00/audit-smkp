@@ -12,14 +12,15 @@ use Illuminate\Validation\Rule;
 class KriteriaController extends Controller
 {
     /**
-     * Display a listing of criteria.
+     * Display a listing of criteria (active & trashed).
      */
     public function index()
     {
         $kriterias = Kriteria::with(['subElemen.elemen', 'dependency'])->latest()->get();
+        $trashedKriterias = Kriteria::onlyTrashed()->with(['subElemen.elemen'])->latest()->get();
         $subElemens = SubElemen::with('elemen')->orderBy('kode_sub')->get();
 
-        return view('admin.kriterias.index', compact('kriterias', 'subElemens'));
+        return view('admin.kriterias.index', compact('kriterias', 'trashedKriterias', 'subElemens'));
     }
 
     /**
@@ -336,13 +337,66 @@ class KriteriaController extends Controller
         AuditLog::create([
             'user_id'         => auth()->id(),
             'modul'           => 'Master Kriteria',
-            'tindakan'        => "Menonaktifkan Sub-sub Elemen (Kriteria): {$kriteriaData['kode_kriteria']}",
+            'tindakan'        => "Menonaktifkan (Soft Delete) Sub-sub Elemen (Kriteria): {$kriteriaData['kode_kriteria']} - {$kriteriaData['deskripsi']}",
             'data_lama'       => $kriteriaData,
             'data_baru'       => null,
             'waktu_perubahan' => now(),
         ]);
 
         return redirect()->back()
-            ->with('success', 'Sub-sub Elemen berhasil dinonaktifkan.');
+            ->with('success', 'Sub-sub Elemen berhasil dinonaktifkan (Soft Delete).');
+    }
+
+    /**
+     * Restore soft-deleted criteria.
+     */
+    public function restore($id)
+    {
+        $kriteria = Kriteria::onlyTrashed()->findOrFail($id);
+        $kriteria->restore();
+
+        if ($kriteria->subElemen) {
+            $kriteria->subElemen->syncNilaiMaksimalFromKriterias();
+        }
+
+        AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Kriteria',
+            'tindakan'        => "Memulihkan (Restore Point) Sub-sub Elemen: {$kriteria->kode_kriteria} - {$kriteria->deskripsi}",
+            'data_lama'       => null,
+            'data_baru'       => $kriteria->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'Sub-sub Elemen berhasil diaktifkan kembali!');
+    }
+
+    /**
+     * Permanently delete criteria.
+     */
+    public function forceDelete($id)
+    {
+        $kriteria = Kriteria::onlyTrashed()->findOrFail($id);
+        $kriteriaData = $kriteria->toArray();
+
+        try {
+            $kriteria->forceDelete();
+
+            AuditLog::create([
+                'user_id'         => auth()->id(),
+                'modul'           => 'Master Kriteria',
+                'tindakan'        => "Menghapus Permanen (Force Delete) Sub-sub Elemen: {$kriteriaData['kode_kriteria']}",
+                'data_lama'       => $kriteriaData,
+                'data_baru'       => null,
+                'waktu_perubahan' => now(),
+            ]);
+
+            return redirect()->back()
+                ->with('success', 'Sub-sub Elemen berhasil dihapus secara permanen!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menghapus permanen: Kriteria masih terhubung dengan data audit.');
+        }
     }
 }

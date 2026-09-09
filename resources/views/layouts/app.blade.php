@@ -297,8 +297,13 @@
             border-top-left-radius: 0 !important;
             border-bottom-left-radius: 0 !important;
         }
-        .modal-body, .modal-content {
-            overflow: visible !important;
+        /* Fix Scrollable Modals */
+        .modal-dialog-scrollable .modal-content {
+            max-height: calc(100vh - 3.5rem);
+            overflow: hidden !important;
+        }
+        .modal-dialog-scrollable .modal-body {
+            overflow-y: auto !important;
         }
         .ts-wrapper {
             position: relative !important;

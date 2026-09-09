@@ -311,12 +311,16 @@
                                     {{ number_format($item->nilai, 2) }} / {{ number_format($item->kriteria->nilai_maksimal ?? 4, 2) }}
                                 @endif
                             </td>
-                            <td class="small text-slate-800">{{ $item->catatan ?? '-' }}</td>
+                            <td class="small text-slate-800" style="white-space: pre-line;">{{ $item->catatan ?? '-' }}</td>
                             <td>
-                                @if($item->lampiran_url)
-                                    <a href="{{ $item->lampiran_url }}" target="_blank" class="btn btn-sm btn-outline-info text-dark py-1 px-2">
-                                        <i class="bi bi-paperclip me-1"></i> Lihat Bukti
-                                    </a>
+                                @if(!empty($item->lampiran_urls))
+                                    <div class="d-flex flex-column gap-1">
+                                        @foreach($item->lampiran_urls as $lFile)
+                                            <a href="{{ $lFile['url'] }}" target="_blank" class="btn btn-sm btn-outline-info text-dark py-0 px-2 text-start text-truncate" style="max-width: 170px;" title="{{ $lFile['name'] }}">
+                                                <i class="bi bi-paperclip me-1"></i> {{ $lFile['name'] }}
+                                            </a>
+                                        @endforeach
+                                    </div>
                                 @else
                                     <span class="text-muted small">-</span>
                                 @endif

@@ -11,15 +11,16 @@ use Illuminate\Validation\Rule;
 class SubElemenController extends Controller
 {
     /**
-     * Display a listing of sub-elemens.
+     * Display a listing of sub-elemens (active & trashed).
      */
     public function index()
     {
         $elemens = Elemen::with(['subElemens.kriterias'])->orderBy('kode_elemen')->get();
         $subElemens = SubElemen::with(['elemen', 'kriterias'])->withCount('kriterias')->orderBy('kode_sub')->get();
+        $trashedSubElemens = SubElemen::onlyTrashed()->with(['elemen'])->orderBy('kode_sub')->get();
         $allKriterias = \App\Models\Kriteria::orderBy('kode_kriteria')->get();
 
-        return view('admin.sub_elemens.index', compact('elemens', 'subElemens', 'allKriterias'));
+        return view('admin.sub_elemens.index', compact('elemens', 'subElemens', 'trashedSubElemens', 'allKriterias'));
     }
 
     /**
@@ -157,9 +158,68 @@ class SubElemenController extends Controller
     public function destroy($id)
     {
         $subElemen = SubElemen::findOrFail($id);
+        $subData = $subElemen->toArray();
         $subElemen->delete();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Sub-Elemen',
+            'tindakan'        => "Menonaktifkan (Soft Delete) Sub-Elemen: {$subData['kode_sub']} - {$subData['nama_sub']}",
+            'data_lama'       => $subData,
+            'data_baru'       => null,
+            'waktu_perubahan' => now(),
+        ]);
 
         return redirect()->route('admin.sub-elemens.index')
             ->with('success', 'Master Sub-Elemen berhasil dinonaktifkan (Soft Delete).');
+    }
+
+    /**
+     * Restore soft-deleted sub-elemen.
+     */
+    public function restore($id)
+    {
+        $subElemen = SubElemen::onlyTrashed()->findOrFail($id);
+        $subElemen->restore();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Sub-Elemen',
+            'tindakan'        => "Memulihkan (Restore Point) Sub-Elemen: {$subElemen->kode_sub} - {$subElemen->nama_sub}",
+            'data_lama'       => null,
+            'data_baru'       => $subElemen->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
+        return redirect()->route('admin.sub-elemens.index')
+            ->with('success', 'Master Sub-Elemen berhasil diaktifkan kembali!');
+    }
+
+    /**
+     * Permanently delete sub-elemen.
+     */
+    public function forceDelete($id)
+    {
+        $subElemen = SubElemen::onlyTrashed()->findOrFail($id);
+        $subData = $subElemen->toArray();
+
+        try {
+            $subElemen->forceDelete();
+
+            \App\Models\AuditLog::create([
+                'user_id'         => auth()->id(),
+                'modul'           => 'Master Sub-Elemen',
+                'tindakan'        => "Menghapus Permanen (Force Delete) Sub-Elemen: {$subData['kode_sub']}",
+                'data_lama'       => $subData,
+                'data_baru'       => null,
+                'waktu_perubahan' => now(),
+            ]);
+
+            return redirect()->route('admin.sub-elemens.index')
+                ->with('success', 'Master Sub-Elemen berhasil dihapus secara permanen!');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.sub-elemens.index')
+                ->with('error', 'Gagal menghapus permanen: Sub-Elemen masih terhubung dengan data audit.');
+        }
     }
 }

@@ -57,29 +57,41 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('audit-sesi.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiAdminController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
+        Route::post('/audit-sesi/{id}/restore', [AuditSesiAdminController::class, 'restore'])->name('audit-sesi.restore');
+        Route::delete('/audit-sesi/{id}/force-delete', [AuditSesiAdminController::class, 'forceDelete'])->name('audit-sesi.force-delete');
         Route::resource('audit-sesi', AuditSesiAdminController::class);
 
-        // Master Data CRUD
+        // Master Data CRUD & Restore Points
         Route::post('/elemens/{id}/restore', [ElemenController::class, 'restore'])->name('elemens.restore');
         Route::delete('/elemens/{id}/force-delete', [ElemenController::class, 'forceDelete'])->name('elemens.force-delete');
         Route::resource('elemens', ElemenController::class);
 
         Route::patch('/sub-elemens/{id}/toggle-na', [SubElemenController::class, 'toggleNa'])->name('sub-elemens.toggle-na');
+        Route::post('/sub-elemens/{id}/restore', [SubElemenController::class, 'restore'])->name('sub-elemens.restore');
+        Route::delete('/sub-elemens/{id}/force-delete', [SubElemenController::class, 'forceDelete'])->name('sub-elemens.force-delete');
         Route::resource('sub-elemens', SubElemenController::class);
 
         Route::patch('/kriterias/{id}/toggle-na', [KriteriaController::class, 'toggleNa'])->name('kriterias.toggle-na');
+        Route::post('/kriterias/{id}/restore', [KriteriaController::class, 'restore'])->name('kriterias.restore');
+        Route::delete('/kriterias/{id}/force-delete', [KriteriaController::class, 'forceDelete'])->name('kriterias.force-delete');
         Route::resource('kriterias', KriteriaController::class);
         
         Route::patch('/perusahaans/{id}/toggle-status', [PerusahaanController::class, 'toggleStatus'])->name('perusahaans.toggle-status');
+        Route::post('/perusahaans/{id}/restore', [PerusahaanController::class, 'restore'])->name('perusahaans.restore');
+        Route::delete('/perusahaans/{id}/force-delete', [PerusahaanController::class, 'forceDelete'])->name('perusahaans.force-delete');
         Route::resource('perusahaans', PerusahaanController::class);
 
         Route::patch('/departemens/{id}/toggle-status', [DepartemenController::class, 'toggleStatus'])->name('departemens.toggle-status');
+        Route::post('/departemens/{id}/restore', [DepartemenController::class, 'restore'])->name('departemens.restore');
+        Route::delete('/departemens/{id}/force-delete', [DepartemenController::class, 'forceDelete'])->name('departemens.force-delete');
         Route::resource('departemens', DepartemenController::class);
 
         // Log Aktivitas User & Audit Trail Perubahan File
         Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
 
         Route::patch('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
+        Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');
         Route::resource('users', UserController::class);
     });
 

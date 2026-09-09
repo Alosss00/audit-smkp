@@ -60,34 +60,38 @@
                 </h2>
                 <div id="collapseElemen{{ $elemen->id }}" class="accordion-collapse collapse {{ $eIndex === 0 ? 'show' : '' }}" data-bs-parent="#matrixAccordion">
                     <div class="accordion-body p-0">
-                        @foreach($elemen->subElemens as $sub)
-                            <div class="bg-slate-100 p-3 border-bottom border-top fw-bold text-slate-800 d-flex align-items-center justify-content-between">
-                                <div>
-                                    <span class="badge bg-secondary me-2">Sub {{ $sub->kode_sub }}</span>
-                                    <span>{{ $sub->nama_sub }}</span>
-                                </div>
-                                <small class="text-muted font-monospace">
-                                    @if($sub->kriterias->count() === 1 && $sub->kriterias->first()->kode_kriteria === $sub->kode_sub)
-                                        <span class="badge bg-info text-dark">Penilaian Langsung</span>
-                                    @else
-                                        {{ $sub->kriterias->count() }} Kriteria
-                                    @endif
-                                </small>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light border-bottom">
+                                    <tr>
+                                        <th style="width: 100px;">Kode</th>
+                                        <th>Pertanyaan / Kriteria & Pedoman Kepdirjen 185</th>
+                                        <th style="width: 100px;" class="text-center">Nilai Maks</th>
+                                        <th style="width: 220px;" class="text-center">Nilai Audit</th>
+                                        <th style="width: 90px;" class="text-center">N/A</th>
+                                        <th style="width: 280px;">Catatan Temuan & Bukti Lampiran</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($elemen->subElemens as $sub)
+                                        @php
+                                            $isPenilaianLangsung = ($sub->kriterias->count() === 1 && $sub->kriterias->first()->kode_kriteria === $sub->kode_sub);
+                                        @endphp
 
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="width: 100px;">Kode</th>
-                                            <th>Pertanyaan / Kriteria & Pedoman Kepdirjen 185</th>
-                                            <th style="width: 100px;" class="text-center">Nilai Maks</th>
-                                            <th style="width: 220px;" class="text-center">Nilai Audit</th>
-                                            <th style="width: 90px;" class="text-center">N/A</th>
-                                            <th style="width: 250px;">Catatan Temuan & Bukti Lampiran</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                                        @if(!$isPenilaianLangsung)
+                                            <tr class="table-light">
+                                                <td colspan="6" class="py-2.5 px-3 fw-bold text-slate-800 bg-slate-100 border-top border-bottom shadow-none">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div>
+                                                            <span class="badge bg-secondary me-2">Sub {{ $sub->kode_sub }}</span>
+                                                            <span>{{ $sub->nama_sub }}</span>
+                                                        </div>
+                                                        <span class="badge bg-white text-dark border font-monospace">{{ $sub->kriterias->count() }} Kriteria</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endif
+
                                         @foreach($sub->kriterias as $kriteria)
                                             @php
                                                 $detail = $kriteria->auditDetails->first();
@@ -144,8 +148,8 @@
                                                         class="form-control text-center fw-bold font-monospace input-score nilai-input" 
                                                         value="{{ (int) $nilaiVal }}" 
                                                         data-kriteria-id="{{ $kriteria->id }}"
-                                                        data-pedoman="{{ e($pedomanJson) }}"
-                                                        data-dokumen="{{ e($kriteria->persyaratan_dokumen ?? '') }}"
+                                                        data-pedoman="{{ $pedomanJson }}"
+                                                        data-dokumen="{{ $kriteria->persyaratan_dokumen ?? '' }}"
                                                         {{ $isNa || $sesi->status === 'selesai' ? 'disabled' : '' }}>
 
                                                     <!-- Live Pedoman & Bukti Dokumen Card -->
@@ -161,31 +165,80 @@
                                                             {{ $sesi->status === 'selesai' ? 'disabled' : '' }}>
                                                     </div>
                                                 </td>
-                                                <td class="align-top pt-2">
-                                                    <textarea name="details[{{ $detailId }}][catatan]" 
-                                                        class="form-control form-control-sm mb-2" 
-                                                        rows="2" 
-                                                        placeholder="Catatan temuan..."
-                                                        {{ $sesi->status === 'selesai' ? 'disabled' : '' }}>{{ $catatanVal }}</textarea>
+                                                <td class="align-top pt-2" style="min-width: 270px;">
+                                                    @php
+                                                        $catatanList = $detail ? $detail->catatan_array : [];
+                                                        if (empty($catatanList)) {
+                                                            $catatanList = [''];
+                                                        }
+                                                    @endphp
 
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <input type="file" name="details[{{ $detailId }}][lampiran]" class="form-control form-control-sm" accept="image/*,.pdf" {{ $sesi->status === 'selesai' ? 'disabled' : '' }}>
+                                                    <!-- List Catatan Temuan Dinamis -->
+                                                    <div class="catatan-wrapper" id="catatanWrapper{{ $detailId }}">
+                                                        @foreach($catatanList as $cIdx => $cItem)
+                                                            <div class="catatan-item mb-2 p-2 bg-light rounded-2 border position-relative">
+                                                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                                                    <span class="small fw-bold text-slate-700 font-monospace catatan-label">
+                                                                        <i class="bi bi-journal-text me-1 text-primary"></i>Temuan #{{ $cIdx + 1 }}
+                                                                    </span>
+                                                                    @if($sesi->status !== 'selesai')
+                                                                        <button type="button" class="btn btn-xs text-danger p-0 border-0 btn-remove-catatan" title="Hapus catatan ini" style="{{ count($catatanList) <= 1 ? 'display: none;' : '' }}">
+                                                                            <i class="bi bi-trash"></i>
+                                                                        </button>
+                                                                    @endif
+                                                                </div>
+                                                                <textarea name="details[{{ $detailId }}][catatans][]" 
+                                                                    class="form-control form-control-sm bg-white" 
+                                                                    rows="2" 
+                                                                    placeholder="Tulis uraian temuan / ketidaksesuaian..."
+                                                                    {{ $sesi->status === 'selesai' ? 'disabled' : '' }}>{{ $cItem }}</textarea>
+                                                            </div>
+                                                        @endforeach
                                                     </div>
 
-                                                    @if($lampiranUrl)
-                                                        <div class="mt-1">
-                                                            <a href="{{ $lampiranUrl }}" target="_blank" class="small text-info text-decoration-none fw-semibold">
-                                                                <i class="bi bi-paperclip me-1"></i> Lihat Bukti Terunggah
-                                                            </a>
+                                                    @if($sesi->status !== 'selesai')
+                                                        <div class="mb-2">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0 btn-add-catatan" data-detail-id="{{ $detailId }}">
+                                                                <i class="bi bi-plus-circle me-1"></i> Tambah Catatan Temuan
+                                                            </button>
                                                         </div>
                                                     @endif
+
+                                                    <!-- Bukti Lampiran Dokumen/Foto -->
+                                                    <div class="p-2 border rounded-2 bg-light mt-2">
+                                                        <label class="form-label small fw-bold text-slate-700 mb-1 d-block" style="font-size: 0.75rem;">
+                                                            <i class="bi bi-paperclip text-info me-1"></i>Bukti Lampiran (Foto/PDF):
+                                                        </label>
+
+                                                        @if($detail && !empty($detail->lampiran_urls))
+                                                            <div class="d-flex flex-column gap-1 mb-2">
+                                                                @foreach($detail->lampiran_urls as $lFile)
+                                                                    <div class="d-flex align-items-center justify-content-between bg-white px-2 py-1 rounded border small">
+                                                                        <a href="{{ $lFile['url'] }}" target="_blank" class="text-info text-decoration-none fw-semibold text-truncate me-2" style="max-width: 170px;" title="{{ $lFile['name'] }}">
+                                                                            <i class="bi bi-file-earmark-arrow-down me-1"></i>{{ $lFile['name'] }}
+                                                                        </a>
+                                                                        @if($sesi->status !== 'selesai')
+                                                                            <label class="text-danger small m-0 cursor-pointer" title="Centang untuk menghapus file ini saat simpan" style="font-size: 0.7rem;">
+                                                                                <input type="checkbox" name="details[{{ $detailId }}][hapus_lampiran][]" value="{{ $lFile['path'] }}" class="form-check-input me-1"> Hapus
+                                                                            </label>
+                                                                        @endif
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
+
+                                                        @if($sesi->status !== 'selesai')
+                                                            <input type="file" name="details[{{ $detailId }}][lampirans][]" class="form-control form-control-sm" accept="image/*,.pdf" multiple>
+                                                            <div class="text-muted" style="font-size: 0.7rem;">Bisa pilih lebih dari 1 file lampiran</div>
+                                                        @endif
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endforeach
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -250,34 +303,49 @@
                                 </div>
                             @endif
 
-                            <!-- Rubric 0 to 4 Guidelines -->
-                            <h6 class="fw-bold text-slate-800 mb-3"><i class="bi bi-bookmark-star-fill text-warning me-1"></i>Acuan Pemberian Nilai Audit (0 s/d 4):</h6>
+                            @php
+                                $pedomanArr = $kriteria->pedoman_array ?? [];
+                                $maxVal = !empty($pedomanArr) ? max(array_map('intval', array_keys($pedomanArr))) : (int) ceil($kriteria->nilai_maksimal ?? 4);
+                                if ($maxVal <= 0) $maxVal = 4;
+                            @endphp
+
+                            <!-- Rubric Guidelines -->
+                            <h6 class="fw-bold text-slate-800 mb-3"><i class="bi bi-bookmark-star-fill text-warning me-1"></i>Acuan Pemberian Nilai Audit (0 s/d {{ $maxVal }}):</h6>
                             
-                            <div class="d-flex flex-column gap-2">
-                                <div class="p-3 border-start border-4 border-danger bg-light rounded-2">
-                                    <span class="badge bg-danger mb-1">Nilai 0 (0% - Tidak Ada / Tidak Memenuhi)</span>
-                                    <p class="mb-0 small text-slate-800">{{ $kriteria->pedoman_nilai_0 ?? 'Nilai 0: Tidak ada dokumen, tidak dilaksanakan, dan tidak ada bukti fisik pelaksanaan.' }}</p>
-                                </div>
+                            <div class="d-flex flex-column gap-3">
+                                @foreach($pedomanArr as $skor => $deskripsiRubrik)
+                                    @php
+                                        $numSkor = (int)$skor;
+                                        $pct = $maxVal > 0 ? round(($numSkor / $maxVal) * 100) : 0;
+                                        $borderClass = 'border-danger';
+                                        $badgeClass = 'bg-danger';
+                                        $statusText = 'Tidak Ada / Tidak Memenuhi';
 
-                                <div class="p-3 border-start border-4 border-warning bg-light rounded-2">
-                                    <span class="badge bg-warning text-dark mb-1">Nilai 1 (25% - Pemenuhan Parsial / Draft)</span>
-                                    <p class="mb-0 small text-slate-800">{{ $kriteria->pedoman_nilai_1 ?? 'Nilai 1: Ada draft/wacana tetapi belum disahkan atau belum disosialisasikan.' }}</p>
-                                </div>
-
-                                <div class="p-3 border-start border-4 border-info bg-light rounded-2">
-                                    <span class="badge bg-info text-dark mb-1">Nilai 2 (50% - Terdokumentasi / Pelaksanaan Terbatas)</span>
-                                    <p class="mb-0 small text-slate-800">{{ $kriteria->pedoman_nilai_2 ?? 'Nilai 2: Terdokumentasi secara resmi tetapi penerapan di lapangan masih terbatas/parsial.' }}</p>
-                                </div>
-
-                                <div class="p-3 border-start border-4 border-primary bg-light rounded-2">
-                                    <span class="badge bg-primary mb-1">Nilai 3 (75% - Diterapkan / Belum Dievaluasi)</span>
-                                    <p class="mb-0 small text-slate-800">{{ $kriteria->pedoman_nilai_3 ?? 'Nilai 3: Terdokumentasi dan diterapkan penuh tetapi belum dievaluasi secara berkala.' }}</p>
-                                </div>
-
-                                <div class="p-3 border-start border-4 border-success bg-light rounded-2">
-                                    <span class="badge bg-success mb-1">Nilai 4 (100% - Sempurna, Diterapkan & Dievaluasi)</span>
-                                    <p class="mb-0 small text-slate-800">{{ $kriteria->pedoman_nilai_4 ?? 'Nilai 4: Terdokumentasi resmi, diterapkan 100%, dievaluasi berkala, dan ditindaklanjuti.' }}</p>
-                                </div>
+                                        if ($numSkor == $maxVal || $pct >= 100) {
+                                            $borderClass = 'border-success';
+                                            $badgeClass = 'bg-success';
+                                            $statusText = 'Pemenuhan 100% / Sesuai Standar';
+                                        } elseif ($pct >= 75) {
+                                            $borderClass = 'border-primary';
+                                            $badgeClass = 'bg-primary';
+                                            $statusText = 'Penerapan Baik / Hampir Lengkap';
+                                        } elseif ($pct >= 50) {
+                                            $borderClass = 'border-info';
+                                            $badgeClass = 'bg-info text-dark';
+                                            $statusText = 'Terdokumentasi / Pelaksanaan Terbatas';
+                                        } elseif ($pct > 0) {
+                                            $borderClass = 'border-warning';
+                                            $badgeClass = 'bg-warning text-dark';
+                                            $statusText = 'Pemenuhan Parsial / Draft';
+                                        }
+                                    @endphp
+                                    <div class="p-3 border-start border-4 {{ $borderClass }} bg-light rounded-3 shadow-none">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="badge {{ $badgeClass }} px-2 py-1">Nilai {{ $skor }} ({{ $pct }}% — {{ $statusText }})</span>
+                                        </div>
+                                        <div class="text-slate-800 small" style="white-space: pre-line; line-height: 1.6;">{{ $deskripsiRubrik }}</div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                         <div class="modal-footer border-top">
@@ -368,27 +436,51 @@
 
                 let pedoman = {};
                 try {
-                    pedoman = JSON.parse(input.getAttribute('data-pedoman') || '{}');
-                } catch(e) {}
+                    const rawPedoman = input.getAttribute('data-pedoman') || '{}';
+                    if (rawPedoman.startsWith('{') || rawPedoman.startsWith('[')) {
+                        pedoman = JSON.parse(rawPedoman);
+                    } else {
+                        const tempEl = document.createElement('textarea');
+                        tempEl.innerHTML = rawPedoman;
+                        pedoman = JSON.parse(tempEl.value);
+                    }
+                } catch(e) {
+                    console.error('Pedoman parse error:', e);
+                }
 
                 const dokumen = input.getAttribute('data-dokumen') || '';
+                const maxScore = parseFloat(input.getAttribute('max') || '4') || 4;
+                const numScore = parseFloat(rawVal) || 0;
+                const pct = maxScore > 0 ? Math.round((numScore / maxScore) * 100) : 0;
 
-                const badges = {
-                    '0': { class: 'bg-danger text-white', label: 'Nilai 0 (0% - Tidak Memenuhi)' },
-                    '1': { class: 'bg-warning text-dark', label: 'Nilai 1 (25% - Draft / Wacana)' },
-                    '2': { class: 'bg-info text-dark', label: 'Nilai 2 (50% - Terbatas)' },
-                    '3': { class: 'bg-primary text-white', label: 'Nilai 3 (75% - Diterapkan Penuh)' },
-                    '4': { class: 'bg-success text-white', label: 'Nilai 4 (100% - Sempurna & Dievaluasi)' }
-                };
+                let badgeClass = 'bg-danger text-white';
+                let statusLabel = 'Tidak Ada / Tidak Memenuhi';
 
-                const badgeInfo = badges[rawVal] || { class: 'bg-secondary text-white', label: 'Nilai ' + rawVal };
-                const textDesc = pedoman[rawVal] || ('Acuan Nilai ' + rawVal);
+                if (numScore >= maxScore || pct >= 100) {
+                    badgeClass = 'bg-success text-white';
+                    statusLabel = 'Pemenuhan 100% / Sesuai Standar';
+                } else if (pct >= 75) {
+                    badgeClass = 'bg-primary text-white';
+                    statusLabel = 'Penerapan Baik / Hampir Lengkap';
+                } else if (pct >= 50) {
+                    badgeClass = 'bg-info text-dark';
+                    statusLabel = 'Terdokumentasi / Pelaksanaan Terbatas';
+                } else if (pct > 0) {
+                    badgeClass = 'bg-warning text-dark';
+                    statusLabel = 'Pemenuhan Parsial / Draft';
+                }
 
-                let html = `<div class="d-flex align-items-center gap-1 mb-1"><span class="badge ${badgeInfo.class} px-2 py-1">${badgeInfo.label}</span></div>`;
-                html += `<div class="fw-semibold text-slate-800 mb-1" style="line-height: 1.35;">${textDesc}</div>`;
+                const textDesc = pedoman[rawVal] 
+                    ?? (Array.isArray(pedoman) ? pedoman[parseInt(rawVal, 10)] : null) 
+                    ?? (pedoman[String(rawVal)] ?? ('Acuan Nilai ' + rawVal));
+
+                let html = `<div class="d-flex align-items-center justify-content-between mb-1">`;
+                html += `<span class="badge ${badgeClass} px-2 py-1">Nilai ${rawVal} (${pct}% — ${statusLabel})</span>`;
+                html += `</div>`;
+                html += `<div class="text-slate-800" style="line-height: 1.45; font-size: 0.78rem; white-space: pre-line;">${textDesc}</div>`;
 
                 if (dokumen.trim() !== '') {
-                    html += `<div class="border-top pt-1 mt-1 text-slate-700" style="font-size: 0.74rem;">`;
+                    html += `<div class="border-top pt-1 mt-1 text-slate-600" style="font-size: 0.72rem;">`;
                     html += `<i class="bi bi-file-earmark-check-fill text-primary me-1"></i><strong>Bukti Dokumen Wajib:</strong> ${dokumen}`;
                     html += `</div>`;
                 }
@@ -405,39 +497,85 @@
                         if (input.disabled) return;
                         input.value = this.dataset.score;
                         updateHint();
-                        fillCatatanTextarea();
                         cekKonsistensi();
                     });
                 });
             }
 
-            function fillCatatanTextarea() {
-                const catatanTextarea = row.querySelector('textarea[name*="[catatan]"]');
-                if (!catatanTextarea || input.disabled) return;
-                const rawVal = input.value !== '' ? String(Math.floor(Number(input.value))) : '';
-                if (rawVal !== '') {
-                    let pedoman = {};
-                    try { pedoman = JSON.parse(input.getAttribute('data-pedoman') || '{}'); } catch(e) {}
-                    if (pedoman[rawVal]) {
-                        catatanTextarea.value = pedoman[rawVal];
-                    }
-                }
-            }
-
             input.addEventListener('focus', function() { updateHint(); });
             input.addEventListener('input', function() {
                 updateHint();
-                fillCatatanTextarea();
                 cekKonsistensi();
             });
             input.addEventListener('change', function() {
                 updateHint();
-                fillCatatanTextarea();
                 cekKonsistensi();
             });
 
             // Initial update on page load
             updateHint();
+        });
+
+        // Dynamic Add / Remove Catatan Temuan
+        document.addEventListener('click', function(e) {
+            // Add Catatan Button
+            const addBtn = e.target.closest('.btn-add-catatan');
+            if (addBtn) {
+                const detailId = addBtn.dataset.detailId;
+                const wrapper = document.getElementById('catatanWrapper' + detailId);
+                if (wrapper) {
+                    const currentItems = wrapper.querySelectorAll('.catatan-item');
+                    const nextNum = currentItems.length + 1;
+                    
+                    const newItem = document.createElement('div');
+                    newItem.className = 'catatan-item mb-2 p-2 bg-light rounded-2 border position-relative';
+                    newItem.innerHTML = `
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="small fw-bold text-slate-700 font-monospace catatan-label">
+                                <i class="bi bi-journal-text me-1 text-primary"></i>Temuan #${nextNum}
+                            </span>
+                            <button type="button" class="btn btn-xs text-danger p-0 border-0 btn-remove-catatan" title="Hapus catatan ini">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        <textarea name="details[${detailId}][catatans][]" 
+                            class="form-control form-control-sm bg-white" 
+                            rows="2" 
+                            placeholder="Tulis uraian temuan / ketidaksesuaian..."></textarea>
+                    `;
+                    wrapper.appendChild(newItem);
+
+                    // Show remove buttons on all items in this wrapper if > 1
+                    wrapper.querySelectorAll('.btn-remove-catatan').forEach(btn => btn.style.display = 'inline-block');
+                    
+                    const textarea = newItem.querySelector('textarea');
+                    if (textarea) textarea.focus();
+                }
+            }
+
+            // Remove Catatan Button
+            const removeBtn = e.target.closest('.btn-remove-catatan');
+            if (removeBtn) {
+                const item = removeBtn.closest('.catatan-item');
+                const wrapper = item.closest('.catatan-wrapper');
+                if (item && wrapper) {
+                    item.remove();
+                    // Re-index remaining labels
+                    const remainingItems = wrapper.querySelectorAll('.catatan-item');
+                    remainingItems.forEach((it, idx) => {
+                        const label = it.querySelector('.catatan-label');
+                        if (label) {
+                            label.innerHTML = `<i class="bi bi-journal-text me-1 text-primary"></i>Temuan #${idx + 1}`;
+                        }
+                    });
+                    if (remainingItems.length <= 1) {
+                        remainingItems.forEach(it => {
+                            const btn = it.querySelector('.btn-remove-catatan');
+                            if (btn) btn.style.display = 'none';
+                        });
+                    }
+                }
+            }
         });
 
         // Logic Peringatan Konsistensi Antar-Kriteria (Advisory Visual Client-Side)

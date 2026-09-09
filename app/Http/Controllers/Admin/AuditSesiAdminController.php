@@ -40,10 +40,11 @@ class AuditSesiAdminController extends Controller
         }
 
         $auditSesis = $query->paginate(10);
+        $trashedSesis = AuditSesi::onlyTrashed()->with(['user', 'perusahaan', 'departemen'])->latest()->get();
         $perusahaans = Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
         $departemens = Departemen::where('is_active', true)->orderBy('nama_departemen')->get();
 
-        return view('admin.audit-sesi.index', compact('auditSesis', 'perusahaans', 'departemens'));
+        return view('admin.audit-sesi.index', compact('auditSesis', 'trashedSesis', 'perusahaans', 'departemens'));
     }
 
     /**
@@ -191,11 +192,16 @@ class AuditSesiAdminController extends Controller
         }
 
         $request->validate([
-            'details'            => 'required|array',
-            'details.*.nilai'    => 'nullable|integer|min:0',
-            'details.*.is_na'    => 'nullable|boolean',
-            'details.*.catatan'  => 'nullable|string',
-            'details.*.lampiran' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
+            'details'                  => 'required|array',
+            'details.*.nilai'          => 'nullable|integer|min:0',
+            'details.*.is_na'          => 'nullable|boolean',
+            'details.*.catatan'        => 'nullable',
+            'details.*.catatans'       => 'nullable|array',
+            'details.*.catatans.*'     => 'nullable|string',
+            'details.*.lampiran'       => 'nullable',
+            'details.*.lampirans'      => 'nullable|array',
+            'details.*.lampirans.*'    => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
+            'details.*.hapus_lampiran' => 'nullable|array',
         ]);
 
         DB::beginTransaction();
@@ -221,18 +227,65 @@ class AuditSesiAdminController extends Controller
                         $nilai = $max;
                     }
 
-                    $updatePayload = [
-                        'nilai'   => $nilai,
-                        'is_na'   => $isNa,
-                        'catatan' => $data['catatan'] ?? null,
-                    ];
-
-                    if (isset($data['lampiran']) && $data['lampiran']->isValid()) {
-                        if ($detail->lampiran && Storage::disk('public')->exists($detail->lampiran)) {
-                            Storage::disk('public')->delete($detail->lampiran);
+                    // Collect catatans (supports both array and single string)
+                    $catatanList = [];
+                    if (!empty($data['catatans']) && is_array($data['catatans'])) {
+                        foreach ($data['catatans'] as $c) {
+                            if (is_string($c) && trim($c) !== '') {
+                                $catatanList[] = trim($c);
+                            }
                         }
-                        $updatePayload['lampiran'] = $data['lampiran']->store('lampiran', 'public');
+                    } elseif (isset($data['catatan']) && is_string($data['catatan']) && trim($data['catatan']) !== '') {
+                        $catatanList[] = trim($data['catatan']);
                     }
+
+                    $catatanFinal = null;
+                    if (count($catatanList) === 1) {
+                        $catatanFinal = $catatanList[0];
+                    } elseif (count($catatanList) > 1) {
+                        $formattedLines = [];
+                        foreach ($catatanList as $idx => $txt) {
+                            $formattedLines[] = ($idx + 1) . '. ' . $txt;
+                        }
+                        $catatanFinal = implode("\n", $formattedLines);
+                    }
+
+                    // Existing Lampirans
+                    $existingLampirans = $detail->lampiran_array;
+                    if (!empty($data['hapus_lampiran']) && is_array($data['hapus_lampiran'])) {
+                        foreach ($data['hapus_lampiran'] as $delPath) {
+                            if (Storage::disk('public')->exists($delPath)) {
+                                Storage::disk('public')->delete($delPath);
+                            }
+                            $existingLampirans = array_diff($existingLampirans, [$delPath]);
+                        }
+                    }
+
+                    // Upload new Lampirans
+                    if (!empty($data['lampirans']) && is_array($data['lampirans'])) {
+                        foreach ($data['lampirans'] as $file) {
+                            if ($file && $file->isValid()) {
+                                $existingLampirans[] = $file->store('lampiran', 'public');
+                            }
+                        }
+                    } elseif (isset($data['lampiran']) && $data['lampiran'] instanceof \Illuminate\Http\UploadedFile && $data['lampiran']->isValid()) {
+                        $existingLampirans[] = $data['lampiran']->store('lampiran', 'public');
+                    }
+
+                    $existingLampirans = array_values(array_unique(array_filter($existingLampirans)));
+                    $lampiranFinal = null;
+                    if (count($existingLampirans) === 1) {
+                        $lampiranFinal = $existingLampirans[0];
+                    } elseif (count($existingLampirans) > 1) {
+                        $lampiranFinal = json_encode($existingLampirans);
+                    }
+
+                    $updatePayload = [
+                        'nilai'    => $nilai,
+                        'is_na'    => $isNa,
+                        'catatan'  => $catatanFinal,
+                        'lampiran' => $lampiranFinal,
+                    ];
 
                     $detail->update($updatePayload);
 
@@ -388,11 +441,12 @@ class AuditSesiAdminController extends Controller
     }
 
     /**
-     * Remove audit session (draft/berjalan only).
+     * Soft delete audit session (draft/berjalan only).
      */
     public function destroy($id)
     {
         $sesi = AuditSesi::findOrFail($id);
+        $sesiData = $sesi->toArray();
 
         if ($sesi->status === 'selesai') {
             return back()->with('error', 'Sesi audit yang sudah selesai tidak dapat dihapus.');
@@ -400,7 +454,65 @@ class AuditSesiAdminController extends Controller
 
         $sesi->delete();
 
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Sesi Audit',
+            'tindakan'        => "Menonaktifkan (Soft Delete) Sesi Audit: {$sesiData['area_audit']} ({$sesiData['tanggal_mulai']} s/d {$sesiData['tanggal_selesai']})",
+            'data_lama'       => $sesiData,
+            'data_baru'       => null,
+            'waktu_perubahan' => now(),
+        ]);
+
         return redirect()->route('admin.audit-sesi.index')
-            ->with('success', 'Sesi audit berhasil dihapus.');
+            ->with('success', 'Sesi audit berhasil dipindahkan ke kotak sampah (Soft Delete).');
+    }
+
+    /**
+     * Restore soft-deleted audit session.
+     */
+    public function restore($id)
+    {
+        $sesi = AuditSesi::onlyTrashed()->findOrFail($id);
+        $sesi->restore();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Sesi Audit',
+            'tindakan'        => "Memulihkan (Restore Point) Sesi Audit: {$sesi->area_audit}",
+            'data_lama'       => null,
+            'data_baru'       => $sesi->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
+        return redirect()->route('admin.audit-sesi.index')
+            ->with('success', 'Sesi audit berhasil diaktifkan kembali!');
+    }
+
+    /**
+     * Permanently delete audit session and its details.
+     */
+    public function forceDelete($id)
+    {
+        $sesi = AuditSesi::onlyTrashed()->findOrFail($id);
+        $sesiData = $sesi->toArray();
+
+        try {
+            $sesi->forceDelete();
+
+            \App\Models\AuditLog::create([
+                'user_id'         => auth()->id(),
+                'modul'           => 'Sesi Audit',
+                'tindakan'        => "Menghapus Permanen (Force Delete) Sesi Audit: {$sesiData['area_audit']}",
+                'data_lama'       => $sesiData,
+                'data_baru'       => null,
+                'waktu_perubahan' => now(),
+            ]);
+
+            return redirect()->route('admin.audit-sesi.index')
+                ->with('success', 'Sesi audit berhasil dihapus secara permanen!');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.audit-sesi.index')
+                ->with('error', 'Gagal menghapus permanen sesi audit: ' . $e->getMessage());
+        }
     }
 }

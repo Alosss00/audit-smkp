@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AuditSesi extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'audit_sesis';
 
@@ -212,6 +213,7 @@ class AuditSesi extends Model
                         'is_na'          => (bool) $d->is_na,
                         'catatan'        => $d->catatan,
                         'lampiran_url'   => $d->lampiran_url,
+                        'lampiran_urls'  => $d->lampiran_urls,
                     ];
                 }
 

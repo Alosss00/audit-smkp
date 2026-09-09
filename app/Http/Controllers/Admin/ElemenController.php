@@ -87,7 +87,17 @@ class ElemenController extends Controller
     public function destroy($id)
     {
         $elemen = Elemen::findOrFail($id);
+        $elemenData = $elemen->toArray();
         $elemen->delete();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Elemen',
+            'tindakan'        => "Menonaktifkan (Soft Delete) Elemen: {$elemenData['kode_elemen']} - {$elemenData['nama_elemen']}",
+            'data_lama'       => $elemenData,
+            'data_baru'       => null,
+            'waktu_perubahan' => now(),
+        ]);
 
         return redirect()->route('admin.elemens.index')
             ->with('success', 'Master Elemen berhasil dinonaktifkan (Soft Delete).');
@@ -101,6 +111,15 @@ class ElemenController extends Controller
         $elemen = Elemen::onlyTrashed()->findOrFail($id);
         $elemen->restore();
 
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Elemen',
+            'tindakan'        => "Memulihkan (Restore Point) Elemen: {$elemen->kode_elemen} - {$elemen->nama_elemen}",
+            'data_lama'       => null,
+            'data_baru'       => $elemen->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
         return redirect()->route('admin.elemens.index')
             ->with('success', 'Master Elemen berhasil diaktifkan kembali!');
     }
@@ -111,9 +130,20 @@ class ElemenController extends Controller
     public function forceDelete($id)
     {
         $elemen = Elemen::onlyTrashed()->findOrFail($id);
+        $elemenData = $elemen->toArray();
 
         try {
             $elemen->forceDelete();
+
+            \App\Models\AuditLog::create([
+                'user_id'         => auth()->id(),
+                'modul'           => 'Master Elemen',
+                'tindakan'        => "Menghapus Permanen (Force Delete) Elemen: {$elemenData['kode_elemen']}",
+                'data_lama'       => $elemenData,
+                'data_baru'       => null,
+                'waktu_perubahan' => now(),
+            ]);
+
             return redirect()->route('admin.elemens.index')
                 ->with('success', 'Master Elemen berhasil dihapus secara permanen!');
         } catch (\Exception $e) {
