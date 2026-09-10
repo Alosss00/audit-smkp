@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Administrator — SMKP Minerba')
+@section('title', 'Dashboard Auditor Internal SMKP — SMKP Minerba')
 
 @section('content')
 <div class="row align-items-center mb-4">
     <div class="col-md-7">
         <h2 class="fw-bold text-slate-800 mb-1">
-            <i class="bi bi-speedometer2 text-danger me-2"></i>Dashboard Administrator (Lead Auditor)
+            <i class="bi bi-speedometer2 text-danger me-2"></i>Dashboard Auditor Internal SMKP
         </h2>
         <p class="text-muted mb-0">Selamat datang, <strong>{{ auth()->user()->name }}</strong>. Pengawasan audit internal, pembuatan sesi, penilaian matriks, dan otoritas PICA SMKP Minerba.</p>
     </div>

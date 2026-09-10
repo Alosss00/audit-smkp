@@ -90,50 +90,76 @@
                 @foreach($elemen->subElemens as $sub)
                     @php
                         $subData = $rekapSub[$sub->id] ?? null;
+                        $singleKriteria = $sub->kriterias->count() === 1 ? $sub->kriterias->first() : null;
+                        $isDirect = ($singleKriteria && ($singleKriteria->kode_kriteria === $sub->kode_sub || $singleKriteria->deskripsi === $sub->nama_sub));
+                        $directDetail = $singleKriteria ? $details->firstWhere('kriteria_id', $singleKriteria->id) : null;
                     @endphp
-                    <!-- LEVEL 2: BARIS SUB ELEMEN -->
-                    <tr style="background-color: #f1f5f9; font-weight: bold;">
-                        <td style="border: 1px solid #000000;"></td>
-                        <td style="border: 1px solid #000000;"></td>
-                        <td style="border: 1px solid #000000; font-weight: bold;">{{ $sub->nama_sub }}</td>
-                        <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">{{ $sub->kode_sub }}</td>
-                        <td style="border: 1px solid #000000;">-</td>
-                        <td style="border: 1px solid #000000;">-</td>
-                        <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_maks_efektif'] ?? 0, 0) }}</td>
-                        <td style="border: 1px solid #000000;">-</td>
-                        <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_aktual'] ?? 0, 0) }}</td>
-                        <td style="border: 1px solid #000000;">-</td>
-                        <td style="border: 1px solid #000000;">-</td>
-                        <td style="border: 1px solid #000000;">-</td>
-                        <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">SUB ELEMEN</td>
-                        <td style="border: 1px solid #000000;">-</td>
-                    </tr>
 
-                    @foreach($sub->kriterias as $kriteria)
-                        @php
-                            $detail = $details->firstWhere('kriteria_id', $kriteria->id);
-                            $nilaiAktual = $detail ? ($detail->is_na ? 0 : (float)$detail->nilai) : 0;
-                            $catatan = $detail ? $detail->catatan : '';
-                            $isNa = $detail ? $detail->is_na : false;
-                        @endphp
-                        <!-- LEVEL 3: BARIS SUB-SUB ELEMEN / KRITERIA PENILAIAN -->
-                        <tr>
+                    @if($isDirect)
+                        <!-- LEVEL 2: SUB ELEMEN (PENILAIAN LANGSUNG - 1 BARIS) -->
+                        <tr style="background-color: #f1f5f9; font-weight: bold;">
                             <td style="border: 1px solid #000000;"></td>
                             <td style="border: 1px solid #000000;"></td>
-                            <td style="border: 1px solid #000000;"></td>
-                            <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">{{ $kriteria->kode_kriteria }}</td>
-                            <td style="border: 1px solid #000000;">{{ $kriteria->deskripsi }}</td>
+                            <td style="border: 1px solid #000000; font-weight: bold;">{{ $sub->nama_sub }}</td>
+                            <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">{{ $sub->kode_sub }}</td>
                             <td style="border: 1px solid #000000;">-</td>
                             <td style="border: 1px solid #000000;">-</td>
-                            <td style="text-align: right; border: 1px solid #000000;">{{ number_format($kriteria->nilai_maksimal, 0) }}</td>
+                            <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_maks_efektif'] ?? 0, 0) }}</td>
                             <td style="border: 1px solid #000000;">-</td>
-                            <td style="text-align: right; border: 1px solid #000000;">{{ $isNa ? 'N/A' : number_format($nilaiAktual, 0) }}</td>
+                            <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_aktual'] ?? 0, 0) }}</td>
                             <td style="border: 1px solid #000000;">-</td>
                             <td style="border: 1px solid #000000;">-</td>
-                            <td style="text-align: center; border: 1px solid #000000;">{{ $isNa ? 'N/A' : 'KRITERIA' }}</td>
-                            <td style="border: 1px solid #000000;">{{ $catatan }}</td>
+                            <td style="border: 1px solid #000000;">-</td>
+                            <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">
+                                {{ (!empty($directDetail) && $directDetail->is_na) ? 'N/A' : 'SUB ELEMEN' }}
+                            </td>
+                            <td style="border: 1px solid #000000;">{{ $directDetail->catatan ?? '' }}</td>
                         </tr>
-                    @endforeach
+                    @else
+                        <!-- LEVEL 2: BARIS SUB ELEMEN (GROUPING) -->
+                        <tr style="background-color: #f1f5f9; font-weight: bold;">
+                            <td style="border: 1px solid #000000;"></td>
+                            <td style="border: 1px solid #000000;"></td>
+                            <td style="border: 1px solid #000000; font-weight: bold;">{{ $sub->nama_sub }}</td>
+                            <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">{{ $sub->kode_sub }}</td>
+                            <td style="border: 1px solid #000000;">-</td>
+                            <td style="border: 1px solid #000000;">-</td>
+                            <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_maks_efektif'] ?? 0, 0) }}</td>
+                            <td style="border: 1px solid #000000;">-</td>
+                            <td style="text-align: right; border: 1px solid #000000; font-weight: bold;">{{ number_format($subData['total_nilai_aktual'] ?? 0, 0) }}</td>
+                            <td style="border: 1px solid #000000;">-</td>
+                            <td style="border: 1px solid #000000;">-</td>
+                            <td style="border: 1px solid #000000;">-</td>
+                            <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">SUB ELEMEN</td>
+                            <td style="border: 1px solid #000000;">-</td>
+                        </tr>
+
+                        @foreach($sub->kriterias as $kriteria)
+                            @php
+                                $detail = $details->firstWhere('kriteria_id', $kriteria->id);
+                                $nilaiAktual = $detail ? ($detail->is_na ? 0 : (float)$detail->nilai) : 0;
+                                $catatan = $detail ? $detail->catatan : '';
+                                $isNa = $detail ? $detail->is_na : false;
+                            @endphp
+                            <!-- LEVEL 3: BARIS SUB-SUB ELEMEN / KRITERIA PENILAIAN -->
+                            <tr>
+                                <td style="border: 1px solid #000000;"></td>
+                                <td style="border: 1px solid #000000;"></td>
+                                <td style="border: 1px solid #000000;"></td>
+                                <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">{{ $kriteria->kode_kriteria }}</td>
+                                <td style="border: 1px solid #000000;">{{ $kriteria->deskripsi }}</td>
+                                <td style="border: 1px solid #000000;">-</td>
+                                <td style="border: 1px solid #000000;">-</td>
+                                <td style="text-align: right; border: 1px solid #000000;">{{ number_format($kriteria->nilai_maksimal, 0) }}</td>
+                                <td style="border: 1px solid #000000;">-</td>
+                                <td style="text-align: right; border: 1px solid #000000;">{{ $isNa ? 'N/A' : number_format($nilaiAktual, 0) }}</td>
+                                <td style="border: 1px solid #000000;">-</td>
+                                <td style="border: 1px solid #000000;">-</td>
+                                <td style="text-align: center; border: 1px solid #000000;">{{ $isNa ? 'N/A' : 'KRITERIA' }}</td>
+                                <td style="border: 1px solid #000000;">{{ $catatan }}</td>
+                            </tr>
+                        @endforeach
+                    @endif
                 @endforeach
             @endforeach
         </tbody>

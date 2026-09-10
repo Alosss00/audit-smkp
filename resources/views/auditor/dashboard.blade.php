@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Auditor — SMKP Minerba')
+@section('title', 'Dashboard Auditor Internal Perusahaan — SMKP Minerba')
 
 @section('content')
 <div class="row align-items-center mb-4">
     <div class="col-md-8">
         <h2 class="fw-bold text-slate-800 mb-1">
-            <i class="bi bi-clipboard-check-fill text-info me-2"></i>Dashboard Auditor (Auditee / PIC Area)
+            <i class="bi bi-clipboard-check-fill text-info me-2"></i>Dashboard Auditor Internal Perusahaan
         </h2>
         <p class="text-muted mb-0">Selamat datang, <strong>{{ auth()->user()->name }}</strong>. Area Kerja: <span class="badge bg-primary fs-6">{{ $userArea ?? 'Semua Area' }}</span></p>
     </div>

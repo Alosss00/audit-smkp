@@ -66,7 +66,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Helper to check if user is admin.
+     * Helper to check if user is admin (Auditor Internal SMKP).
      */
     public function isAdmin(): bool
     {
@@ -74,10 +74,18 @@ class User extends Authenticatable
     }
 
     /**
-     * Helper to check if user is auditor.
+     * Helper to check if user is auditor (Auditor Internal Perusahaan).
      */
     public function isAuditor(): bool
     {
         return $this->role === 'auditor';
+    }
+
+    /**
+     * Get human-readable role label.
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        return $this->role === 'admin' ? 'Auditor Internal SMKP' : 'Auditor Internal Perusahaan';
     }
 }

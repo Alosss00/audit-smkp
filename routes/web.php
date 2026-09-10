@@ -95,7 +95,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::resource('users', UserController::class);
     });
 
-    // Auditor Routes (Auditee / PIC Area)
+    // Auditor Routes (Auditee / PIC Area — Read-Only Rekap & Tindak Lanjut PICA)
     Route::middleware('role:auditor')->prefix('auditor')->as('auditor.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'auditor'])->name('dashboard');
 
@@ -105,7 +105,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('audit-sesi.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 
-        // Modul PICA (Tindak Lanjut oleh Auditee / PIC Area)
+        // Modul PICA (Tindak Lanjut Perbaikan Temuan Audit oleh Auditee / PIC Area)
         Route::get('/pica', [PicaController::class, 'index'])->name('pica.index');
         Route::get('/pica/{id}/edit', [PicaController::class, 'edit'])->name('pica.edit');
         Route::put('/pica/{id}', [PicaController::class, 'update'])->name('pica.update');

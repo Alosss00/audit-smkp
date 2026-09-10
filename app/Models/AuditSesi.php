@@ -222,6 +222,8 @@ class AuditSesi extends Model
                 $elAktual += $subAktual;
                 $elMaks   += $subMaks;
 
+                $isDirect = count($subDetails) === 1 && ($subDetails[0]['kode_kriteria'] === $sub->kode_sub || $subDetails[0]['deskripsi'] === $sub->nama_sub);
+
                 $subList[] = [
                     'sub_elemen_id'            => $sub->id,
                     'kode_sub'                 => $sub->kode_sub,
@@ -230,6 +232,8 @@ class AuditSesi extends Model
                     'total_nilai_maks_efektif' => (int) round($subMaks),
                     'persentase'               => round($subPct, 2),
                     'details'                  => $subDetails,
+                    'is_direct'                => $isDirect,
+                    'direct_detail'            => $isDirect ? ($subDetails[0] ?? null) : null,
                 ];
             }
 

@@ -439,9 +439,9 @@
                         <div class="overflow-hidden">
                             <strong class="text-white d-block text-truncate small" style="max-width: 130px;">{{ auth()->user()->name }}</strong>
                             @if(auth()->user()->isAdmin())
-                                <span class="badge bg-danger badge-role" style="font-size: 0.65rem; padding: 2px 8px;">Administrator</span>
+                                <span class="badge bg-danger badge-role" style="font-size: 0.65rem; padding: 2px 8px;">Auditor Internal SMKP</span>
                             @else
-                                <span class="badge bg-info text-dark badge-role" style="font-size: 0.65rem; padding: 2px 8px;">Auditor</span>
+                                <span class="badge bg-info text-dark badge-role" style="font-size: 0.65rem; padding: 2px 8px;">Auditor Internal Perusahaan</span>
                             @endif
                         </div>
                     </div>

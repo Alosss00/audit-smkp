@@ -187,50 +187,86 @@
 
                     <!-- Level 2: Baris Sub-Elemen -->
                     @foreach($el['sub_elemens'] as $sub)
-                        <tr class="collapse show el-collapse-{{ $el['elemen_id'] }} bg-sub-elemen" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target=".sub-collapse-{{ $sub['sub_elemen_id'] }}">
-                            <td class="text-center font-monospace fw-bold" style="width: 70px;">{{ $sub['kode_sub'] }}</td>
-                            <td colspan="2" class="fw-semibold text-slate-800">{{ $sub['nama_sub'] }}</td>
-                            <td class="text-center text-muted">-</td>
-                            <!-- Cetak Nilai Maksimal HANYA di kolom Nilai Sub Elemen (kolom ke-5) -->
-                            <td class="text-center font-monospace fw-bold">{{ number_format($sub['total_nilai_maks_efektif'], 0) }}</td>
-                            <td class="text-center text-muted">-</td>
-                            <!-- Cetak Nilai Hasil Audit HANYA di kolom Nilai Sub Elemen (kolom ke-7, biru) -->
-                            <td class="bg-blue-input font-monospace">{{ number_format($sub['total_nilai_aktual'], 0) }}</td>
-                            <td class="text-center text-muted">-</td>
-                            <td class="text-center text-muted">-</td>
-                            <td class="text-center text-muted">-</td>
-                            <td class="text-center small text-secondary fw-semibold">SUB ELEMEN</td>
-                        </tr>
-
-                        <!-- Level 3: Baris Sub-sub Elemen / Kriteria Penilaian -->
-                        @foreach($sub['details'] as $d)
-                            <tr class="collapse show el-collapse-{{ $el['elemen_id'] }} sub-collapse-{{ $sub['sub_elemen_id'] }} bg-white">
-                                <td style="width: 70px;"></td>
-                                <td class="text-center font-monospace small text-secondary" style="width: 85px;">{{ $d['kode_kriteria'] }}</td>
-                                <td class="small text-slate-700 ps-3">
-                                    <div>{{ $d['deskripsi'] }}</div>
-                                    @if($d['catatan'])
-                                        <div class="mt-1 small text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Temuan: {{ $d['catatan'] }}</div>
+                        @if(!empty($sub['is_direct']))
+                            <!-- Sub-Elemen Penilaian Langsung (Cukup 1 Baris, Tanpa Baris Kriteria Tambahan) -->
+                            <tr class="collapse show el-collapse-{{ $el['elemen_id'] }} bg-sub-elemen">
+                                <td class="text-center font-monospace fw-bold" style="width: 70px;">{{ $sub['kode_sub'] }}</td>
+                                <td colspan="2" class="fw-semibold text-slate-800">
+                                    <div>{{ $sub['nama_sub'] }}</div>
+                                    @if(!empty($sub['direct_detail']['catatan']))
+                                        <div class="mt-1 small text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Temuan: {{ $sub['direct_detail']['catatan'] }}</div>
                                     @endif
                                 </td>
                                 <td class="text-center text-muted">-</td>
+                                <!-- Nilai Maksimal Sub Elemen -->
+                                <td class="text-center font-monospace fw-bold">{{ number_format($sub['total_nilai_maks_efektif'], 0) }}</td>
                                 <td class="text-center text-muted">-</td>
-                                <!-- Cetak Nilai Maksimal HANYA di kolom Nilai Sub-sub Elemen (kolom ke-6) -->
-                                <td class="text-center font-monospace small text-muted">{{ number_format($d['nilai_maksimal'], 0) }}</td>
-                                <td class="text-center text-muted bg-blue-input" style="opacity: 0.2;">-</td>
-                                <!-- Cetak Nilai Hasil Audit HANYA di kolom Nilai Sub-sub Elemen (kolom ke-8) -->
-                                <td class="text-center font-monospace fw-bold">
-                                    @if($d['is_na'])
+                                <!-- Nilai Aktual Sub Elemen (biru) -->
+                                <td class="bg-blue-input font-monospace">
+                                    @if(!empty($sub['direct_detail']['is_na']))
                                         <span class="badge bg-secondary">N/A</span>
                                     @else
-                                        <span class="{{ $d['nilai'] < $d['nilai_maksimal'] ? 'text-danger' : 'text-success' }}">{{ number_format($d['nilai'], 0) }}</span>
+                                        <span class="{{ $sub['total_nilai_aktual'] < $sub['total_nilai_maks_efektif'] ? 'text-warning' : 'text-white' }} fw-bold">
+                                            {{ number_format($sub['total_nilai_aktual'], 2) }}
+                                        </span>
                                     @endif
                                 </td>
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
-                                <td class="text-center small text-muted">{{ $d['is_na'] ? 'N/A' : 'KRITERIA' }}</td>
+                                <td class="text-center text-muted">-</td>
+                                <td class="text-center small text-secondary fw-semibold">
+                                    @if(!empty($sub['direct_detail']['is_na']))
+                                        <span class="badge bg-secondary">N/A</span>
+                                    @else
+                                        SUB ELEMEN
+                                    @endif
+                                </td>
                             </tr>
-                        @endforeach
+                        @else
+                            <!-- Sub-Elemen dengan Beberapa Sub-sub Elemen / Kriteria -->
+                            <tr class="collapse show el-collapse-{{ $el['elemen_id'] }} bg-sub-elemen" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target=".sub-collapse-{{ $sub['sub_elemen_id'] }}">
+                                <td class="text-center font-monospace fw-bold" style="width: 70px;">
+                                    <i class="bi bi-chevron-down toggle-icon me-1 text-secondary small"></i>{{ $sub['kode_sub'] }}
+                                </td>
+                                <td colspan="2" class="fw-semibold text-slate-800">{{ $sub['nama_sub'] }}</td>
+                                <td class="text-center text-muted">-</td>
+                                <td class="text-center font-monospace fw-bold">{{ number_format($sub['total_nilai_maks_efektif'], 0) }}</td>
+                                <td class="text-center text-muted">-</td>
+                                <td class="bg-blue-input font-monospace">{{ number_format($sub['total_nilai_aktual'], 2) }}</td>
+                                <td class="text-center text-muted">-</td>
+                                <td class="text-center text-muted">-</td>
+                                <td class="text-center text-muted">-</td>
+                                <td class="text-center small text-secondary fw-semibold">SUB ELEMEN</td>
+                            </tr>
+
+                            <!-- Level 3: Baris Sub-sub Elemen / Kriteria Penilaian -->
+                            @foreach($sub['details'] as $d)
+                                <tr class="collapse show el-collapse-{{ $el['elemen_id'] }} sub-collapse-{{ $sub['sub_elemen_id'] }} bg-white">
+                                    <td style="width: 70px;"></td>
+                                    <td class="text-center font-monospace small text-secondary" style="width: 85px;">{{ $d['kode_kriteria'] }}</td>
+                                    <td class="small text-slate-700 ps-3">
+                                        <div>{{ $d['deskripsi'] }}</div>
+                                        @if($d['catatan'])
+                                            <div class="mt-1 small text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Temuan: {{ $d['catatan'] }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="text-center text-muted">-</td>
+                                    <td class="text-center text-muted">-</td>
+                                    <td class="text-center font-monospace small text-muted">{{ number_format($d['nilai_maksimal'], 0) }}</td>
+                                    <td class="text-center text-muted bg-blue-input" style="opacity: 0.2;">-</td>
+                                    <td class="text-center font-monospace fw-bold">
+                                        @if($d['is_na'])
+                                            <span class="badge bg-secondary">N/A</span>
+                                        @else
+                                            <span class="{{ $d['nilai'] < $d['nilai_maksimal'] ? 'text-danger' : 'text-success' }}">{{ number_format($d['nilai'], 0) }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center text-muted">-</td>
+                                    <td class="text-center text-muted">-</td>
+                                    <td class="text-center small text-muted">{{ $d['is_na'] ? 'N/A' : 'KRITERIA' }}</td>
+                                </tr>
+                            @endforeach
+                        @endif
                     @endforeach
                 @endforeach
             </tbody>

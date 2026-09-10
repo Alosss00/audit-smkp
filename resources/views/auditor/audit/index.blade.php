@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Sesi Audit — SMKP Minerba')
+@section('title', 'Daftar Sesi Audit Area Kerja — SMKP Minerba')
 
 @section('content')
-<div class="row align-items-center mb-4">
-    <div class="col-md-8">
+<div class="row align-items-center justify-content-between mb-4">
+    <div class="col-md-12">
         <h2 class="fw-bold text-slate-800 mb-1">
             <i class="bi bi-journal-text text-info me-2"></i>Sesi Audit Area Kerja
         </h2>
-        <p class="text-muted mb-0">Daftar dan rekapitulasi sesi penilaian matriks SMKP pada area kerja: <strong>{{ $userArea ?? 'Semua Area' }}</strong></p>
+        <p class="text-muted mb-0">Daftar dan rekapitulasi sesi penilaian SMKP yang dilaksanakan pada area kerja: <strong>{{ $userArea ?? 'Semua Area' }}</strong></p>
     </div>
 </div>
 
@@ -36,7 +36,8 @@
     @if($auditSesis->isEmpty())
         <div class="text-center py-5 text-muted">
             <i class="bi bi-inbox display-4 d-block mb-3 opacity-50"></i>
-            <p class="mb-2 fs-5 fw-semibold">Belum ada sesi audit pada area kerja Anda.</p>
+            <p class="mb-0 fs-5 fw-semibold">Belum ada sesi audit pada area kerja Anda.</p>
+            <small class="text-muted">Sesi audit akan diinisialisasi dan dinilai oleh Administrator / Tim Lead Auditor.</small>
         </div>
     @else
         <div class="table-responsive">
@@ -46,6 +47,7 @@
                         <th style="width: 50px;">No</th>
                         <th>Periode Audit</th>
                         <th>Area Audit</th>
+                        <th>Auditor Pelaksana</th>
                         <th>Status</th>
                         <th>Skor Akhir</th>
                         <th class="text-end">Aksi</th>
@@ -61,6 +63,9 @@
                             </td>
                             <td>
                                 <span class="fw-bold text-slate-800">{{ $sesi->area_audit }}</span>
+                            </td>
+                            <td>
+                                <small class="text-muted"><i class="bi bi-person me-1"></i>{{ $sesi->user->name ?? '-' }}</small>
                             </td>
                             <td>
                                 @if($sesi->status === 'draft')
@@ -79,8 +84,8 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('auditor.audit-sesi.rekap', $sesi->id) }}" class="btn btn-sm btn-outline-info text-dark rounded-2">
-                                    <i class="bi bi-bar-chart-line me-1"></i> Rekap
+                                <a href="{{ route('auditor.audit-sesi.rekap', $sesi->id) }}" class="btn btn-sm btn-outline-info text-dark rounded-2" title="Lihat Rekapitulasi Nilai">
+                                    <i class="bi bi-bar-chart-line me-1"></i> Lihat Rekap
                                 </a>
                             </td>
                         </tr>
