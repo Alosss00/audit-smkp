@@ -198,7 +198,7 @@ class AuditSesiAdminController extends Controller
             'details.*.catatan'        => 'nullable',
             'details.*.catatans'       => 'nullable|array',
             'details.*.catatans.*'     => 'nullable|string',
-            'details.*.lampiran'       => 'nullable',
+            'details.*.lampiran'       => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             'details.*.lampirans'      => 'nullable|array',
             'details.*.lampirans.*'    => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             'details.*.hapus_lampiran' => 'nullable|array',
@@ -406,7 +406,8 @@ class AuditSesiAdminController extends Controller
     public function exportExcel($id)
     {
         $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
-        $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . str_replace(' ', '_', $sesi->area_audit) . '_' . $sesi->tanggal_mulai->format('Y-m-d') . '.xlsx';
+        $safeArea = preg_replace('/[^A-Za-z0-9_\-]/', '_', $sesi->area_audit);
+        $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . $safeArea . '_' . $sesi->tanggal_mulai->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new AuditSesiExport($sesi), $fileName);
     }

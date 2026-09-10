@@ -189,7 +189,7 @@
 </div>
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
         const createModal = document.getElementById('createKriteriaModal');
         if (createModal) {

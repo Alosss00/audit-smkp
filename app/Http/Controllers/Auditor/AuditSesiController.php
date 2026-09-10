@@ -70,7 +70,8 @@ class AuditSesiController extends Controller
     public function exportExcel($id)
     {
         $sesi = $this->findAuditorSession($id);
-        $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . str_replace(' ', '_', $sesi->area_audit) . '_' . $sesi->tanggal_mulai->format('Y-m-d') . '.xlsx';
+        $safeArea = preg_replace('/[^A-Za-z0-9_\-]/', '_', $sesi->area_audit);
+        $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . $safeArea . '_' . $sesi->tanggal_mulai->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new AuditSesiExport($sesi), $fileName);
     }

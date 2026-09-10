@@ -208,7 +208,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Bar Chart Area Audit Score Comparison
         const ctxBar = document.getElementById('elementBarChart').getContext('2d');

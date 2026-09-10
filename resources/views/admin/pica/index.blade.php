@@ -402,7 +402,7 @@
 @endforeach
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     function toggleJustifikasi(picaId) {
         const select = document.getElementById('kategoriSelect' + picaId);
         const container = document.getElementById('justifikasiContainer' + picaId);

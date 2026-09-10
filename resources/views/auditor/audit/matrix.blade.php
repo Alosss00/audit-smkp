@@ -358,7 +358,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
         const checkNas = document.querySelectorAll('.check-na');
 

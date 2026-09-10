@@ -281,7 +281,7 @@
 </div>
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
         const toggleBtn = document.getElementById('toggleAllHierarkiBtn');
         let isExpanded = true;

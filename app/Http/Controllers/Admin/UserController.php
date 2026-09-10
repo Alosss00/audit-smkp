@@ -33,10 +33,11 @@ class UserController extends Controller
             'email'    => 'nullable|email|unique:users,email',
             'role'     => 'required|in:admin,auditor',
             'area'     => 'required_if:role,auditor|nullable|string|max:255',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:6|max:100',
         ], [
             'username.unique' => 'Username sudah digunakan.',
             'password.min'    => 'Password minimal 6 karakter.',
+            'password.max'    => 'Password maksimal 100 karakter.',
             'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor (Auditee / PIC Area).',
         ]);
 
@@ -45,7 +46,7 @@ class UserController extends Controller
             'username'  => $request->username,
             'email'     => $request->email,
             'role'      => $request->role,
-            'area'      => $request->area,
+            'area'      => $request->role === 'admin' ? null : $request->area,
             'password'  => Hash::make($request->password),
             'is_active' => true,
         ]);
@@ -76,20 +77,30 @@ class UserController extends Controller
             'email'    => 'nullable|email|unique:users,email,' . $user->id,
             'role'     => 'required|in:admin,auditor',
             'area'     => 'required_if:role,auditor|nullable|string|max:255',
-            'password' => 'nullable|string|min:6',
+            'password' => 'nullable|string|min:6|max:100',
         ], [
+            'password.min'    => 'Password minimal 6 karakter.',
+            'password.max'    => 'Password maksimal 100 karakter.',
             'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor (Auditee / PIC Area).',
         ]);
 
         $originalData = ['name' => $user->name, 'username' => $user->username, 'email' => $user->email, 'role' => $user->role, 'area' => $user->area, 'is_active' => $user->is_active];
+        
+        $newRole  = $request->role;
         $isActive = $request->has('is_active') ? true : false;
+
+        // Proteksi: Admin tidak dapat mendemosi role atau menonaktifkan akun miliknya sendiri
+        if ($user->id === auth()->id()) {
+            $newRole  = 'admin';
+            $isActive = true;
+        }
 
         $data = [
             'name'      => $request->name,
             'username'  => $request->username,
             'email'     => $request->email,
-            'role'      => $request->role,
-            'area'      => $request->area,
+            'role'      => $newRole,
+            'area'      => $newRole === 'admin' ? null : $request->area,
             'is_active' => $isActive,
         ];
 

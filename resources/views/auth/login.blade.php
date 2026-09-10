@@ -132,7 +132,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     function fillCredentials(username, password) {
         document.getElementById('username').value = username;
         document.getElementById('password').value = password;

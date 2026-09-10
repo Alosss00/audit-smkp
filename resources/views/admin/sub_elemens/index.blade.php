@@ -533,7 +533,7 @@
 @endforeach
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function() {
     let currentGeneralData = null;
 

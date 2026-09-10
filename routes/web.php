@@ -43,8 +43,8 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         // Audit System Monitoring & Oversight
         Route::get('/rekap-audit', [AuditOversightController::class, 'index'])->name('rekap-audit.index');
         Route::get('/rekap-audit/{id}', [AuditOversightController::class, 'show'])->name('rekap-audit.show');
-        Route::get('/rekap-audit/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('rekap-audit.cetak');
-        Route::get('/rekap-audit/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('rekap-audit.export-excel');
+        Route::get('/rekap-audit/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('rekap-audit.cetak');
+        Route::get('/rekap-audit/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('rekap-audit.export-excel');
 
         // Monitoring PICA (Problem Identification and Corrective Action) — all auditors
         Route::get('/pica', [AdminPicaController::class, 'index'])->name('pica.index');
@@ -89,10 +89,13 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         // Log Aktivitas User & Audit Trail Perubahan File
         Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
 
-        Route::patch('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
-        Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
-        Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');
-        Route::resource('users', UserController::class);
+        // User Management CRUD with Rate Limiting
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::patch('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+            Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
+            Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');
+            Route::resource('users', UserController::class);
+        });
     });
 
     // Auditor Routes (Auditee / PIC Area — Read-Only Rekap & Tindak Lanjut PICA)
