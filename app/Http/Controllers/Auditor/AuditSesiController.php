@@ -59,9 +59,10 @@ class AuditSesiController extends Controller
     {
         $sesi      = $this->findAuditorSession($id);
         $rekap     = $sesi->getRekapPerElemen();
+        $hierarki  = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->skor_akhir ?? $sesi->hitungSkorAkhir();
 
-        return view('auditor.audit.cetak', compact('sesi', 'rekap', 'skorAkhir'));
+        return view('auditor.audit.cetak', compact('sesi', 'rekap', 'hierarki', 'skorAkhir'));
     }
 
     /**
@@ -71,9 +72,9 @@ class AuditSesiController extends Controller
     {
         $sesi = $this->findAuditorSession($id);
         $safeArea = preg_replace('/[^A-Za-z0-9_\-]/', '_', $sesi->area_audit);
-        $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . $safeArea . '_' . $sesi->tanggal_mulai->format('Y-m-d') . '.xlsx';
+        $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . $safeArea . '_' . ($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y-m-d') : date('Y-m-d')) . '.xlsx';
 
-        return Excel::download(new AuditSesiExport($sesi), $fileName);
+        return AuditSesiExport::downloadTemplateWithScores($sesi, $fileName);
     }
 
     /**

@@ -187,6 +187,52 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User berhasil dihapus.');
+            ->with('success', 'User berhasil dihapus dan dipindahkan ke Restore Point.');
+    }
+
+    /**
+     * Restore the specified user from trash.
+     */
+    public function restore($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Manajemen User',
+            'tindakan'        => "Memulihkan akun user: {$user->name} ({$user->username})",
+            'data_lama'       => null,
+            'data_baru'       => ['id' => $user->id, 'name' => $user->name, 'username' => $user->username],
+            'waktu_perubahan' => now(),
+        ]);
+
+        return back()->with('success', "Akun user '{$user->name}' berhasil dipulihkan!");
+    }
+
+    /**
+     * Permanently delete the specified user from storage.
+     */
+    public function forceDelete($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Anda tidak dapat menghapus permanen akun Anda sendiri.');
+        }
+
+        $info = ['id' => $user->id, 'name' => $user->name, 'username' => $user->username];
+        $user->forceDelete();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Manajemen User',
+            'tindakan'        => "Menghapus PERMANEN akun user: {$info['name']} ({$info['username']})",
+            'data_lama'       => $info,
+            'data_baru'       => null,
+            'waktu_perubahan' => now(),
+        ]);
+
+        return back()->with('success', "Akun user '{$info['name']}' berhasil dihapus permanen.");
     }
 }

@@ -17,11 +17,244 @@ class SMKPSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        Kriteria::truncate();
-        SubElemen::truncate();
-        Elemen::truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        $sqlPath = __DIR__ . '/smkp_minerba_clean.sql';
+        if (file_exists($sqlPath)) {
+            $sql = file_get_contents($sqlPath);
+            
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            DB::statement('DROP TABLE IF EXISTS tb_kriteria_penilaian;');
+            DB::statement('DROP TABLE IF EXISTS tb_sub_sub_elemen;');
+            DB::statement('DROP TABLE IF EXISTS tb_sub_elemen;');
+            DB::statement('DROP TABLE IF EXISTS tb_elemen;');
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            // Tokenize and execute SQL
+            $statements = [];
+            $length = strlen($sql);
+            $current = '';
+            $inString = false;
+            $stringChar = '';
+            $escaped = false;
+
+            for ($i = 0; $i < $length; $i++) {
+                $char = $sql[$i];
+                if ($inString) {
+                    $current .= $char;
+                    if ($char === '\\' && !$escaped) {
+                        $escaped = true;
+                        continue;
+                    }
+                    if ($char === $stringChar && !$escaped) {
+                        if ($i + 1 < $length && $sql[$i + 1] === $stringChar) {
+                            $current .= $sql[++$i];
+                        } else {
+                            $inString = false;
+                        }
+                    }
+                    $escaped = false;
+                } else {
+                    if ($char === "'" || $char === '"' || $char === '`') {
+                        $inString = true;
+                        $stringChar = $char;
+                        $current .= $char;
+                    } elseif ($char === ';') {
+                        $trimmed = trim($current);
+                        if (!empty($trimmed)) {
+                            $statements[] = $trimmed;
+                        }
+                        $current = '';
+                    } else {
+                        $current .= $char;
+                    }
+                }
+            }
+            $trimmed = trim($current);
+            if (!empty($trimmed)) {
+                $statements[] = $trimmed;
+            }
+
+            foreach ($statements as $stmt) {
+                $test = trim(preg_replace('/--[^\n]*\n/', '', $stmt));
+                if (empty($test)) continue;
+                try {
+                    DB::unprepared($stmt . ';');
+                } catch (\Throwable $e) {
+                    // skip or log
+                }
+            }
+
+            // Synchronize tb_* to Laravel models
+            $tbElemens = DB::table('tb_elemen')->get();
+            $tbSubElemens = DB::table('tb_sub_elemen')->get()->keyBy('kode_sub_elemen');
+            $tbSubSubElemens = DB::table('tb_sub_sub_elemen')->get()->keyBy('kode_sub_sub_elemen');
+            $tbKriterias = DB::table('tb_kriteria_penilaian')->get()->groupBy('kode_item_audit');
+
+            // 1. Elemens
+            foreach ($tbElemens as $row) {
+                $elemen = Elemen::withTrashed()->firstOrNew(['kode_elemen' => trim($row->kode_elemen)]);
+                $elemen->nama_elemen = trim($row->nama_elemen);
+                $elemen->bobot = (float) $row->bobot_persen;
+                if ($elemen->trashed()) {
+                    $elemen->restore();
+                }
+                $elemen->save();
+            }
+
+            // 2. Sub Elemens
+            foreach ($tbSubElemens as $row) {
+                $elemen = Elemen::where('kode_elemen', trim($row->kode_elemen))->first();
+                if (!$elemen) continue;
+
+                $subElemen = SubElemen::withTrashed()->firstOrNew([
+                    'elemen_id' => $elemen->id,
+                    'kode_sub'  => trim($row->kode_sub_elemen),
+                ]);
+                $subElemen->nama_sub = trim($row->nama_sub_elemen);
+                if ($subElemen->trashed()) {
+                    $subElemen->restore();
+                }
+                $subElemen->save();
+            }
+
+            // 3. Sub-Sub Elemens & Kriterias
+            $subElemensWithChildren = [];
+            foreach ($tbSubSubElemens as $row) {
+                $subElemensWithChildren[trim($row->kode_sub_elemen)] = true;
+            }
+
+            foreach ($tbSubSubElemens as $row) {
+                $subSubKode = trim($row->kode_sub_sub_elemen);
+                $parentKode = trim($row->kode_sub_elemen);
+                $parentSub = SubElemen::where('kode_sub', $parentKode)->first();
+                if (!$parentSub) continue;
+
+                $rubrics = $tbKriterias->get($subSubKode, collect());
+                $pedomanJson = [];
+                $pedoman0 = null;
+                $pedoman1 = null;
+                $pedoman2 = null;
+                $pedoman3 = null;
+                $pedoman4 = null;
+                $maxScore = 0;
+                $isNa = false;
+
+                foreach ($rubrics as $r) {
+                    $skor = trim($r->skor);
+                    $desk = trim($r->deskripsi);
+                    $pedomanJson[$skor] = $desk;
+                    if (is_numeric($skor)) {
+                        $num = (float)$skor;
+                        if ($num > $maxScore) $maxScore = $num;
+                        if ($skor === '0') $pedoman0 = $desk;
+                        if ($skor === '1') $pedoman1 = $desk;
+                        if ($skor === '2') $pedoman2 = $desk;
+                        if ($skor === '3') $pedoman3 = $desk;
+                        if ($skor === '4') $pedoman4 = $desk;
+                    } elseif (strtoupper($skor) === 'N/A') {
+                        $isNa = true;
+                    }
+                }
+
+                if ($maxScore == 0 && !$isNa) {
+                    $maxScore = 4.0;
+                }
+
+                $kriteria = Kriteria::withTrashed()->firstOrNew([
+                    'sub_elemen_id' => $parentSub->id,
+                    'kode_kriteria' => $subSubKode,
+                ]);
+                $kriteria->deskripsi = trim($row->nama_sub_sub_elemen);
+                $kriteria->nilai_maksimal = $maxScore;
+                $kriteria->is_na = $isNa;
+                if (!empty($pedoman0)) $kriteria->pedoman_nilai_0 = $pedoman0;
+                if (!empty($pedoman1)) $kriteria->pedoman_nilai_1 = $pedoman1;
+                if (!empty($pedoman2)) $kriteria->pedoman_nilai_2 = $pedoman2;
+                if (!empty($pedoman3)) $kriteria->pedoman_nilai_3 = $pedoman3;
+                if (!empty($pedoman4)) $kriteria->pedoman_nilai_4 = $pedoman4;
+                if (!empty($pedomanJson)) $kriteria->pedoman_nilai_json = $pedomanJson;
+
+                if ($kriteria->trashed()) {
+                    $kriteria->restore();
+                }
+                $kriteria->save();
+            }
+
+            foreach ($tbSubElemens as $row) {
+                $kodeSub = trim($row->kode_sub_elemen);
+                if (isset($subElemensWithChildren[$kodeSub])) {
+                    $sub = SubElemen::where('kode_sub', $kodeSub)->first();
+                    if ($sub) {
+                        Kriteria::where('sub_elemen_id', $sub->id)->where('kode_kriteria', $kodeSub)->delete();
+                    }
+                    continue;
+                }
+
+                $parentSub = SubElemen::where('kode_sub', $kodeSub)->first();
+                if (!$parentSub) continue;
+
+                $rubrics = $tbKriterias->get($kodeSub, collect());
+                $pedomanJson = [];
+                $pedoman0 = null;
+                $pedoman1 = null;
+                $pedoman2 = null;
+                $pedoman3 = null;
+                $pedoman4 = null;
+                $maxScore = 0;
+                $isNa = false;
+
+                foreach ($rubrics as $r) {
+                    $skor = trim($r->skor);
+                    $desk = trim($r->deskripsi);
+                    $pedomanJson[$skor] = $desk;
+                    if (is_numeric($skor)) {
+                        $num = (float)$skor;
+                        if ($num > $maxScore) $maxScore = $num;
+                        if ($skor === '0') $pedoman0 = $desk;
+                        if ($skor === '1') $pedoman1 = $desk;
+                        if ($skor === '2') $pedoman2 = $desk;
+                        if ($skor === '3') $pedoman3 = $desk;
+                        if ($skor === '4') $pedoman4 = $desk;
+                    } elseif (strtoupper($skor) === 'N/A') {
+                        $isNa = true;
+                    }
+                }
+
+                if ($maxScore == 0 && !$isNa) {
+                    $maxScore = 4.0;
+                }
+
+                $kriteria = Kriteria::withTrashed()->firstOrNew([
+                    'sub_elemen_id' => $parentSub->id,
+                    'kode_kriteria' => $kodeSub,
+                ]);
+                $kriteria->deskripsi = trim($row->nama_sub_elemen);
+                $kriteria->nilai_maksimal = $maxScore;
+                $kriteria->is_na = $isNa;
+                if (!empty($pedoman0)) $kriteria->pedoman_nilai_0 = $pedoman0;
+                if (!empty($pedoman1)) $kriteria->pedoman_nilai_1 = $pedoman1;
+                if (!empty($pedoman2)) $kriteria->pedoman_nilai_2 = $pedoman2;
+                if (!empty($pedoman3)) $kriteria->pedoman_nilai_3 = $pedoman3;
+                if (!empty($pedoman4)) $kriteria->pedoman_nilai_4 = $pedoman4;
+                if (!empty($pedomanJson)) $kriteria->pedoman_nilai_json = $pedomanJson;
+
+                if ($kriteria->trashed()) {
+                    $kriteria->restore();
+                }
+                $kriteria->save();
+            }
+
+            // 4. Recalculate max scores
+            foreach (SubElemen::all() as $sub) {
+                $sub->nilai_maksimal = (float) $sub->kriterias()->sum('nilai_maksimal');
+                $sub->save();
+            }
+
+            foreach (Elemen::all() as $elem) {
+                $elem->total_nilai_sub_elemen = (float) $elem->subElemens()->sum('nilai_maksimal');
+                $elem->save();
+            }
+            return;
+        }
 
         // Data Structure matching user input 100%
         $data = [

@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Manual — SMKP Minerba Internal Audit System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-size: 10pt; /* Golden Ratio Base: 10pt */
+            line-height: 1.55;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            max-height: 297mm;
+            padding: 16mm 18mm 14mm 18mm;
+            position: relative;
+            page-break-after: always;
+            page-break-inside: avoid;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Typography based on Golden Ratio (~1.618):
+           - Base: 10pt
+           - Sub-sub / H3: 10 * 1.25 = 12.5pt
+           - Sub-heading / H2: 10 * 1.618 ≈ 16pt
+           - Main Heading / H1: 16 * 1.618 ≈ 26pt
+        */
+        h1.chap-title {
+            font-size: 26pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 10px 0;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        h2.sec-title {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #0369a1;
+            margin: 14px 0 6px 0;
+            line-height: 1.3;
+            border-bottom: 1.5px solid #f1f5f9;
+            padding-bottom: 3px;
+        }
+
+        h3.subsec-title {
+            font-size: 12.5pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 10px 0 4px 0;
+            line-height: 1.35;
+        }
+
+        p {
+            font-size: 10pt;
+            margin: 0 0 8px 0;
+            text-align: justify;
+        }
+
+        /* Cover Page */
+        .cover-page {
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 55%, #0284c7 100%);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 26mm 20mm 18mm 20mm;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 5px 14px;
+            border-radius: 9999px;
+            font-size: 9pt;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #38bdf8;
+            margin-bottom: 20px;
+        }
+
+        .cover-title {
+            font-size: 30pt;
+            font-weight: 800;
+            line-height: 1.18;
+            margin: 0 0 12px 0;
+            color: #ffffff;
+        }
+
+        .cover-subtitle {
+            font-size: 14pt;
+            font-weight: 400;
+            color: #cbd5e1;
+            margin: 0 0 25px 0;
+            line-height: 1.45;
+            max-width: 95%;
+        }
+
+        .cover-divider {
+            width: 70px;
+            height: 4px;
+            background: linear-gradient(90deg, #38bdf8, #0284c7);
+            border-radius: 2px;
+            margin-bottom: 25px;
+        }
+
+        .cover-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        .cover-meta-item label {
+            display: block;
+            font-size: 7.5pt;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .cover-meta-item span {
+            display: block;
+            font-size: 10pt;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .cover-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8pt;
+            color: #94a3b8;
+        }
+
+        /* Standard Header & Footer */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1.5px solid #e2e8f0;
+            padding-bottom: 6px;
+            margin-bottom: 14px;
+            font-size: 8pt;
+            color: #64748b;
+        }
+
+        .page-header .brand {
+            font-weight: 700;
+            color: #0369a1;
+            letter-spacing: 0.5px;
+        }
+
+        .page-footer {
+            position: absolute;
+            bottom: 10mm;
+            left: 18mm;
+            right: 18mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 6px;
+            font-size: 7.5pt;
+            color: #94a3b8;
+        }
+
+        /* Callout & Alert Boxes */
+        .callout {
+            background-color: #f8fafc;
+            border-left: 4px solid #0284c7;
+            padding: 8px 12px;
+            border-radius: 0 8px 8px 0;
+            margin: 8px 0;
+            font-size: 9pt;
+            line-height: 1.45;
+        }
+
+        .callout.tip { background-color: #f0fdf4; border-left-color: #16a34a; }
+        .callout.warn { background-color: #fffbeb; border-left-color: #d97706; }
+        .callout.danger { background-color: #fef2f2; border-left-color: #ef4444; }
+
+        /* UI Mockup Placeholder Box */
+        .ui-placeholder {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1.5px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 8px 0;
+            text-align: center;
+            color: #475569;
+            font-size: 8.5pt;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .ui-placeholder strong {
+            color: #0369a1;
+            font-size: 9pt;
+        }
+
+        /* Step Guide Numbered Blocks */
+        .step-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .step-num {
+            background: #0284c7;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 9pt;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .step-content {
+            flex-grow: 1;
+        }
+
+        .step-content h4 {
+            font-size: 9.5pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 2px 0;
+        }
+
+        .step-content p {
+            font-size: 8.5pt;
+            color: #475569;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* Tables */
+        table.doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 8.5pt;
+        }
+
+        table.doc-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 6px 10px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #0f172a;
+        }
+
+        table.doc-table td {
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: top;
+        }
+
+        table.doc-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .badge-pill {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            font-size: 7pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-pill.crit { background: #fee2e2; color: #991b1b; }
+        .badge-pill.mayor { background: #ffedd5; color: #9a3412; }
+        .badge-pill.minor { background: #e0f2fe; color: #0369a1; }
+        .badge-pill.success { background: #dcfce7; color: #15803d; }
+        .badge-pill.gold { background: #fef3c7; color: #b45309; }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 8px 0;
+        }
+
+        .card-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .card-box h4 {
+            margin: 0 0 3px 0;
+            font-size: 9.5pt;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .card-box p {
+            font-size: 8.5pt;
+            color: #475569;
+            margin: 0;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= HALAMAN 1: COVER ================= -->
+    <div class="page cover-page">
+        <div>
+            <div class="cover-badge">Buku Panduan Operasional Resmi</div>
+            <h1 class="cover-title">User Manual & Panduan Penggunaan Sistem</h1>
+            <p class="cover-subtitle">Sistem Informasi Audit Internal Penerapan Sistem Manajemen Keselamatan Pertambangan (SMKP) Minerba Berdasarkan Kepdirjen ESDM No. 185.K/37.04/DJB/2019</p>
+            <div class="cover-divider"></div>
+
+            <div class="cover-meta-grid">
+                <div class="cover-meta-item">
+                    <label>Nama Sistem Aplikasi</label>
+                    <span>SMKP Minerba Internal Audit System</span>
+                </div>
+                <div class="cover-meta-item">
+                    <label>Standar Acuan Regulasi</label>
+                    <span>Kepdirjen ESDM 185.K (Form TT-MGT-FRS-026B)</span>
+                </div>
+                <div class="cover-meta-item">
+                    <label>Sasaran Pengguna</label>
+                    <span>Lead Auditor SMKP & Auditee / PIC Area Kerja</span>
+                </div>
+                <div class="cover-meta-item">
+                    <label>Klasifikasi Dokumen</label>
+                    <span>Buku Panduan Pengguna (User Manual v2.1)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <span>&copy; 2026 PT Sistem Informasi Audit Minerba &bull; Seluruh Hak Cipta Dilindungi</span>
+            <span>Versi Rilis: 2.1 (Production Ready)</span>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 2: DAFTAR ISI & PENDAHULUAN ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span class="brand">SMKP MINERBA &bull; BUKU PANDUAN PENGGUNA</span>
+            <span>Halaman 2 dari 9</span>
+        </div>
+
+        <h1 class="chap-title">Daftar Isi & Pendahuluan</h1>
+
+        <h2 class="sec-title">Daftar Isi Dokumen</h2>
+        <table class="doc-table" style="margin-bottom: 12px;">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Bab</th>
+                    <th style="width: 70%;">Topik Pembahasan</th>
+                    <th style="width: 15%; text-align: center;">Halaman</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>BAB 1</strong></td>
+                    <td>Pendahuluan, Sasaran Pengguna & Matriks Hak Akses Peran</td>
+                    <td style="text-align: center;">Halaman 3</td>
+                </tr>
+                <tr>
+                    <td><strong>BAB 2</strong></td>
+                    <td>Persyaratan Sistem, Akses Login & Navigasi Antarmuka</td>
+                    <td style="text-align: center;">Halaman 3</td>
+                </tr>
+                <tr>
+                    <td><strong>BAB 3</strong></td>
+                    <td>Panduan Lengkap Lead Auditor (Audit Sesi, Matriks 7 Elemen, & Rekapitulasi)</td>
+                    <td style="text-align: center;">Halaman 4 - 5</td>
+                </tr>
+                <tr>
+                    <td><strong>BAB 4</strong></td>
+                    <td>Panduan Pengguna Auditee / PIC Area Kerja (Dashboard & Akses Sesi Area)</td>
+                    <td style="text-align: center;">Halaman 6</td>
+                </tr>
+                <tr>
+                    <td><strong>BAB 5</strong></td>
+                    <td>Modul Tindak Lanjut PICA (Problem Identification & Corrective Action)</td>
+                    <td style="text-align: center;">Halaman 6</td>
+                </tr>
+                <tr>
+                    <td><strong>BAB 6</strong></td>
+                    <td>Pelaporan & Ekspor Format Resmi ESDM (PDF Cetak & Excel TT-MGT-FRS-026B)</td>
+                    <td style="text-align: center;">Halaman 7</td>
+                </tr>
+                <tr>
+                    <td><strong>BAB 7</strong></td>
+                    <td>Pengelolaan Master Data, User Management, & Audit Logs (Khusus Admin)</td>
+                    <td style="text-align: center;">Halaman 8</td>
+                </tr>
+                <tr>
+                    <td><strong>BAB 8</strong></td>
+                    <td>Tanya Jawab (FAQ), Panduan Troubleshooting, & Lembar Bantuan</td>
+                    <td style="text-align: center;">Halaman 9</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2 class="sec-title">Glosarium & Istilah Penting</h2>
+        <div class="grid-2">
+            <div class="card-box">
+                <h4>🏛️ SMKP Minerba</h4>
+                <p>Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara yang wajib diterapkan berdasarkan Kepdirjen ESDM 185.K.</p>
+            </div>
+            <div class="card-box">
+                <h4>🛠️ PICA</h4>
+                <p><em>Problem Identification and Corrective Action</em>: Modul pencatatan akar masalah, tindakan koreksi, dan pencegahan ketidaksesuaian.</p>
+            </div>
+            <div class="card-box">
+                <h4>🚫 Kriteria N/A (Not Applicable)</h4>
+                <p>Kriteria penilaian yang tidak relevan dengan area audit dan dikecualikan dari pembagi perhitungan persentase elemen.</p>
+            </div>
+            <div class="card-box">
+                <h4>📄 Format TT-MGT-FRS-026B</h4>
+                <p>Format baku lembar kerja audit dan matriks penilaian resmi yang diakui dalam pelaporan keselamatan pertambangan.</p>
+            </div>
+        </div>
+
+        <div class="callout tip">
+            <strong>Tujuan Panduan:</strong> Dokumen ini disusun untuk memandu seluruh pengguna dalam menjalankan proses audit keselamatan pertambangan secara cepat, terstruktur, akurat, dan sesuai dengan tata kelola regulasi ESDM.
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Klasifikasi Dokumen: User Manual v2.1</span>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 3: BAB 1 & BAB 2 ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span class="brand">SMKP MINERBA &bull; BUKU PANDUAN PENGGUNA</span>
+            <span>Halaman 3 dari 9</span>
+        </div>
+
+        <h1 class="chap-title">BAB 1: Pendahuluan & Hak Akses</h1>
+        
+        <h2 class="sec-title">1.1 Matriks Pembagian Peran Pengguna (Role Matrix)</h2>
+        <p>
+            Aplikasi mengimplementasikan pemisahan hak akses berbasis peran (*Role-Based Access Control*) untuk menjamin objektivitas evaluasi dan perlindungan data:
+        </p>
+
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Peran Akun</th>
+                    <th style="width: 45%;">Tanggung Jawab Utama</th>
+                    <th style="width: 30%;">Akses Menu Sistem</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Auditor Internal SMKP</strong><br><small style="color: #64748b;">(Lead Auditor / Admin)</small></td>
+                    <td>Merencanakan sesi audit, mengisi skor matriks kriteria 7 elemen, menentukan klasifikasi temuan, memfinalisasi sesi, mengelola master data, dan verifikasi akhir PICA.</td>
+                    <td><span class="badge-pill gold">Akses Penuh (Full Control)</span><br>Dashboard, Kelola Sesi, Monitoring, Otoritas PICA, Master Data, Kelola User, Log Aktivitas.</td>
+                </tr>
+                <tr>
+                    <td><strong>Auditor Internal Perusahaan</strong><br><small style="color: #64748b;">(Auditee / PIC Area Kerja)</small></td>
+                    <td>Melihat rekapitulasi audit area kerjanya sendiri (*read-only*), menganalisis temuan ketidaksesuaian, mengisi akar masalah, dan mengunggah dokumen bukti perbaikan PICA.</td>
+                    <td><span class="badge-pill minor">Akses Terisolasi (Scoped)</span><br>Dashboard Area, Sesi Audit Area Saya, Tindak Lanjut PICA Area.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h1 class="chap-title" style="margin-top: 14px;">BAB 2: Akses Awal & Navigasi</h1>
+
+        <h2 class="sec-title">2.1 Cara Login ke Dalam Sistem</h2>
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Buka Browser & Akses Alamat URL</h4>
+                    <p>Gunakan Google Chrome, Microsoft Edge, atau Mozilla Firefox versi terbaru. Akses alamat web audit SMKP yang diberikan oleh Administrator.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Masukkan Kredensial Akun</h4>
+                    <p>Ketik <strong>Username</strong> dan <strong>Password</strong> Anda. Centang opsi <em>Ingat Saya</em> jika menggunakan komputer kerja pribadi.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>Klik Tombol "Masuk ke Sistem"</h4>
+                    <p>Sistem akan mengotentikasi akun dan mengarahkan Anda ke Dashboard sesuai peran (Admin atau Auditee).</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui-placeholder">
+            <strong>[TAMPILAN ANTARMUKA: HALAMAN LOGIN SISTEM]</strong>
+            <span>Form Login dengan Username, Password, Tombol Masuk, dan Proteksi Rate-Limiting Anti-Brute Force</span>
+        </div>
+
+        <h2 class="sec-title">2.2 Navigasi Sidebar & Header</h2>
+        <p>
+            Menu utama terletak di sebelah kiri (*Sidebar Dark Slate*). Untuk perangkat tablet/ponsel, menu dapat dibuka melalui tombol ikon garis tiga di pojok kiri atas. Tombol <strong>Keluar / Logout</strong> tersedia di bagian bawah sidebar.
+        </p>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Klasifikasi Dokumen: User Manual v2.1</span>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 4: BAB 3 - LEAD AUDITOR (BAGIAN 1) ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span class="brand">SMKP MINERBA &bull; BUKU PANDUAN PENGGUNA</span>
+            <span>Halaman 4 dari 9</span>
+        </div>
+
+        <h1 class="chap-title">BAB 3: Panduan Lead Auditor SMKP (Bagian 1)</h1>
+
+        <h2 class="sec-title">3.1 Membuat Sesi Audit Baru (New Session)</h2>
+        <p>
+            Lead Auditor berwenang membuat jadwal evaluasi audit internal untuk perusahaan mitra, kontraktor, maupun departemen internal:
+        </p>
+
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Buka Menu "Kelola Sesi Audit" &bull; Klik "+ Buat Sesi Baru"</h4>
+                    <p>Akses menu di sidebar lalu tekan tombol merah di sudut kanan atas halaman.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Lengkapi Informasi Sesi Audit</h4>
+                    <p>Pilih <strong>Perusahaan</strong> atau <strong>Departemen</strong>, tentukan <strong>Area Kerja Audit</strong> (misal: <em>Pit West, Workshop Hauling</em>), serta tanggal mulai dan tanggal selesai audit.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>Simpan & Inisialisasi Matriks</h4>
+                    <p>Klik tombol <strong>"Buat & Mulai Penilaian"</strong>. Sistem otomatis menyalin seluruh kriteria aktif 7 Elemen SMKP ke dalam sesi tersebut.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui-placeholder">
+            <strong>[TAMPILAN ANTARMUKA: FORM PEMBUATAN SESI AUDIT BARU]</strong>
+            <span>Input Dropdown Perusahaan, Departemen, Rentang Tanggal Pelaksanaan, dan Tombol Inisialisasi</span>
+        </div>
+
+        <h2 class="sec-title">3.2 Mengisi Matriks Penilaian 7 Elemen SMKP</h2>
+        <p>
+            Halaman matriks penilaian tersusun dalam format akordeon interaktif per elemen (Elemen I s/d VII):
+        </p>
+
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Komponen Matriks</th>
+                    <th style="width: 50%;">Petunjuk Pengisian & Mekanisme Kerja</th>
+                    <th style="width: 25%;">Ketentuan Nilai</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Rubrik Pedoman Skor</strong></td>
+                    <td>Klik ikon info untuk melihat panduan kualitatif pemenuhan standar kriteria (Skor 0 = Belum ada, 1 = Ada draft, 2 = Diterapkan sebagian, 3 = Diterapkan konsisten, 4 = Sangat baik/terdokumentasi).</td>
+                    <td>Nilai 0 s/d 4 (atau nilai maksimal kriteria)</td>
+                </tr>
+                <tr>
+                    <td><strong>Input Nilai Kriteria</strong></td>
+                    <td>Ketikkan skor hasil observasi lapangan dan verifikasi dokumen bukti.</td>
+                    <td>Angka bulat &le; Max Score</td>
+                </tr>
+                <tr>
+                    <td><strong>Centang N/A (Not Applicable)</strong></td>
+                    <td>Centang jika kriteria tidak relevan di area audit tersebut (misal: peledakan di area perkantoran). Skor otomatis menjadi 0 dan dikeluarkan dari pembagi persentase.</td>
+                    <td>Mengurangi total bobot maksimal elemen</td>
+                </tr>
+                <tr>
+                    <td><strong>Catatan Auditor & Lampiran</strong></td>
+                    <td>Tulis temuan faktual lapangan. Klik <em>Unggah Berkas</em> untuk melampirkan foto temuan atau dokumen pendukung (PDF/JPG/PNG, maks. 5MB).</td>
+                    <td>Maksimal 5 berkas per kriteria</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout tip">
+            <strong>Pemberitahuan Otomatis PICA:</strong> Setiap kriteria yang bernilai kurang dari nilai maksimal (dan tidak dicentang N/A) akan otomatis terdaftar sebagai temuan di modul PICA setelah form matriks disimpan.
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Klasifikasi Dokumen: User Manual v2.1</span>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 5: BAB 3 - LEAD AUDITOR (BAGIAN 2) ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span class="brand">SMKP MINERBA &bull; BUKU PANDUAN PENGGUNA</span>
+            <span>Halaman 5 dari 9</span>
+        </div>
+
+        <h1 class="chap-title">BAB 3: Panduan Lead Auditor SMKP (Bagian 2)</h1>
+
+        <h2 class="sec-title">3.3 Rekapitulasi Skor & Klasifikasi Temuan Otomatis</h2>
+        <p>
+            Setelah mengisi matriks, Lead Auditor dapat membuka halaman <strong>Rekapitulasi Nilai</strong> untuk menganalisis hasil evaluasi:
+        </p>
+
+        <div class="grid-2">
+            <div class="card-box">
+                <h4>📊 Radar Chart & Persentase Bobot</h4>
+                <p>Menampilkan grafik jaring laba-laba visualisasi tingkat kepatuhan per elemen I s/d VII dibandingkan target standar 100%.</p>
+            </div>
+            <div class="card-box">
+                <h4>🎯 Skor Akhir Pencapaian SMKP</h4>
+                <p>Dihitung otomatis dengan formula baku: <br><code>(Total Nilai Diperoleh / Total Nilai Maksimum Riil) &times; 100%</code>.</p>
+            </div>
+        </div>
+
+        <h3 class="subsec-title">Memahami Logika Klasifikasi Temuan Sistem (Kritikal / Mayor / Minor)</h3>
+        <p>
+            Sistem secara otomatis mengklasifikasikan temuan ketidaksesuaian berdasarkan aturan Kepdirjen ESDM 185.K:
+        </p>
+
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width: 22%;">Kategori Temuan</th>
+                    <th style="width: 48%;">Kriteria Penentuan Otomatis</th>
+                    <th style="width: 30%;">Tindakan Wajib</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge-pill crit">Kritikal</span></td>
+                    <td>Ditetapkan manual oleh Lead Auditor pada kondisi darurat/bahaya fatal langsung terhadap keselamatan jiwa.</td>
+                    <td>Wajib mengisi <strong>Justifikasi Kategori</strong> secara rinci.</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-pill mayor">Mayor (Jalur #1)</span></td>
+                    <td>Pencapaian total skor pada suatu <strong>Sub-Elemen &lt; 50%</strong> dari total nilai maksimal sub-elemen tersebut.</td>
+                    <td>Otomatis ditetapkan sistem untuk seluruh temuan di sub-elemen terkait.</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-pill mayor">Mayor (Jalur #2)</span></td>
+                    <td>Kriteria kuncian/mandatori SMKP yang tidak dipenuhi (misal: ketiadaan izin K3 atau SOP kritis).</td>
+                    <td>Ditetapkan sistem atau konfirmasi Lead Auditor.</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-pill minor">Minor</span></td>
+                    <td>Ketidaksesuaian kriteria di mana pencapaian sub-elemen <strong>&ge; 50%</strong>.</td>
+                    <td>Tindak lanjut perbaikan administratif dan operasional berkala.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2 class="sec-title">3.4 Prosedur Finalisasi Sesi Audit (Penguncian Data)</h2>
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Tinjau Ulang Rekapitulasi & Daftar Temuan</h4>
+                    <p>Pastikan seluruh 7 elemen telah terisi lengkap dan catatan audit sudah jelas.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Klik Tombol Hijau "Finalisasi Sesi Audit"</h4>
+                    <p>Sistem akan memvalidasi ulang skor akhir dan mengunci status sesi menjadi <strong>Selesai (Read-Only)</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout warn">
+            <strong>Penting:</strong> Sesi yang sudah difinalisasi tidak dapat diedit kembali nilainya untuk mencegah manipulasi data. Seluruh rekaman tersimpan permanen dalam <em>Audit Log</em>.
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Klasifikasi Dokumen: User Manual v2.1</span>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 6: BAB 4 & BAB 5 (AUDITEE & PICA) ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span class="brand">SMKP MINERBA &bull; BUKU PANDUAN PENGGUNA</span>
+            <span>Halaman 6 dari 9</span>
+        </div>
+
+        <h1 class="chap-title">BAB 4 & 5: Auditee & Tindak Lanjut PICA</h1>
+
+        <h2 class="sec-title">4.1 Panduan Auditee (PIC Area Kerja)</h2>
+        <p>
+            Pengguna dengan peran <strong>Auditor Internal Perusahaan (Auditee)</strong> memiliki hak akses terisolasi untuk memantau area kerjanya:
+        </p>
+        <ul style="padding-left: 18px; font-size: 9.5pt; color: #334155; margin-bottom: 10px;">
+            <li><strong>Dashboard Area:</strong> Memantau nilai rata-rata kepatuhan SMKP area dan status penyelesaian PICA.</li>
+            <li><strong>Sesi Audit Area Saya:</strong> Membuka laporan rekapitulasi audit dan mencetak lembar hasil evaluasi.</li>
+        </ul>
+
+        <h1 class="chap-title" style="margin-top: 14px;">BAB 5: Siklus Alur Kerja PICA</h1>
+        <p>
+            Modul PICA (*Problem Identification and Corrective Action*) menjembatani perbaikan antara temuan Lead Auditor dan realisasi perbaikan oleh Auditee:
+        </p>
+
+        <div class="ui-placeholder">
+            <strong>[DIAGRAM ALUR SIKLUS PICA]</strong>
+            <span>TEMUAN AUDIT (Status: OPEN) ➔ RESPON AUDITEE (Status: IN PROGRESS) ➔ VERIFIKASI LEAD AUDITOR (Status: CLOSED)</span>
+        </div>
+
+        <h2 class="sec-title">5.1 Langkah Auditee Mengisi Tindakan Perbaikan</h2>
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Buka Menu "Tindak Lanjut PICA" &bull; Pilih Temuan &bull; Klik "Tindak Lanjut"</h4>
+                    <p>Daftar temuan ketidaksesuaian di area kerja Anda akan ditampilkan beserta deskripsi temuan auditor.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Lengkapi 3 Pilar Tindakan Perbaikan</h4>
+                    <p>
+                        &bull; <strong>Akar Masalah:</strong> Analisis penyebab utama ketidaksesuaian.<br>
+                        &bull; <strong>Tindakan Koreksi:</strong> Langkah langsung mengatasi temuan fisik/administratif.<br>
+                        &bull; <strong>Tindakan Pencegahan:</strong> Solusi sistemik agar temuan tidak terulang di masa depan.
+                    </p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>Unggah Bukti Perbaikan &bull; Klik "Simpan Perubahan"</h4>
+                    <p>Unggah berkas bukti (foto perbaikan, revisi SOP, memo internal). Status otomatis berubah menjadi <strong>In Progress</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="sec-title">5.2 Langkah Lead Auditor Memverifikasi & Menutup PICA</h2>
+        <p>
+            Lead Auditor membuka menu <strong>"Otoritas & Oversight PICA"</strong>, memeriksa bukti unggahan Auditee, menetapkan <strong>Tenggat Waktu</strong>, menuliskan <strong>Catatan Verifikasi Auditor</strong>, lalu memilih status <strong>Closed</strong>.
+        </p>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Klasifikasi Dokumen: User Manual v2.1</span>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 7: BAB 6 - EKSPOR & PELAPORAN ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span class="brand">SMKP MINERBA &bull; BUKU PANDUAN PENGGUNA</span>
+            <span>Halaman 7 dari 9</span>
+        </div>
+
+        <h1 class="chap-title">BAB 6: Pelaporan & Ekspor Format Resmi ESDM</h1>
+
+        <h2 class="sec-title">6.1 Mencetak Laporan Lengkap (Format PDF / Print)</h2>
+        <p>
+            Laporan cetak resmi dirancang sesuai tata letak pelaporan evaluasi Kepdirjen ESDM 185.K/37.04/DJB/2019:
+        </p>
+
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Buka Rekap Sesi Audit Terkait</h4>
+                    <p>Dapat diakses melalui menu <em>Kelola Sesi Audit</em> (Admin) atau <em>Sesi Audit Area Saya</em> (Auditee).</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Klik Tombol Hitam "Cetak Laporan (PDF)"</h4>
+                    <p>Sistem akan membuka tab baru berisi lembar laporan terformat rapi siap cetak atau disimpan sebagai file PDF.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>Komponen Lembar Cetak</h4>
+                    <p>Mencakup: Header Perusahaan, Ringkasan Nilai 7 Elemen, Daftar Temuan PICA, dan Kotak Pengesahan Tanda Tangan Auditor & KTT / Manajemen Area.</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="sec-title">6.2 Mengekspor File Microsoft Excel Resmi (TT-MGT-FRS-026B)</h2>
+        <p>
+            Untuk keperluan arsip digital dan analisis data lanjutan, sistem menyediakan fitur ekspor Excel satu-klik:
+        </p>
+
+        <div class="callout tip">
+            <strong>Nomor Register Baku:</strong> Berkas Excel yang diunduh secara otomatis memiliki format penamaan resmi: <br>
+            <code>TT-MGT-FRS-026B_Audit_SMKP_[Nama_Area]_[Tanggal_Audit].xlsx</code>.
+        </div>
+
+        <h3 class="subsec-title">Struktur Lembar Kerja (Worksheet) di Dalam File Excel:</h3>
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Nama Lembar (Sheet)</th>
+                    <th style="width: 45%;">Isi & Format Informasi</th>
+                    <th style="width: 30%;">Penggunaan Bisnis</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Sheet 1: Rekapitulasi SMKP</strong></td>
+                    <td>Tabel rekapitulasi bobot 7 elemen, total nilai maksimal, nilai riil diperoleh, dan persentase akhir kepatuhan.</td>
+                    <td>Lampiran laporan manajemen eksekutif & Inspektur Tambang ESDM.</td>
+                </tr>
+                <tr>
+                    <td><strong>Sheet 2: Matriks Kriteria</strong></td>
+                    <td>Rincian seluruh butir sub-elemen, kode kriteria, deskripsi standar, skor penilaian, catatan temuan, dan status N/A.</td>
+                    <td>Verifikasi teknis auditor dan telaah detail pemenuhan regulasi.</td>
+                </tr>
+                <tr>
+                    <td><strong>Sheet 3: Tabel Pemantauan PICA</strong></td>
+                    <td>Daftar temuan, kategori temuan, akar masalah, tindakan koreksi & pencegahan, serta status penyelesaian.</td>
+                    <td>Lembar kendali monitoring K3KP perusahaan.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="ui-placeholder">
+            <strong>[TAMPILAN ANTARMUKA: TOMBOL EKSPOR & DOKUMEN HASIL EXCEL]</strong>
+            <span>Tombol Hijau "Export Excel (.xlsx)" pada Header Halaman Rekapitulasi Sesi Audit</span>
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Klasifikasi Dokumen: User Manual v2.1</span>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 8: BAB 7 - MASTER DATA & USER ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span class="brand">SMKP MINERBA &bull; BUKU PANDUAN PENGGUNA</span>
+            <span>Halaman 8 dari 9</span>
+        </div>
+
+        <h1 class="chap-title">BAB 7: Master Data, User Management & Log</h1>
+
+        <h2 class="sec-title">7.1 Pengelolaan Master Data SMKP (Khusus Admin)</h2>
+        <p>
+            Menu Master Data digunakan untuk memelihara parameter konfigurasi sistem agar selalu mutakhir:
+        </p>
+
+        <div class="grid-2">
+            <div class="card-box">
+                <h4>🏢 Master Perusahaan & Departemen</h4>
+                <p>Menambah kontraktor baru, kode perusahaan, nama departemen internal, serta menonaktifkan unit yang sudah tidak aktif.</p>
+            </div>
+            <div class="card-box">
+                <h4>📑 Struktur Elemen, Sub-Elemen, & Kriteria</h4>
+                <p>Mengelola bobot elemen, menambahkan butir kriteria turunan, mengatur opsi kriteria standalone, dan menyunting rubrik pedoman nilai.</p>
+            </div>
+        </div>
+
+        <h2 class="sec-title">7.2 Manajemen Pengguna & Hak Akses (Kelola User)</h2>
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Menambah User Baru</h4>
+                    <p>Klik tombol <strong>"+ Tambah User Baru"</strong> pada menu <em>Kelola User</em>. Isi Nama, Username unik, Email, Role (Admin atau Auditor), dan Password.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Menetapkan Area Kerja Pengguna (Area Scoping)</h4>
+                    <p>Untuk user role <em>Auditor Internal Perusahaan</em>, pilih area kerja perusahaan/departemen yang menjadi tanggung jawabnya. Sistem akan membatasi data audit sesuai area ini.</p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>Aktivasi, Deaktivasi, & Reset Password</h4>
+                    <p>Admin dapat menonaktifkan akun sewaktu-waktu. User yang dinonaktifkan akan otomatis ter-logout dan tidak dapat mengakses sistem.</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="sec-title">7.3 Pemantauan Jejak Audit & Log Aktivitas (Audit Trail)</h2>
+        <p>
+            Menu <strong>"Log Aktivitas & Audit File"</strong> merekam secara transparan seluruh peristiwa krusial:
+        </p>
+        <ul style="padding-left: 18px; font-size: 8.5pt; color: #334155; margin-bottom: 8px;">
+            <li>Riwayat Login & Logout pengguna (beserta informasi IP & Browser).</li>
+            <li>Perubahan nilai kriteria pada matriks penilaian audit (merekam nilai lama vs nilai baru).</li>
+            <li>Pembuatan, penyuntingan, dan penghapusan data master perusahaan/user.</li>
+            <li>Pembaruan status dan verifikasi tindakan perbaikan PICA.</li>
+        </ul>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Klasifikasi Dokumen: User Manual v2.1</span>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 9: BAB 8 & PENUTUP ================= -->
+    <div class="page">
+        <div class="page-header">
+            <span class="brand">SMKP MINERBA &bull; BUKU PANDUAN PENGGUNA</span>
+            <span>Halaman 9 dari 9</span>
+        </div>
+
+        <h1 class="chap-title">BAB 8: Tanya Jawab (FAQ) & Penutup</h1>
+
+        <h2 class="sec-title">8.1 Tanya Jawab Umum (Frequently Asked Questions)</h2>
+
+        <div class="card-box" style="margin-bottom: 8px;">
+            <h4>❓ Mengapa saya tidak bisa mengubah skor pada matriks penilaian?</h4>
+            <p><strong>Jawaban:</strong> Sesi audit tersebut telah berstatus <em>Selesai (Final)</em> dan berada dalam mode hanya-baca (*read-only*). Penguncian ini bertujuan menjaga keabsahan data evaluasi.</p>
+        </div>
+
+        <div class="card-box" style="margin-bottom: 8px;">
+            <h4>❓ Mengapa Auditee tidak dapat melihat sesi audit dari area lain?</h4>
+            <p><strong>Jawaban:</strong> Ini adalah fitur keamanan <em>Data Containment</em>. Setiap akun Auditee hanya diberikan wewenang melihat dan menindaklanjuti PICA pada area kerja yang ditugaskan kepadanya.</p>
+        </div>
+
+        <div class="card-box" style="margin-bottom: 8px;">
+            <h4>❓ Apa format dan ukuran maksimal file lampiran yang diperbolehkan?</h4>
+            <p><strong>Jawaban:</strong> Sistem mendukung format dokumen <strong>PDF</strong> dan gambar <strong>JPG, JPEG, PNG</strong> dengan ukuran maksimal <strong>5 Megabyte (5MB)</strong> per file.</p>
+        </div>
+
+        <h2 class="sec-title">8.2 Panduan Troubleshooting Sederhana</h2>
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width: 30%;">Gejala Masalah</th>
+                    <th style="width: 35%;">Kemungkinan Penyebab</th>
+                    <th style="width: 35%;">Langkah Solusi Mandiri</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Gagal Login ("Akun dinonaktifkan")</td>
+                    <td>Status akun disetel nonaktif oleh Admin.</td>
+                    <td>Hubungi Administrator SMKP untuk mengaktifkan kembali akun Anda.</td>
+                </tr>
+                <tr>
+                    <td>Tampilan dropdown atau tabel tidak merespon</td>
+                    <td>Cache lama peramban web menumpuk.</td>
+                    <td>Tekan <code>Ctrl + F5</code> (Hard Refresh) atau bersihkan cache browser.</td>
+                </tr>
+                <tr>
+                    <td>Gagal unggah lampiran bukti PICA</td>
+                    <td>Ukuran file &gt; 5MB atau format tidak didukung.</td>
+                    <td>Kompres dokumen PDF atau ubah format foto menjadi JPG/PNG di bawah 5MB.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2 class="sec-title">8.3 Layanan Bantuan & Kontak Dukungan Teknis</h2>
+        <div class="callout tip">
+            <strong>Helpdesk Dukungan Sistem:</strong><br>
+            Email: <code>support-audit@smkp-minerba.id</code> &bull; Hotline / WhatsApp: <code>+62 811-XXXX-XXXX</code><br>
+            Jam Operasional: Senin &ndash; Jumat (08.00 &ndash; 17.00 WITA)
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Klasifikasi Dokumen: User Manual v2.1</span>
+        </div>
+    </div>
+
+</body>
+</html>

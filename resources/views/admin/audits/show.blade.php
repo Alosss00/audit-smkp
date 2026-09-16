@@ -182,7 +182,7 @@
                         <td class="text-center text-muted">-</td>
                         <td class="bg-green-total text-center">{{ number_format($el['total_nilai_aktual'], 0) }}</td>
                         <td class="text-center fw-bold">{{ number_format($el['persentase'], 2) }}%</td>
-                        <td class="text-center fw-bold small">ELEMEN</td>
+                        <td class="text-center small"></td>
                     </tr>
 
                     <!-- Level 2: Baris Sub-Elemen -->
@@ -215,11 +215,7 @@
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center small text-secondary fw-semibold">
-                                    @if(!empty($sub['direct_detail']['is_na']))
-                                        <span class="badge bg-secondary">N/A</span>
-                                    @else
-                                        SUB ELEMEN
-                                    @endif
+                                    {{ !empty($sub['direct_detail']['is_na']) ? 'N/A' : ($sub['direct_detail']['catatan'] ?? '') }}
                                 </td>
                             </tr>
                         @else
@@ -236,7 +232,7 @@
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
-                                <td class="text-center small text-secondary fw-semibold">SUB ELEMEN</td>
+                                <td class="text-center small text-secondary fw-semibold"></td>
                             </tr>
 
                             <!-- Level 3: Baris Sub-sub Elemen / Kriteria Penilaian -->
@@ -263,7 +259,7 @@
                                     </td>
                                     <td class="text-center text-muted">-</td>
                                     <td class="text-center text-muted">-</td>
-                                    <td class="text-center small text-muted">{{ $d['is_na'] ? 'N/A' : 'KRITERIA' }}</td>
+                                    <td class="text-center small text-muted">{{ $d['is_na'] ? 'N/A' : ($d['catatan'] ?? '') }}</td>
                                 </tr>
                             @endforeach
                         @endif
@@ -275,7 +271,7 @@
                     <td colspan="8" class="text-end text-uppercase">Total Pencapaian Keseluruhan:</td>
                     <td class="bg-green-total text-center fs-5 text-success">{{ number_format($skorAkhir, 2) }}%</td>
                     <td class="text-center text-primary fs-5">{{ number_format(array_sum(array_column($rekap, 'persentase')) / max(count($rekap), 1), 2) }}%</td>
-                    <td class="text-center">TOTAL</td>
+                    <td class="text-center"></td>
                 </tr>
             </tfoot>
         </table>

@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisa Alur & Swimlane Flowchart — Matriks Penilaian SMKP Minerba</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-size: 9.5pt;
+            line-height: 1.5;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            max-height: 297mm;
+            padding: 16mm 18mm 14mm 18mm;
+            position: relative;
+            page-break-after: always;
+            page-break-inside: avoid;
+            background-color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Typography */
+        h1.chap-title {
+            font-size: 22pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        h2.sec-title {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #0369a1;
+            margin: 12px 0 6px 0;
+            line-height: 1.3;
+            border-bottom: 1.5px solid #e2e8f0;
+            padding-bottom: 3px;
+        }
+
+        h3.subsec-title {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 8px 0 4px 0;
+            line-height: 1.35;
+        }
+
+        p {
+            font-size: 9.5pt;
+            margin: 0 0 6px 0;
+            text-align: justify;
+        }
+
+        /* Cover Page */
+        .cover-page {
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 55%, #0284c7 100%);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 26mm 20mm 18mm 20mm;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 5px 14px;
+            border-radius: 9999px;
+            font-size: 9pt;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .cover-title {
+            font-size: 27pt;
+            font-weight: 800;
+            line-height: 1.15;
+            margin: 0 0 12px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .cover-subtitle {
+            font-size: 12.5pt;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #cbd5e1;
+            margin: 0 0 25px 0;
+            max-width: 90%;
+        }
+
+        .cover-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 14px 18px;
+            backdrop-filter: blur(10px);
+        }
+
+        .meta-item-label {
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+        }
+
+        .meta-item-val {
+            font-size: 10pt;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .cover-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8.5pt;
+            color: #94a3b8;
+        }
+
+        /* Page Layout Components */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1.5px solid #0284c7;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .page-header-title {
+            font-size: 8.5pt;
+            font-weight: 700;
+            color: #0284c7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .page-header-sys {
+            font-size: 8pt;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .page-footer {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8pt;
+            color: #94a3b8;
+            margin-top: auto;
+        }
+
+        .page-body {
+            flex: 1;
+        }
+
+        /* UI Cards & Containers */
+        .card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+
+        .card-highlight {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+
+        .card-warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 1px solid #fde68a;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 7.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-blue { background-color: #e0f2fe; color: #0369a1; }
+        .badge-green { background-color: #dcfce7; color: #15803d; }
+        .badge-amber { background-color: #fef3c7; color: #b45309; }
+        .badge-red { background-color: #fee2e2; color: #b91c1c; }
+        .badge-slate { background-color: #f1f5f9; color: #475569; }
+
+        /* Tables */
+        table.doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            margin: 6px 0 10px 0;
+        }
+
+        table.doc-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: 700;
+            text-align: left;
+            padding: 6px 8px;
+            border: 1px solid #0f172a;
+        }
+
+        table.doc-table td {
+            padding: 5px 8px;
+            border: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        table.doc-table tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
+        /* Code & Monospace */
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8pt;
+        }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 1px 4px;
+            border-radius: 4px;
+            color: #0f172a;
+            font-weight: 500;
+        }
+
+        pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 6px 0 8px 0;
+            line-height: 1.35;
+        }
+
+        /* Step List */
+        .step-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 7px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            background-color: #0284c7;
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8pt;
+            font-weight: 700;
+            margin-top: 1px;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 9pt;
+            margin-bottom: 1px;
+        }
+
+        .step-desc {
+            font-size: 8.5pt;
+            color: #475569;
+            margin: 0;
+        }
+
+        /* Flowchart Visual Container in HTML */
+        .flow-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            background-color: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px;
+            margin: 8px 0;
+        }
+
+        .flow-lane {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 6px 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .flow-lane-hdr {
+            text-align: center;
+            font-weight: 700;
+            font-size: 7.5pt;
+            color: #0f172a;
+            background-color: #e2e8f0;
+            padding: 4px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .flow-node {
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 7pt;
+            line-height: 1.25;
+            text-align: center;
+            border: 1px solid #94a3b8;
+            background-color: #ffffff;
+        }
+
+        .node-term { border-radius: 12px; background-color: #dcfce7; border-color: #86efac; font-weight: 700; color: #166534; }
+        .node-proc { background-color: #e0f2fe; border-color: #7dd3fc; color: #0369a1; font-weight: 600; }
+        .node-dec { background-color: #fef3c7; border-color: #fde68a; color: #92400e; font-weight: 600; transform: rotate(0deg); }
+        .node-io { background-color: #f3e8ff; border-color: #d8b4fe; color: #6b21a8; font-weight: 600; }
+        .node-db { background-color: #fee2e2; border-color: #fca5a5; color: #991b1b; font-weight: 600; border-radius: 6px; }
+        .node-err { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== PAGE 1: COVER PAGE ==================== -->
+    <div class="page cover-page">
+        <div>
+            <span class="cover-badge">Software Architecture & Process Engineering</span>
+            <h1 class="cover-title">ANALISA ALUR EKSEKUSI &amp; SWIMLANE FLOWCHART</h1>
+            <p class="cover-subtitle">
+                Pemetaan Alur Eksekusi End-to-End Fitur Matriks Penilaian Audit &amp; Automated PICA Triggering Berdasarkan Notasi Standar ANSI/ISO 5807
+            </p>
+        </div>
+
+        <div class="cover-meta-grid">
+            <div>
+                <div class="meta-item-label">Aplikasi Target</div>
+                <div class="meta-item-val">Sistem Audit Internal SMKP Minerba</div>
+            </div>
+            <div>
+                <div class="meta-item-label">Tech Stack</div>
+                <div class="meta-item-val">Laravel 10 / PHP 8.1 / MySQL</div>
+            </div>
+            <div>
+                <div class="meta-item-label">Standar Notasi</div>
+                <div class="meta-item-val">ANSI/ISO 5807 Standard Flowchart</div>
+            </div>
+            <div>
+                <div class="meta-item-label">Entry Point Target</div>
+                <div class="meta-item-val">POST /admin/audit-sesi/{id}/matrix</div>
+            </div>
+            <div>
+                <div class="meta-item-label">Klasifikasi Dokumen</div>
+                <div class="meta-item-val">Confidential / Technical Architecture</div>
+            </div>
+            <div>
+                <div class="meta-item-label">Tanggal Analisa</div>
+                <div class="meta-item-val">10 September 2026</div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba &bull; Engineering Analysis</span>
+            <span>Dokumentasi Teknis v1.0</span>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 2: SCOPE & ARCHITECTURAL OVERVIEW ==================== -->
+    <div class="page">
+        <div class="page-header">
+            <span class="page-header-title">1. Scope Analisa &amp; Pemetaan Codebase</span>
+            <span class="page-header-sys">SMKP MINERBA SYSTEM</span>
+        </div>
+
+        <div class="page-body">
+            <h1 class="chap-title">1. Scope Analisa Codebase</h1>
+            <p>
+                Berdasarkan penelusuran struktur direktori dan source code pada workspace <code>c:\laragon\www\audit</code>, aplikasi ini merupakan sistem web enterprise untuk pelaksanaan dan pelaporan Audit Internal Sistem Manajemen Keselamatan Pertambangan (SMKP Minerba) berbasis Kepmen ESDM No. 1827 K/30/MEM/2018.
+            </p>
+
+            <h2 class="sec-title">1.1 Pemetaan Seluruh Modul Codebase</h2>
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Modul Aplikasi</th>
+                        <th style="width: 35%;">Komponen Utama (Controller/Model)</th>
+                        <th style="width: 40%;">Fungsi Operasional</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Matriks Penilaian SMKP</strong> <span class="badge badge-blue">Target Analisa</span></td>
+                        <td><code>AuditSesiAdminController.php</code><br><code>AuditDetail.php</code>, <code>Kriteria.php</code></td>
+                        <td>Evaluasi skor 7 Elemen SMKP, penanganan kriteria N/A, upload bukti audit, auto-trigger PICA.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PICA &amp; Tindakan Koreksi</strong></td>
+                        <td><code>PicaAdminController.php</code><br><code>PicaAuditorController.php</code>, <code>Pica.php</code></td>
+                        <td>Manajemen temuan ketidaksesuaian, input akar masalah, tindakan perbaikan, dan approval status.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sesi &amp; Penjadwalan Audit</strong></td>
+                        <td><code>AuditSesi.php</code>, <code>TimAuditor.php</code></td>
+                        <td>Pengaturan ruang lingkup, tanggal audit, penugasan Lead Auditor dan Anggota Auditor.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Master Kriteria SMKP</strong></td>
+                        <td><code>ElemenController.php</code><br><code>SubElemenController.php</code>, <code>KriteriaController</code></td>
+                        <td>Struktur master 7 Elemen, sub-elemen, pembobotan persentase, dan panduan nilai (0-4).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>User &amp; RBAC Control</strong></td>
+                        <td><code>UserController.php</code>, <code>User.php</code></td>
+                        <td>Manajemen 4 peran (Admin, Lead Auditor, Auditor, Auditee) dengan proteksi self-demotion.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Export &amp; Pelaporan</strong></td>
+                        <td><code>LaporanController.php</code> (DomPDF, Excel)</td>
+                        <td>Generasi rekapitulasi nilai, grafik radar compliance, dan Laporan Hasil Audit (LHA) resmi.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 class="sec-title">1.2 Identifikasi Fitur Target &amp; Entry Point</h2>
+            <div class="card-highlight">
+                <div style="font-weight: 700; color: #0369a1; margin-bottom: 4px;">🎯 Target Fitur yang Dianalisa: Matriks Penilaian Audit &amp; Automated PICA Triggering</div>
+                <table style="width: 100%; font-size: 8.5pt; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 25%; font-weight: 600; padding: 2px 0;">HTTP Route:</td>
+                        <td style="padding: 2px 0;"><code>POST /admin/audit-sesi/{id}/matrix</code> (Name: <code>admin.audit-sesi.matrix.update</code>)</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; padding: 2px 0;">Controller / Method:</td>
+                        <td style="padding: 2px 0;"><code>App\Http\Controllers\Admin\AuditSesiAdminController@updateMatrix</code></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; padding: 2px 0;">View Frontend:</td>
+                        <td style="padding: 2px 0;"><code>resources/views/auditor/audit/matrix.blade.php</code></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; padding: 2px 0;">Middleware Stack:</td>
+                        <td style="padding: 2px 0;"><code>web</code>, <code>auth</code>, <code>prevent-back-history</code>, <code>role:admin</code></td>
+                    </tr>
+                </table>
+            </div>
+
+            <h2 class="sec-title">1.3 Pola Arsitektur Eksekusi</h2>
+            <p>
+                Alur data mengikuti pola <strong>Controller-Driven with Eloquent ORM &amp; Database Transactions</strong>. Tidak ditemukan service layer terpisah (logic terkapsulasi dalam controller dan model helper). Seluruh operasi update kriteria, persistensi file lampiran, dan triggering PICA dieksekusi secara atomik dalam <code>DB::transaction</code>.
+            </p>
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Halaman 2</span>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 3: STEP-BY-STEP EXECUTION FLOW ==================== -->
+    <div class="page">
+        <div class="page-header">
+            <span class="page-header-title">2. Deskripsi Alur Step-by-Step</span>
+            <span class="page-header-sys">SMKP MINERBA SYSTEM</span>
+        </div>
+
+        <div class="page-body">
+            <h1 class="chap-title">2. Deskripsi Alur Eksekusi Terperinci</h1>
+            <p>
+                Penelusuran alur eksekusi dari interaksi antarmuka pengguna hingga persistensi basis data dan pencatatan audit trail:
+            </p>
+
+            <ul class="step-list">
+                <li class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <div class="step-title">User Interaction &amp; Input Data (Layer: User / Browser)</div>
+                        <p class="step-desc">Auditor membuka matriks penilaian sesi audit, mengisi skor nilai kriteria (0–4), mencentang checkbox N/A jika kriteria tidak relevan, menuliskan catatan temuan, serta melampirkan berkas bukti audit.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Client-Side Calculation &amp; Form Submission (Layer: Frontend Blade/JS)</div>
+                        <p class="step-desc">Script JavaScript menghitung total skor per elemen secara dinamis di antarmuka. Saat tombol "Simpan" diklik, form di-submit via HTTP POST (multipart/form-data) menyertakan token proteksi CSRF.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Security &amp; RBAC Validation (Layer: Middleware Stack)</div>
+                        <p class="step-desc">Permintaan disaring bertingkat: <code>VerifyCsrfToken</code> (menolak jika token mismatch/419), <code>Authenticate</code> (menolak jika session expired/401), dan <code>CheckRole:admin</code> (menolak jika role tidak sesuai/403).</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <div class="step-title">State Guard &amp; Input Validation (Layer: Controller)</div>
+                        <p class="step-desc">Controller memeriksa status sesi. Jika status <code>'selesai'</code>, request di-abort (403). Selanjutnya aturan validasi dieksekusi untuk memastikan tipe numerik nilai, status boolean N/A, dan validitas MIME type file (PDF, JPG, PNG).</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <div class="step-title">Atomic Transaction &amp; File Storage (Layer: Database &amp; Storage)</div>
+                        <p class="step-desc">Controller membuka <code>DB::beginTransaction()</code>. File lampiran diunggah ke <code>storage/app/public/lampiran/</code>. Field <code>audit_details</code> diperbarui (skor, nilai maks, catatan bullet, dan array path lampiran).</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">6</div>
+                    <div class="step-content">
+                        <div class="step-title">Automated PICA Triggering &amp; Cleanup (Layer: Business Logic)</div>
+                        <p class="step-desc">Jika <code>!is_na &amp;&amp; nilai &lt; nilai_maks</code>, sistem otomatis membuat temuan PICA baru (status: <code>open</code>, kategori: <code>minor</code>). Jika nilai dinaikkan ke nilai maks dan belum ada akar masalah, draft PICA dihapus.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">7</div>
+                    <div class="step-content">
+                        <div class="step-title">Sub-Elemen &lt; 50% Auto-Classification (Layer: Business Logic)</div>
+                        <p class="step-desc">Sistem menghitung total kepatuhan sub-elemen terkait. Jika persentase kepatuhan &lt; 50%, seluruh temuan PICA pada sub-elemen tersebut otomatis ditingkatkan keparahannya menjadi <strong>Kategori Mayor</strong>.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <div class="step-num">8</div>
+                    <div class="step-content">
+                        <div class="step-title">Session Recalculation, Logging &amp; Commit (Layer: Controller &amp; DB)</div>
+                        <p class="step-desc">Method <code>$sesi-&gt;hitungSkorAkhir()</code> dijalankan untuk mengagregasi skor total 7 Elemen. Catatan audit trail disimpan ke <code>audit_logs</code>, transaksi di-commit, dan user dialihkan kembali dengan status sukses.</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Halaman 3</span>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 4: VISUAL SWIMLANE FLOWCHART ==================== -->
+    <div class="page">
+        <div class="page-header">
+            <span class="page-header-title">3. Diagram Swimlane (ANSI/ISO 5807)</span>
+            <span class="page-header-sys">SMKP MINERBA SYSTEM</span>
+        </div>
+
+        <div class="page-body">
+            <h1 class="chap-title">3. Visual Swimlane Flowchart</h1>
+            <p>
+                Representasi grafis alur eksekusi lintas layer/aktor menggunakan notasi simbol standar <strong>ANSI/ISO 5807</strong>:
+            </p>
+
+            <div class="flow-container">
+                <!-- Lane 1: User -->
+                <div class="flow-lane">
+                    <div class="flow-lane-hdr">User / Auditor</div>
+                    <div class="flow-node node-term">START: Buka Form Matriks</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-io">Input Nilai, N/A, Catatan, Lampiran</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-proc">Klik Tombol "Simpan"</div>
+                    <div style="margin-top: 150px; text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-io">Menerima Flash Alert Sukses / Error</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-term">END: Selesai</div>
+                </div>
+
+                <!-- Lane 2: Frontend -->
+                <div class="flow-lane">
+                    <div class="flow-lane-hdr">Frontend (JS)</div>
+                    <div style="margin-top: 30px;"></div>
+                    <div class="flow-node node-proc">Hitung Live Skor Dinamis &amp; Toggle N/A</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-io">Submit HTTP POST (Multipart + CSRF)</div>
+                    <div style="margin-top: 60px;"></div>
+                    <div class="flow-node node-err">Render Alert Error Validasi</div>
+                </div>
+
+                <!-- Lane 3: Middleware -->
+                <div class="flow-lane">
+                    <div class="flow-lane-hdr">Middleware</div>
+                    <div style="margin-top: 80px;"></div>
+                    <div class="flow-node node-dec">CSRF Valid?</div>
+                    <div style="text-align: center; color: #ef4444; font-size: 7pt;">Tidak &rarr; [419 Expired]</div>
+                    <div style="text-align: center; color: #16a34a; font-size: 7pt;">Ya &darr;</div>
+                    <div class="flow-node node-dec">Auth &amp; Role:admin?</div>
+                    <div style="text-align: center; color: #ef4444; font-size: 7pt;">Tidak &rarr; [401/403]</div>
+                    <div style="text-align: center; color: #16a34a; font-size: 7pt;">Ya &darr;</div>
+                </div>
+
+                <!-- Lane 4: Controller -->
+                <div class="flow-lane">
+                    <div class="flow-lane-hdr">Controller</div>
+                    <div style="margin-top: 130px;"></div>
+                    <div class="flow-node node-dec">Status == 'selesai'?</div>
+                    <div style="text-align: center; color: #16a34a; font-size: 7pt;">Tidak &darr;</div>
+                    <div class="flow-node node-proc">Validasi Array Input</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-proc">DB::beginTransaction()</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-dec">!is_na &amp; nilai &lt; max?</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-dec">Sub-Elemen &lt; 50%?</div>
+                    <div style="text-align: center; color: #ef4444; font-size: 7pt;">Ya &rarr; Set Mayor</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-proc">hitungSkorAkhir()</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-proc">DB::commit()</div>
+                </div>
+
+                <!-- Lane 5: Database & Storage -->
+                <div class="flow-lane">
+                    <div class="flow-lane-hdr">Database / Disk</div>
+                    <div style="margin-top: 130px;"></div>
+                    <div class="flow-node node-db">SELECT FROM audit_sesis</div>
+                    <div style="margin-top: 40px;"></div>
+                    <div class="flow-node node-proc">Save Storage File Bukti</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-db">UPDATE audit_details</div>
+                    <div style="text-align: center; color: #94a3b8; font-size: 8pt;">&darr;</div>
+                    <div class="flow-node node-db">INSERT / DELETE picas</div>
+                    <div style="margin-top: 30px;"></div>
+                    <div class="flow-node node-db">INSERT INTO audit_logs</div>
+                </div>
+            </div>
+
+            <h2 class="sec-title" style="margin-top: 8px;">Keterangan Simbol ANSI/ISO 5807</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 8pt;">
+                <div><span class="badge badge-green">Terminator</span> Titik Mulai (Start) &amp; Akhir (End)</div>
+                <div><span class="badge badge-blue">Process</span> Operasi kalkulasi / manipulasi data</div>
+                <div><span class="badge badge-amber">Decision</span> Percabangan logika kondisi (Ya/Tidak)</div>
+                <div><span class="badge badge-slate" style="background:#f3e8ff; color:#6b21a8;">Data I/O</span> Input user atau output antarmuka</div>
+                <div><span class="badge badge-red">Database</span> Operasi query baca/tulis basis data</div>
+                <div><span class="badge badge-red" style="background:#fee2e2; color:#b91c1c;">Error Branch</span> Jalur penanganan eksepsi / rollback</div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Halaman 4</span>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 5: DRAW.IO XML & MERMAID SPECIFICATION ==================== -->
+    <div class="page">
+        <div class="page-header">
+            <span class="page-header-title">4. Spesifikasi draw.io &amp; Mermaid.js</span>
+            <span class="page-header-sys">SMKP MINERBA SYSTEM</span>
+        </div>
+
+        <div class="page-body">
+            <h1 class="chap-title">4. Spesifikasi Diagram draw.io &amp; Mermaid</h1>
+            <p>
+                File XML draw.io lengkap dan valid telah disertakan untuk memungkinkan pengeditan langsung di <a href="https://app.diagrams.net/" style="color:#0284c7; text-decoration:none;">draw.io (diagrams.net)</a> melalui menu <strong>Extras &gt; Edit Diagram</strong>.
+            </p>
+
+            <h2 class="sec-title">4.1 Cara Impor ke draw.io</h2>
+            <div class="card">
+                <ol style="margin: 0; padding-left: 18px; font-size: 8.5pt;">
+                    <li>Buka aplikasi web <strong>draw.io</strong> / <strong>diagrams.net</strong>.</li>
+                    <li>Pilih menu <strong>Extras &rarr; Edit Diagram...</strong>.</li>
+                    <li>Paste seluruh blok XML yang disediakan pada laporan teknis ke dalam dialog editor.</li>
+                    <li>Klik tombol <strong>OK</strong>. Seluruh swimlane container, node ANSI/ISO 5807, dan panah aliran data akan ter-render secara otomatis dengan tata letak yang rapi.</li>
+                </ol>
+            </div>
+
+            <h2 class="sec-title">4.2 Mermaid.js Code Snippet (Verifikasi Cepat)</h2>
+            <pre><code>flowchart TD
+    subgraph LANE_USER["User / Auditor"]
+        U_START(["START: Buka Form"]) --> U_INPUT[/"Input Nilai, N/A, Bukti"/]
+        U_INPUT --> U_SUBMIT["Klik Simpan"]
+        U_RESULT[/"Flash Alert &amp; Matriks Terupdate"/] --> U_END(["END: Selesai"])
+    end
+    subgraph LANE_FE["Frontend (JS)"]
+        FE_CALC["Hitung Skor Dinamis"]
+        FE_POST[/"POST Multipart + CSRF"/]
+    end
+    subgraph LANE_MW["Middleware"]
+        MW_CSRF{"CSRF Valid?"}
+        MW_AUTH{"Auth &amp; Role Admin?"}
+    end
+    subgraph LANE_CTRL["Controller"]
+        C_VAL["Validasi Input"] --> C_TX["DB::beginTransaction()"]
+        C_PICA{"!is_na &amp; nilai &lt; max?"}
+        C_SUB{"Sub-Elemen &lt; 50%?"}
+        C_RECALC[["hitungSkorAkhir()"]] --> C_COMMIT["DB::commit()"]
+    end
+    subgraph LANE_DB["Database &amp; Storage"]
+        DB_STORE["Save Lampiran File"]
+        DB_DETAIL[("UPDATE audit_details")]
+        DB_PICA[("INSERT / DELETE picas")]
+        DB_LOG[("INSERT audit_logs")]
+    end
+    U_INPUT --> FE_CALC --> U_SUBMIT --> FE_POST --> MW_CSRF
+    MW_CSRF -- Ya --> MW_AUTH -- Ya --> C_VAL
+    C_TX --> DB_STORE --> DB_DETAIL --> C_PICA
+    C_PICA -- Ya --> DB_PICA --> C_SUB
+    C_SUB --> C_RECALC --> DB_LOG --> C_COMMIT --> U_RESULT</code></pre>
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Halaman 5</span>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 6: FINDINGS & ASSUMPTIONS ==================== -->
+    <div class="page">
+        <div class="page-header">
+            <span class="page-header-title">5. Catatan Temuan &amp; Asumsi</span>
+            <span class="page-header-sys">SMKP MINERBA SYSTEM</span>
+        </div>
+
+        <div class="page-body">
+            <h1 class="chap-title">5. Catatan Temuan &amp; Asumsi Analisa</h1>
+
+            <h2 class="sec-title">5.1 Catatan Temuan Teknis &amp; Rekomendasi</h2>
+            <div class="card-warning">
+                <div style="font-weight: 700; color: #b45309; margin-bottom: 2px;">⚠️ 1. Proteksi Hapus Draft PICA (Auditee Data Preservation)</div>
+                <p style="font-size: 8.5pt; margin: 0; color: #78350f;">
+                    Implementasi kode memeriksa apakah <code>akar_masalah == null &amp;&amp; tindakan_koreksi == null</code> sebelum menghapus PICA. Hal ini mencegah hilangnya rencana tindakan korektif yang telah disusun oleh Auditee jika Auditor melakukan penyesuaian nilai kriteria di kemudian hari.
+                </p>
+            </div>
+
+            <div class="card-highlight">
+                <div style="font-weight: 700; color: #0369a1; margin-bottom: 2px;">💡 2. Kepatuhan Regulasi ESDM (Auto-Escalation Sub-Elemen &lt; 50%)</div>
+                <p style="font-size: 8.5pt; margin: 0; color: #0c4a6e;">
+                    Logika bisnis menerapkan aturan Kepmen ESDM No. 1827 K/30/MEM/2018 Lampiran II secara otomatis: jika akumulasi nilai pada suatu Sub-Elemen berada di bawah 50% dari total nilai maksimumnya, seluruh temuan kriteria di sub-elemen tersebut otomatis ditingkatkan keparahannya menjadi temuan <strong>Kategori Mayor</strong>.
+                </p>
+            </div>
+
+            <div class="card">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">📁 3. Manajemen Penyimpanan File Lampiran</div>
+                <p style="font-size: 8.5pt; margin: 0; color: #475569;">
+                    Setiap upload lampiran baru disimpan ke dalam array JSON <code>lampirans</code> pada tabel <code>audit_details</code> tanpa menghapus file lama. Hal ini menjaga riwayat bukti audit (audit evidence retention), namun disk storage disarankan dibersihkan melalui cron task arsip jika sesi audit telah melewati masa retensi aktif.
+                </p>
+            </div>
+
+            <h2 class="sec-title">5.2 Asumsi yang Diambil dalam Analisa</h2>
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Asumsi</th>
+                        <th style="width: 70%;">Rasionalisasi Berdasarkan Codebase</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Status Sesi Aktif</strong></td>
+                        <td>Diasumsikan pengujian dilakukan pada sesi audit berstatus <code>draft</code> atau <code>berjalan</code>. Sesi berstatus <code>selesai</code> akan diblokir oleh controller guard.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Arsitektur Monolitik</strong></td>
+                        <td>Aplikasi menggunakan arsitektur Laravel Monolith dengan rendering Blade. Tidak ditemukan dependensi microservices atau Elasticsearch eksternal pada modul penilaian ini.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kekuatan Transaksi Atomik</strong></td>
+                        <td>Penggunaan <code>DB::beginTransaction()</code> dan <code>DB::commit()</code> menjamin integritas data multi-kriteria secara menyeluruh terhadap kegagalan jaringan atau server.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="page-footer">
+            <span>Sistem Informasi Audit Internal SMKP Minerba</span>
+            <span>Halaman 6</span>
+        </div>
+    </div>
+
+</body>
+</html>

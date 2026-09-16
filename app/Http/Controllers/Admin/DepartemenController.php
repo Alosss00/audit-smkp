@@ -110,7 +110,58 @@ class DepartemenController extends Controller
         $name = $departemen->nama_departemen;
         $departemen->delete();
 
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Departemen',
+            'tindakan'        => "Menghapus departemen: {$name}",
+            'data_lama'       => ['id' => $departemen->id, 'nama' => $name],
+            'data_baru'       => null,
+            'waktu_perubahan' => now(),
+        ]);
+
         return redirect()->route('admin.departemens.index')
-            ->with('success', "Departemen '{$name}' berhasil dihapus.");
+            ->with('success', "Departemen '{$name}' berhasil dihapus dan dipindahkan ke Restore Point.");
+    }
+
+    /**
+     * Restore the specified departemen from trash.
+     */
+    public function restore($id)
+    {
+        $departemen = Departemen::onlyTrashed()->findOrFail($id);
+        $name = $departemen->nama_departemen;
+        $departemen->restore();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Departemen',
+            'tindakan'        => "Memulihkan departemen: {$name}",
+            'data_lama'       => null,
+            'data_baru'       => ['id' => $departemen->id, 'nama' => $name],
+            'waktu_perubahan' => now(),
+        ]);
+
+        return back()->with('success', "Departemen '{$name}' berhasil dipulihkan!");
+    }
+
+    /**
+     * Permanently delete the specified departemen.
+     */
+    public function forceDelete($id)
+    {
+        $departemen = Departemen::onlyTrashed()->findOrFail($id);
+        $name = $departemen->nama_departemen;
+        $departemen->forceDelete();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Departemen',
+            'tindakan'        => "Menghapus PERMANEN departemen: {$name}",
+            'data_lama'       => ['id' => $departemen->id, 'nama' => $name],
+            'data_baru'       => null,
+            'waktu_perubahan' => now(),
+        ]);
+
+        return back()->with('success', "Departemen '{$name}' berhasil dihapus permanen.");
     }
 }

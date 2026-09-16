@@ -117,10 +117,10 @@
                     <i class="bi bi-key-fill text-warning me-1"></i> Akun Pengujian (Klik untuk Autofill):
                 </div>
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge bg-danger demo-badge p-2 flex-grow-1 text-center" onclick="fillCredentials('admin', 'password')">
+                    <span class="badge bg-danger demo-badge p-2 flex-grow-1 text-center btn-fill-cred" role="button" data-username="admin" data-password="password">
                         <i class="bi bi-shield-lock me-1"></i> Admin: <code>admin</code>
                     </span>
-                    <span class="badge bg-info text-dark demo-badge p-2 flex-grow-1 text-center" onclick="fillCredentials('auditor', 'password')">
+                    <span class="badge bg-info text-dark demo-badge p-2 flex-grow-1 text-center btn-fill-cred" role="button" data-username="auditor" data-password="password">
                         <i class="bi bi-clipboard-check me-1"></i> Auditor: <code>auditor</code>
                     </span>
                 </div>
@@ -133,9 +133,17 @@
 
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
-    function fillCredentials(username, password) {
-        document.getElementById('username').value = username;
-        document.getElementById('password').value = password;
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-fill-cred').forEach(function(el) {
+            el.addEventListener('click', function() {
+                const u = this.getAttribute('data-username');
+                const p = this.getAttribute('data-password');
+                const uInput = document.getElementById('username');
+                const pInput = document.getElementById('password');
+                if (uInput) uInput.value = u;
+                if (pInput) pInput.value = p;
+            });
+        });
+    });
 </script>
 @endpush

@@ -424,7 +424,12 @@
 
                     <a href="{{ route('admin.audit-logs.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}">
                         <i class="bi bi-clock-history"></i>
-                        <span>Log Aktivitas & Audit File</span>
+                        <span>Log Aktivitas & File</span>
+                    </a>
+
+                    <a href="{{ route('admin.restore-points.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.restore-points.*') ? 'active' : '' }}">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Restore Point & Backup</span>
                     </a>
                 @endif
             </div>
