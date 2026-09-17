@@ -46,7 +46,7 @@
                     <tr>
                         <th style="width: 50px;">No</th>
                         <th>Periode Audit</th>
-                        <th>Area Audit</th>
+                        <th>Perusahaan / Departemen</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
                         <th>Skor Akhir</th>
@@ -62,7 +62,37 @@
                                 {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}
                             </td>
                             <td>
-                                <span class="fw-bold text-slate-800">{{ $sesi->area_audit }}</span>
+                                @if($sesi->departemen_id && $sesi->departemen)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2.5 py-1 rounded-pill small fw-semibold">
+                                            <i class="bi bi-diagram-3 me-1"></i>Departemen
+                                        </span>
+                                        <span class="fw-bold text-slate-800">{{ $sesi->departemen->nama_departemen }}</span>
+                                    </div>
+                                @elseif($sesi->perusahaan_id && $sesi->perusahaan)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-semibold">
+                                            <i class="bi bi-building me-1"></i>Perusahaan
+                                        </span>
+                                        <span class="fw-bold text-slate-800">{{ $sesi->perusahaan->nama_perusahaan }}</span>
+                                    </div>
+                                @elseif($sesi->departemen)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2.5 py-1 rounded-pill small fw-semibold">
+                                            <i class="bi bi-diagram-3 me-1"></i>Departemen
+                                        </span>
+                                        <span class="fw-bold text-slate-800">{{ $sesi->departemen->nama_departemen }}</span>
+                                    </div>
+                                @elseif($sesi->perusahaan)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-semibold">
+                                            <i class="bi bi-building me-1"></i>Perusahaan
+                                        </span>
+                                        <span class="fw-bold text-slate-800">{{ $sesi->perusahaan->nama_perusahaan }}</span>
+                                    </div>
+                                @else
+                                    <span class="fw-bold text-slate-800">{{ $sesi->area_audit }}</span>
+                                @endif
                             </td>
                             <td>
                                 <small class="text-muted"><i class="bi bi-person me-1"></i>{{ $sesi->user->name ?? '-' }}</small>

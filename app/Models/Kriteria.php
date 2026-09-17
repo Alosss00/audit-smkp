@@ -85,4 +85,20 @@ class Kriteria extends Model
     {
         return $this->hasMany(AuditDetail::class, 'kriteria_id');
     }
+
+    /**
+     * Gating rules where this Kriteria acts as upstream/hulu.
+     */
+    public function gatingRulesAsHulu()
+    {
+        return $this->hasMany(KriteriaGatingRule::class, 'kriteria_hulu_id');
+    }
+
+    /**
+     * Gating rules where this Kriteria acts as downstream/hilir.
+     */
+    public function gatingRulesAsHilir()
+    {
+        return $this->hasMany(KriteriaGatingRule::class, 'kriteria_hilir_id');
+    }
 }

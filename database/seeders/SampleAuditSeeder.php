@@ -39,12 +39,11 @@ class SampleAuditSeeder extends Seeder
         AuditSesi::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // 10 Realistic Audit Session Definitions
+        // 10 Realistic Audit Session Definitions (5 Perusahaan & 5 Departemen)
         $sessionsData = [
             [
-                'area_audit' => 'Area Tambang Utama Pit West & Haulage Road',
                 'perusahaan_nama' => 'PT. Meares Soputan Mining',
-                'departemen_nama' => 'Departemen Mining',
+                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(5)->toDateString(),
                 'tanggal_selesai' => now()->subDays(2)->toDateString(),
                 'status' => 'berjalan',
@@ -55,9 +54,8 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'area_audit' => 'Processing Plant & Heavy Equipment Workshop',
                 'perusahaan_nama' => 'PT. Macmahon Indonesia',
-                'departemen_nama' => 'Departemen Maintenance',
+                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(10)->toDateString(),
                 'tanggal_selesai' => now()->subDays(5)->toDateString(),
                 'status' => 'selesai',
@@ -67,9 +65,8 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'area_audit' => 'Area Pelabuhan (Port & Coal Terminal Jetty 1)',
                 'perusahaan_nama' => 'PT. Samudera Mulia Abadi',
-                'departemen_nama' => 'Departemen Commercial',
+                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(12)->toDateString(),
                 'tanggal_selesai' => now()->subDays(8)->toDateString(),
                 'status' => 'selesai',
@@ -78,9 +75,8 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'area_audit' => 'Area Gudang Bahan Peledak & Handak Central',
                 'perusahaan_nama' => 'PT. Hanwha Mining Services Indonesia',
-                'departemen_nama' => 'Departemen HSE & Formalities',
+                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(16)->toDateString(),
                 'tanggal_selesai' => now()->subDays(12)->toDateString(),
                 'status' => 'berjalan',
@@ -90,17 +86,15 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'area_audit' => 'Area Power Plant & Substation 33kV',
                 'perusahaan_nama' => 'PT. Tambang Tondano Nusajaya',
-                'departemen_nama' => 'Departemen Process Plant',
+                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(18)->toDateString(),
                 'tanggal_selesai' => now()->subDays(15)->toDateString(),
                 'status' => 'draft',
                 'findings' => []
             ],
             [
-                'area_audit' => 'Area Mess Karyawan & Central Kitchen',
-                'perusahaan_nama' => 'PT. Tata Wisata',
+                'perusahaan_nama' => null,
                 'departemen_nama' => 'Departemen HCCS',
                 'tanggal_mulai' => now()->subDays(22)->toDateString(),
                 'tanggal_selesai' => now()->subDays(18)->toDateString(),
@@ -110,8 +104,7 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'area_audit' => 'Area Tangki Timbun Bahan Bakar (Fuel Farm 500kL)',
-                'perusahaan_nama' => 'PT. AKR',
+                'perusahaan_nama' => null,
                 'departemen_nama' => 'Departemen Supply Chain',
                 'tanggal_mulai' => now()->subDays(25)->toDateString(),
                 'tanggal_selesai' => now()->subDays(21)->toDateString(),
@@ -121,8 +114,7 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'area_audit' => 'Area Laboratorium K3 & Pengujian Lingkungan',
-                'perusahaan_nama' => 'PT. Intertek',
+                'perusahaan_nama' => null,
                 'departemen_nama' => 'Departemen Environmental',
                 'tanggal_mulai' => now()->subDays(28)->toDateString(),
                 'tanggal_selesai' => now()->subDays(25)->toDateString(),
@@ -132,8 +124,7 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'area_audit' => 'Area Pit East & Disposal Dumping Area',
-                'perusahaan_nama' => 'PT Batu Biru Nusantara',
+                'perusahaan_nama' => null,
                 'departemen_nama' => 'Departemen Mining Tech Service',
                 'tanggal_mulai' => now()->subDays(32)->toDateString(),
                 'tanggal_selesai' => now()->subDays(28)->toDateString(),
@@ -144,8 +135,7 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'area_audit' => 'Area Kantor Administrasi Utama & Klinik K3',
-                'perusahaan_nama' => 'Siloam Hospital',
+                'perusahaan_nama' => null,
                 'departemen_nama' => 'Departemen OHS',
                 'tanggal_mulai' => now()->subDays(35)->toDateString(),
                 'tanggal_selesai' => now()->subDays(30)->toDateString(),
@@ -157,11 +147,19 @@ class SampleAuditSeeder extends Seeder
         ];
 
         foreach ($sessionsData as $data) {
-            $perusahaanObj = Perusahaan::where('nama_perusahaan', $data['perusahaan_nama'])->first();
-            $perusahaanId = $perusahaanObj ? $perusahaanObj->id : null;
+            $perusahaanId = null;
+            $departemenId = null;
+            $areaAudit = '';
 
-            $departemenObj = Departemen::where('nama_departemen', $data['departemen_nama'])->first();
-            $departemenId = $departemenObj ? $departemenObj->id : null;
+            if (!empty($data['perusahaan_nama'])) {
+                $perusahaanObj = Perusahaan::where('nama_perusahaan', $data['perusahaan_nama'])->first();
+                $perusahaanId = $perusahaanObj ? $perusahaanObj->id : null;
+                $areaAudit = $perusahaanObj ? $perusahaanObj->nama_perusahaan : $data['perusahaan_nama'];
+            } elseif (!empty($data['departemen_nama'])) {
+                $departemenObj = Departemen::where('nama_departemen', $data['departemen_nama'])->first();
+                $departemenId = $departemenObj ? $departemenObj->id : null;
+                $areaAudit = $departemenObj ? $departemenObj->nama_departemen : $data['departemen_nama'];
+            }
 
             $sesi = AuditSesi::create([
                 'user_id' => $auditor->id,
@@ -169,7 +167,7 @@ class SampleAuditSeeder extends Seeder
                 'departemen_id' => $departemenId,
                 'tanggal_mulai' => $data['tanggal_mulai'],
                 'tanggal_selesai' => $data['tanggal_selesai'],
-                'area_audit' => $data['area_audit'],
+                'area_audit' => $areaAudit,
                 'status' => $data['status'],
                 'skor_akhir' => 0.00,
             ]);

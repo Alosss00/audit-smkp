@@ -12,6 +12,7 @@ use App\Models\Elemen;
 use App\Models\Kriteria;
 use App\Models\Perusahaan;
 use App\Models\Pica;
+use App\Services\GatingRuleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -87,10 +88,6 @@ class AuditSesiAdminController extends Controller
             $areaAudit = $departemen ? $departemen->nama_departemen : 'Departemen Audit';
         } else {
             $areaAudit = $request->area_selection;
-        }
-
-        if ($request->filled('detail_area')) {
-            $areaAudit .= ' (' . trim($request->detail_area) . ')';
         }
 
         DB::beginTransaction();
@@ -176,8 +173,10 @@ class AuditSesiAdminController extends Controller
         }])->orderBy('kode_elemen')->get();
 
         $rekap = $sesi->getRekapPerElemen();
+        $gatingRules = \App\Models\KriteriaGatingRule::active()->with(['kriteriaHulu', 'kriteriaHilir'])->get();
+        $gatingViolations = app(GatingRuleService::class)->evaluate($sesi);
 
-        return view('auditor.audit.matrix', compact('sesi', 'elemens', 'rekap'));
+        return view('auditor.audit.matrix', compact('sesi', 'elemens', 'rekap', 'gatingRules', 'gatingViolations'));
     }
 
     /**
@@ -203,6 +202,16 @@ class AuditSesiAdminController extends Controller
             'details.*.lampirans.*'    => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             'details.*.hapus_lampiran' => 'nullable|array',
         ]);
+
+        // Cross-Check / Scoring Gating Validation
+        $gatingService = app(GatingRuleService::class);
+        $hardBlockMessages = $gatingService->getHardBlockMessages($sesi, $request->details);
+
+        if (!empty($hardBlockMessages)) {
+            return back()->withInput()->with('error', 'Penyimpanan ditolak karena melanggar aturan Cross-Check / Gating Logic: ' . implode(' | ', $hardBlockMessages));
+        }
+
+        $softFlagWarnings = $gatingService->getSoftFlagWarnings($sesi, $request->details);
 
         DB::beginTransaction();
         try {
@@ -364,11 +373,19 @@ class AuditSesiAdminController extends Controller
             }
 
             if ($request->has('save_and_rekap')) {
-                return redirect()->route('admin.audit-sesi.rekap', $sesi->id)
+                $redirect = redirect()->route('admin.audit-sesi.rekap', $sesi->id)
                     ->with('success', 'Matriks penilaian berhasil disimpan!');
+                if (!empty($softFlagWarnings)) {
+                    $redirect->with('warning', 'Peringatan Inkonsistensi Gating: ' . implode(' | ', $softFlagWarnings));
+                }
+                return $redirect;
             }
 
-            return back()->with('success', 'Matriks penilaian audit berhasil diperbarui!');
+            $back = back()->with('success', 'Matriks penilaian audit berhasil diperbarui!');
+            if (!empty($softFlagWarnings)) {
+                $back->with('warning', 'Peringatan Inkonsistensi Gating: ' . implode(' | ', $softFlagWarnings));
+            }
+            return $back;
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -384,8 +401,9 @@ class AuditSesiAdminController extends Controller
         $rekap     = $sesi->getRekapPerElemen();
         $hierarki  = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->hitungSkorAkhir();
+        $gatingViolations = app(GatingRuleService::class)->evaluate($sesi);
 
-        return view('admin.audit-sesi.rekap', compact('sesi', 'rekap', 'hierarki', 'skorAkhir'));
+        return view('admin.audit-sesi.rekap', compact('sesi', 'rekap', 'hierarki', 'skorAkhir', 'gatingViolations'));
     }
 
     /**

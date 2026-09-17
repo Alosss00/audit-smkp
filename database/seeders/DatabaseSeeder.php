@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             PerusahaanSeeder::class,
             DepartemenSeeder::class,
             SampleAuditSeeder::class,
+            KriteriaGatingRuleSeeder::class,
         ]);
     }
 }

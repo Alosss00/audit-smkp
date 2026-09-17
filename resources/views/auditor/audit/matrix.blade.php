@@ -112,6 +112,8 @@
                                                         <span class="peringatan-konsistensi badge bg-warning text-dark px-2 py-1 flex-shrink-0" style="display:none;" title="" data-bs-toggle="tooltip"></span>
                                                     </div>
 
+                                                    <div class="gating-warning-container mb-2"></div>
+
                                                     <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2 py-0" data-bs-toggle="modal" data-bs-target="#rubricModal{{ $kriteria->id }}">
                                                         <i class="bi bi-info-circle me-1"></i> Pedoman Penilaian & Bukti Dokumen
                                                     </button>
@@ -575,58 +577,112 @@
             }
         });
 
-        // Logic Peringatan Konsistensi Antar-Kriteria (Advisory Visual Client-Side)
+        // List of Active Gating Rules passed from Server
+        const gatingRules = @json($gatingRules ?? []);
+
+        // Logic Peringatan Konsistensi & Cross-Check Gating Antar-Kriteria (Advisory Visual Client-Side)
         function cekKonsistensi() {
+            // 1. Reset all existing gating warning containers
+            document.querySelectorAll('.gating-warning-container').forEach(function(el) {
+                el.innerHTML = '';
+            });
+
+            // 2. Evaluate Dynamic Gating Rules
+            if (Array.isArray(gatingRules) && gatingRules.length > 0) {
+                gatingRules.forEach(function(rule) {
+                    const huluId = rule.kriteria_hulu_id;
+                    const hilirId = rule.kriteria_hilir_id;
+                    if (!huluId || !hilirId) return;
+
+                    const huluRow = document.querySelector(`.kriteria-row[data-kriteria-id="${huluId}"]`);
+                    const hilirRow = document.querySelector(`.kriteria-row[data-kriteria-id="${hilirId}"]`);
+                    if (!huluRow || !hilirRow) return;
+
+                    const huluNa = huluRow.querySelector('.na-checkbox')?.checked || false;
+                    const hilirNa = hilirRow.querySelector('.na-checkbox')?.checked || false;
+                    if (huluNa || hilirNa) return;
+
+                    const huluNilaiInput = huluRow.querySelector('.nilai-input');
+                    const hilirNilaiInput = hilirRow.querySelector('.nilai-input');
+                    const huluNilai = parseFloat(huluNilaiInput ? huluNilaiInput.value : 0) || 0;
+                    const hilirNilai = parseFloat(hilirNilaiInput ? hilirNilaiInput.value : 0) || 0;
+
+                    let isTriggered = false;
+                    let maxAllowed = null;
+
+                    if (rule.ambang_hulu !== null && rule.ambang_hulu !== undefined) {
+                        if (huluNilai <= parseFloat(rule.ambang_hulu)) {
+                            isTriggered = true;
+                            maxAllowed = rule.skor_maks_hilir !== null ? parseFloat(rule.skor_maks_hilir) : huluNilai;
+                        }
+                    } else {
+                        // Dynamic benchmark: hilir should not exceed hulu
+                        if (hilirNilai > huluNilai) {
+                            isTriggered = true;
+                            maxAllowed = huluNilai;
+                        }
+                    }
+
+                    if (isTriggered && maxAllowed !== null && hilirNilai > maxAllowed) {
+                        const kodeHulu = rule.kriteria_hulu ? rule.kriteria_hulu.kode_kriteria : ('ID:' + huluId);
+                        const isHardBlock = rule.mode === 'hard_block';
+                        const badgeClass = isHardBlock ? 'bg-danger text-white' : 'bg-warning text-dark border border-warning';
+                        const icon = isHardBlock ? 'bi-shield-x' : 'bi-exclamation-triangle';
+                        const titleText = isHardBlock 
+                            ? `Gating Hard Block: Nilai kriteria ini (${hilirNilai}) melebihi batas gating (${maxAllowed}) karena kriteria hulu ${kodeHulu} bernilai ${huluNilai}. Simpan akan ditolak jika melebihi batas.`
+                            : `Peringatan Inkonsistensi Gating: Nilai kriteria ini (${hilirNilai}) melebihi patokan kriteria hulu ${kodeHulu} (${huluNilai}).`;
+
+                        const container = hilirRow.querySelector('.gating-warning-container');
+                        if (container) {
+                            const badge = document.createElement('span');
+                            badge.className = `badge ${badgeClass} p-1.5 px-2.5 rounded-pill d-inline-flex align-items-center gap-1 shadow-sm mt-1`;
+                            badge.setAttribute('title', titleText);
+                            badge.setAttribute('data-bs-toggle', 'tooltip');
+                            badge.innerHTML = `<i class="bi ${icon}"></i> <span>Gating (${isHardBlock ? 'Batas Max ' + maxAllowed : 'Patokan Hulu: ' + huluNilai})</span>`;
+                            container.appendChild(badge);
+                        }
+                    }
+                });
+            }
+
+            // 3. Legacy Dependency Warnings (if any)
             document.querySelectorAll('.kriteria-row[data-dependency-id]').forEach(function(row) {
                 const depId = row.dataset.dependencyId;
-                if (!depId || depId === 'null' || depId === '') {
-                    return;
-                }
+                if (!depId || depId === 'null' || depId === '') return;
 
                 const depRow = document.querySelector(`.kriteria-row[data-kriteria-id="${depId}"]`);
                 if (!depRow) return;
 
-                const depNaInput = depRow.querySelector('.na-checkbox');
-                const depIsNa = depNaInput ? depNaInput.checked : false;
-
-                const thisNaInput = row.querySelector('.na-checkbox');
-                const thisIsNa = thisNaInput ? thisNaInput.checked : false;
-
-                const thisNilaiInput = row.querySelector('.nilai-input');
-                const thisNilai = parseFloat(thisNilaiInput ? thisNilaiInput.value : 0) || 0;
+                const depNa = depRow.querySelector('.na-checkbox')?.checked || false;
+                const thisNa = row.querySelector('.na-checkbox')?.checked || false;
+                const thisNilai = parseFloat(row.querySelector('.nilai-input')?.value || 0) || 0;
                 const thisMax = parseFloat(row.dataset.nilaiMaksimal) || 0;
                 const warningEl = row.querySelector('.peringatan-konsistensi');
-
                 if (!warningEl) return;
 
                 let pesan = null;
-
-                if (depIsNa && !thisIsNa && thisNilai > 0) {
+                if (depNa && !thisNa && thisNilai > 0) {
                     pesan = 'Kriteria prasyarat berstatus N/A — periksa apakah penilaian ini masih relevan.';
-                } else if (!depIsNa) {
-                    const depNilaiInput = depRow.querySelector('.nilai-input');
-                    const depNilai = parseFloat(depNilaiInput ? depNilaiInput.value : 0) || 0;
+                } else if (!depNa) {
+                    const depNilai = parseFloat(depRow.querySelector('.nilai-input')?.value || 0) || 0;
                     const depMax = parseFloat(depRow.dataset.nilaiMaksimal) || 0;
-
-                    if (depMax > 0 && thisMax > 0) {
-                        const depPersen = depNilai / depMax;
-                        const thisPersen = thisNilai / thisMax;
-
-                        if (depPersen < 0.5 && thisPersen >= 0.75) {
-                            pesan = 'Nilai kriteria ini cukup tinggi, tapi kriteria prasyaratnya bernilai rendah (di bawah 50%) — periksa konsistensi.';
-                        }
+                    if (depMax > 0 && thisMax > 0 && (depNilai / depMax) < 0.5 && (thisNilai / thisMax) >= 0.75) {
+                        pesan = 'Nilai kriteria ini cukup tinggi, tapi kriteria prasyaratnya bernilai rendah (di bawah 50%).';
                     }
                 }
 
                 if (pesan) {
-                    const note = row.dataset.dependencyNote ? (' | Catatan: ' + row.dataset.dependencyNote) : '';
                     warningEl.textContent = '⚠ ' + pesan;
-                    warningEl.title = pesan + note;
+                    warningEl.title = pesan;
                     warningEl.style.display = 'inline-block';
                 } else {
                     warningEl.style.display = 'none';
                 }
             });
+
+            // Re-initialize all tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
         }
 
         // Jalankan pengecekan konsistensi saat halaman dimuat

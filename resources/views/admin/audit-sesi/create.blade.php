@@ -47,7 +47,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="mb-3">
+                <div class="mb-4">
                     <label for="area_selection" class="form-label fw-semibold small text-secondary">Pilih Area Audit <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="bi bi-geo-alt-fill text-primary"></i></span>
@@ -68,13 +68,6 @@
                                 @endforeach
                             </optgroup>
                         </select>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <label for="detail_area" class="form-label fw-semibold small text-secondary">Spesifikasi Detail Lokasi / Sub-Area (Opsional)</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="bi bi-pin-map"></i></span>
-                        <input type="text" name="detail_area" id="detail_area" class="form-control" placeholder="Contoh: Pit West / Workshop Utama / Dermaga 1" value="{{ old('detail_area') }}">
                     </div>
                 </div>
                 <div class="d-flex align-items-center justify-content-end gap-2 mt-4 pt-3 border-top">
