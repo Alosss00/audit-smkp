@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1 Admin User
+        // 1. Administrator (Akses Penuh Master Data, User Management, & Penilaian)
         User::updateOrCreate(
             ['username' => 'admin'],
             [
@@ -25,15 +25,27 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // 1 Auditor User
+        // 2. Auditor SMKP (Akses Dashboard, Penilaian & Monitoring)
+        User::updateOrCreate(
+            ['username' => 'auditor_smkp'],
+            [
+                'name'      => 'Auditor SMKP Minerba',
+                'email'     => 'auditor.smkp@smkp.id',
+                'password'  => Hash::make('password'),
+                'role'      => 'auditor_smkp',
+                'is_active' => true,
+            ]
+        );
+
+        // 3. Auditor Perusahaan (Auditee / PIC Area Kerja)
         User::updateOrCreate(
             ['username' => 'auditor'],
             [
-                'name'      => 'Auditor Internal SMKP',
-                'email'     => 'auditor@smkp.id',
+                'name'      => 'Auditor Perusahaan (PT MSM)',
+                'email'     => 'auditor.msm@smkp.id',
                 'password'  => Hash::make('password'),
                 'role'      => 'auditor',
-                'area'      => 'Area Tambang Utama Pit West & Haulage Road',
+                'area'      => 'PT. Meares Soputan Mining',
                 'is_active' => true,
             ]
         );

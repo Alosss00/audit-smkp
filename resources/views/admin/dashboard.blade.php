@@ -150,8 +150,9 @@
     </div>
 </div>
 
+@if(auth()->user()->hasMasterDataAccess())
 <!-- Master Data Quick Navigation -->
-<h5 class="fw-bold mb-3"><i class="bi bi-grid-fill me-2 text-primary"></i>Kelola Master Data & Monitoring</h5>
+<h5 class="fw-bold mb-3"><i class="bi bi-grid-fill me-2 text-primary"></i>Kelola Master Data & User</h5>
 <div class="row g-4">
     <div class="col-md-6 col-lg-3">
         <div class="card card-custom p-4 h-100">
@@ -198,13 +199,57 @@
                 <h5 class="fw-bold mb-0">Kelola Users</h5>
                 <span class="badge bg-warning text-dark rounded-pill">{{ $stats['total_users'] }}</span>
             </div>
-            <p class="text-muted small">Kelola data pengguna, role hak akses Admin dan Auditor pelaksana.</p>
+            <p class="text-muted small">Kelola data pengguna, role Administrator, Auditor SMKP, dan Auditor Perusahaan.</p>
             <a href="{{ route('admin.users.index') }}" class="btn btn-outline-warning text-dark btn-sm rounded-3 mt-auto">
                 <i class="bi bi-gear me-1"></i> Kelola User
             </a>
         </div>
     </div>
 </div>
+@else
+<!-- Auditor SMKP Quick Action Links -->
+<h5 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill me-2 text-primary"></i>Akses Cepat Penilaian & Monitoring</h5>
+<div class="row g-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="card card-custom p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold mb-0">Kelola Sesi Audit</h5>
+                <span class="badge bg-primary rounded-pill">{{ $stats['total_audits'] }} Sesi</span>
+            </div>
+            <p class="text-muted small">Kelola seluruh sesi evaluasi, input matriks penilaian kriteria, dan rekapitulasi nilai.</p>
+            <a href="{{ route('admin.audit-sesi.index') }}" class="btn btn-outline-primary btn-sm rounded-3 mt-auto">
+                <i class="bi bi-journal-check me-1"></i> Buka Sesi Audit
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card card-custom p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold mb-0">Monitoring Audit</h5>
+                <span class="badge bg-success rounded-pill">{{ $stats['audits_selesai'] }} Selesai</span>
+            </div>
+            <p class="text-muted small">Pantau status pelaksanaan audit lintas perusahaan, departemen, dan unduh laporan.</p>
+            <a href="{{ route('admin.rekap-audit.index') }}" class="btn btn-outline-success btn-sm rounded-3 mt-auto">
+                <i class="bi bi-shield-check me-1"></i> Buka Monitoring
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card card-custom p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold mb-0">Otoritas & Oversight PICA</h5>
+                <span class="badge bg-danger rounded-pill">{{ $stats['open_pica'] + $stats['in_progress_pica'] }} Aktif</span>
+            </div>
+            <p class="text-muted small">Verifikasi rencana koreksi/pencegahan ketidaksesuaian dan kelola penutupan temuan PICA.</p>
+            <a href="{{ route('admin.pica.index') }}" class="btn btn-outline-danger btn-sm rounded-3 mt-auto">
+                <i class="bi bi-tools me-1"></i> Buka Oversight PICA
+            </a>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @push('scripts')

@@ -31,14 +31,14 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username',
             'email'    => 'nullable|email|unique:users,email',
-            'role'     => 'required|in:admin,auditor',
+            'role'     => 'required|in:admin,auditor_smkp,auditor',
             'area'     => 'required_if:role,auditor|nullable|string|max:255',
             'password' => 'required|string|min:6|max:100',
         ], [
-            'username.unique' => 'Username sudah digunakan.',
-            'password.min'    => 'Password minimal 6 karakter.',
-            'password.max'    => 'Password maksimal 100 karakter.',
-            'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor (Auditee / PIC Area).',
+            'username.unique'  => 'Username sudah digunakan.',
+            'password.min'     => 'Password minimal 6 karakter.',
+            'password.max'     => 'Password maksimal 100 karakter.',
+            'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor Perusahaan (Auditee / PIC Area).',
         ]);
 
         $newUser = User::create([
@@ -46,7 +46,7 @@ class UserController extends Controller
             'username'  => $request->username,
             'email'     => $request->email,
             'role'      => $request->role,
-            'area'      => $request->role === 'admin' ? null : $request->area,
+            'area'      => $request->role === 'auditor' ? $request->area : null,
             'password'  => Hash::make($request->password),
             'is_active' => true,
         ]);
@@ -75,13 +75,13 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,' . $user->id,
             'email'    => 'nullable|email|unique:users,email,' . $user->id,
-            'role'     => 'required|in:admin,auditor',
+            'role'     => 'required|in:admin,auditor_smkp,auditor',
             'area'     => 'required_if:role,auditor|nullable|string|max:255',
             'password' => 'nullable|string|min:6|max:100',
         ], [
-            'password.min'    => 'Password minimal 6 karakter.',
-            'password.max'    => 'Password maksimal 100 karakter.',
-            'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor (Auditee / PIC Area).',
+            'password.min'     => 'Password minimal 6 karakter.',
+            'password.max'     => 'Password maksimal 100 karakter.',
+            'area.required_if' => 'Area kerja wajib diisi untuk pengguna dengan role Auditor Perusahaan (Auditee / PIC Area).',
         ]);
 
         $originalData = ['name' => $user->name, 'username' => $user->username, 'email' => $user->email, 'role' => $user->role, 'area' => $user->area, 'is_active' => $user->is_active];
@@ -100,7 +100,7 @@ class UserController extends Controller
             'username'  => $request->username,
             'email'     => $request->email,
             'role'      => $newRole,
-            'area'      => $newRole === 'admin' ? null : $request->area,
+            'area'      => $newRole === 'auditor' ? $request->area : null,
             'is_active' => $isActive,
         ];
 

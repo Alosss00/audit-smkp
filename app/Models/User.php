@@ -66,7 +66,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Helper to check if user is admin (Auditor Internal SMKP).
+     * Helper to check if user is Administrator (Full Access).
      */
     public function isAdmin(): bool
     {
@@ -74,7 +74,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Helper to check if user is auditor (Auditor Internal Perusahaan).
+     * Helper to check if user is Auditor SMKP (Dashboard & Penilaian Access).
+     */
+    public function isAuditorSmkp(): bool
+    {
+        return $this->role === 'auditor_smkp';
+    }
+
+    /**
+     * Helper to check if user is Auditor Perusahaan (Auditee / Area Scoped).
      */
     public function isAuditor(): bool
     {
@@ -82,10 +90,31 @@ class User extends Authenticatable
     }
 
     /**
+     * Helper to check if user has access to Penilaian & Monitoring.
+     */
+    public function hasPenilaianAccess(): bool
+    {
+        return in_array($this->role, ['admin', 'auditor_smkp']);
+    }
+
+    /**
+     * Helper to check if user has access to Master Data & Admin configurations.
+     */
+    public function hasMasterDataAccess(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
      * Get human-readable role label.
      */
     public function getRoleLabelAttribute(): string
     {
-        return $this->role === 'admin' ? 'Auditor Internal SMKP' : 'Auditor Internal Perusahaan';
+        return match($this->role) {
+            'admin'        => 'Administrator',
+            'auditor_smkp' => 'Auditor SMKP',
+            'auditor'      => 'Auditor Perusahaan',
+            default        => ucfirst($this->role),
+        };
     }
 }

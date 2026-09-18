@@ -14,7 +14,7 @@ class AuthController extends Controller
     {
         if (Auth::check()) {
             $user = Auth::user();
-            if ($user->role === 'admin') {
+            if ($user->role === 'admin' || $user->role === 'auditor_smkp') {
                 return redirect()->route('admin.dashboard');
             }
             return redirect()->route('auditor.dashboard');
@@ -66,10 +66,13 @@ class AuthController extends Controller
             if ($user->role === 'admin') {
                 return redirect()->intended(route('admin.dashboard'))
                     ->with('success', 'Selamat datang kembali, Administrator!');
+            } elseif ($user->role === 'auditor_smkp') {
+                return redirect()->intended(route('admin.dashboard'))
+                    ->with('success', 'Selamat datang kembali, Auditor SMKP!');
             }
 
             return redirect()->intended(route('auditor.dashboard'))
-                ->with('success', 'Selamat datang kembali, Auditor!');
+                ->with('success', 'Selamat datang kembali, Auditor Perusahaan!');
         }
 
         return back()->withErrors([

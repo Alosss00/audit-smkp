@@ -8,7 +8,7 @@
         <h2 class="fw-bold text-slate-800 mb-1">
             <i class="bi bi-people-fill text-warning me-2"></i>Kelola User & Hak Akses
         </h2>
-        <p class="text-muted mb-0">Kelola akun Auditor Internal SMKP, Auditor Internal Perusahaan, serta status aktif/nonaktif akun.</p>
+        <p class="text-muted mb-0">Kelola akun Administrator, Auditor SMKP, Auditor Perusahaan, serta status aktif/nonaktif akun.</p>
     </div>
     <div class="col-md-4 text-md-end mt-3 mt-md-0">
         <button class="btn btn-warning text-dark rounded-3 px-3 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
@@ -47,9 +47,11 @@
                         <td class="text-muted">{{ $u->email ?? '-' }}</td>
                         <td>
                             @if($u->role === 'admin')
-                                <span class="badge bg-danger badge-role"><i class="bi bi-shield-lock me-1"></i>Auditor Internal SMKP</span>
+                                <span class="badge bg-danger badge-role"><i class="bi bi-shield-lock-fill me-1"></i>Administrator</span>
+                            @elseif($u->role === 'auditor_smkp')
+                                <span class="badge bg-primary badge-role"><i class="bi bi-patch-check-fill me-1"></i>Auditor SMKP</span>
                             @else
-                                <span class="badge bg-info text-dark badge-role"><i class="bi bi-clipboard-check me-1"></i>Auditor Internal Perusahaan</span>
+                                <span class="badge bg-info text-dark badge-role"><i class="bi bi-clipboard-check-fill me-1"></i>Auditor Perusahaan</span>
                             @endif
                         </td>
                         <td class="text-center">
@@ -187,19 +189,20 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Role / Hak Akses</label>
                             <select name="role" class="form-select" required>
-                                <option value="admin" {{ $u->role === 'admin' ? 'selected' : '' }}>Auditor Internal SMKP</option>
-                                <option value="auditor" {{ $u->role === 'auditor' ? 'selected' : '' }}>Auditor Internal Perusahaan</option>
+                                <option value="admin" {{ $u->role === 'admin' ? 'selected' : '' }}>Administrator (Akses Penuh Master Data & Penilaian)</option>
+                                <option value="auditor_smkp" {{ $u->role === 'auditor_smkp' ? 'selected' : '' }}>Auditor SMKP (Dashboard, Penilaian & Monitoring)</option>
+                                <option value="auditor" {{ $u->role === 'auditor' ? 'selected' : '' }}>Auditor Perusahaan (Auditee / PIC Area)</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold small">Area Kerja (Khusus Auditor Internal Perusahaan)</label>
+                            <label class="form-label fw-semibold small">Area Kerja (Khusus Auditor Perusahaan)</label>
                             <select name="area" class="form-select select-searchable" data-allow-create="true" placeholder="-- Ketik untuk mencari perusahaan / departemen --">
                                 <option value="">-- Pilih Perusahaan / Departemen Area Kerja --</option>
                                 @php $areaFound = false; @endphp
                                 <optgroup label="🏢 PERUSAHAAN (KONTRAKTOR / SUBKONTRAKTOR)">
                                     @foreach($perusahaans as $p)
                                         @php
-                                            $isSelected = ($u->area === $p->nama_perusahaan);
+                                             $isSelected = ($u->area === $p->nama_perusahaan);
                                             if ($isSelected) $areaFound = true;
                                         @endphp
                                         <option value="{{ $p->nama_perusahaan }}" {{ $isSelected ? 'selected' : '' }}>
@@ -224,7 +227,7 @@
                                     </optgroup>
                                 @endif
                             </select>
-                            <small class="text-muted" style="font-size: 0.75rem;">Digunakan untuk memfilter temuan PICA & sesi audit area</small>
+                            <small class="text-muted" style="font-size: 0.75rem;">Wajib untuk Auditor Perusahaan. Mengisolasi akses temuan PICA & sesi audit sesuai area.</small>
                         </div>
                         <div class="mb-3">
                             <div class="form-check form-switch">
@@ -275,12 +278,13 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Role / Hak Akses</label>
                         <select name="role" class="form-select" required>
-                            <option value="auditor">Auditor Internal Perusahaan</option>
-                            <option value="admin">Auditor Internal SMKP</option>
+                            <option value="auditor_smkp">Auditor SMKP (Dashboard, Penilaian & Monitoring)</option>
+                            <option value="admin">Administrator (Akses Penuh Master Data & Penilaian)</option>
+                            <option value="auditor">Auditor Perusahaan (Auditee / PIC Area)</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Area Kerja (Khusus Auditor Internal Perusahaan)</label>
+                        <label class="form-label fw-semibold small">Area Kerja (Khusus Auditor Perusahaan)</label>
                         <select name="area" class="form-select select-searchable" data-allow-create="true" placeholder="-- Ketik untuk mencari perusahaan / departemen --">
                             <option value="">-- Pilih Perusahaan / Departemen Area Kerja --</option>
                             <optgroup label="🏢 PERUSAHAAN (KONTRAKTOR / SUBKONTRAKTOR)">
@@ -298,7 +302,7 @@
                                 @endforeach
                             </optgroup>
                         </select>
-                        <small class="text-muted" style="font-size: 0.75rem;">Digunakan untuk memfilter temuan PICA & sesi audit area</small>
+                        <small class="text-muted" style="font-size: 0.75rem;">Wajib untuk Auditor Perusahaan. Mengisolasi akses temuan PICA & sesi audit sesuai area.</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Password</label>

@@ -256,7 +256,7 @@
                 <button type="button" id="btnPrintReport" class="btn btn-sm btn-info fw-bold px-3 shadow-sm">
                     <i class="bi bi-printer-fill me-1"></i> Cetak / Simpan PDF
                 </button>
-                <a href="{{ (auth()->check() && auth()->user()->role === 'admin') ? route('admin.audit-sesi.export-excel', $sesi->id) : route('auditor.audit-sesi.export-excel', $sesi->id) }}" class="btn btn-sm btn-success fw-bold px-3 shadow-sm">
+                <a href="{{ (auth()->check() && (auth()->user()->role === 'admin' || auth()->user()->role === 'auditor_smkp')) ? route('admin.audit-sesi.export-excel', $sesi->id) : route('auditor.audit-sesi.export-excel', $sesi->id) }}" class="btn btn-sm btn-success fw-bold px-3 shadow-sm">
                     <i class="bi bi-file-earmark-excel-fill me-1"></i> Download Excel (.xlsx)
                 </a>
                 <button type="button" id="btnCloseWindow" class="btn btn-sm btn-outline-light px-3">
@@ -291,7 +291,7 @@
                 </tr>
                 <tr>
                     <td class="label-cell">Auditor Pelaksana</td>
-                    <td>{{ $sesi->user->name ?? 'Auditor Internal' }} ({{ $sesi->user->role === 'admin' ? 'Auditor Internal SMKP' : 'Auditor Internal Perusahaan' }})</td>
+                    <td>{{ $sesi->user->name ?? 'Auditor Internal' }} ({{ $sesi->user ? $sesi->user->role_label : 'Auditor' }})</td>
                     <td class="label-cell">Status Sesi Audit</td>
                     <td class="fw-bold text-uppercase">{{ $sesi->status }}</td>
                 </tr>

@@ -346,7 +346,7 @@
                 <!-- Section Utama -->
                 <div class="nav-section-title">Utama</div>
                 
-                @if(auth()->user()->isAdmin())
+                @if(auth()->user()->hasPenilaianAccess())
                     <a href="{{ route('admin.dashboard') }}" class="sidebar-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i class="bi bi-speedometer2"></i>
                         <span>Dashboard</span>
@@ -361,7 +361,7 @@
                 <!-- Section Audit System -->
                 <div class="nav-section-title">Penilaian & Monitoring</div>
 
-                @if(auth()->user()->isAdmin())
+                @if(auth()->user()->hasPenilaianAccess())
                     <a href="{{ route('admin.audit-sesi.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.audit-sesi.index') || request()->routeIs('admin.audit-sesi.matrix') || request()->routeIs('admin.audit-sesi.rekap') ? 'active' : '' }}">
                         <i class="bi bi-journal-check"></i>
                         <span>Kelola Sesi Audit</span>
@@ -390,7 +390,7 @@
                 @endif
 
                 <!-- Section Master Data (Admin Only) -->
-                @if(auth()->user()->isAdmin())
+                @if(auth()->user()->hasMasterDataAccess())
                     <div class="nav-section-title">Pengelolaan Master Data</div>
 
                     <a href="{{ route('admin.perusahaans.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.perusahaans.*') ? 'active' : '' }}">
@@ -445,21 +445,52 @@
                         <div class="overflow-hidden">
                             <strong class="text-white d-block text-truncate small" style="max-width: 130px;">{{ auth()->user()->name }}</strong>
                             @if(auth()->user()->isAdmin())
-                                <span class="badge bg-danger badge-role" style="font-size: 0.65rem; padding: 2px 8px;">Auditor Internal SMKP</span>
+                                <span class="badge bg-danger badge-role" style="font-size: 0.65rem; padding: 2px 8px;"><i class="bi bi-shield-lock-fill me-1"></i>Administrator</span>
+                            @elseif(auth()->user()->isAuditorSmkp())
+                                <span class="badge bg-primary badge-role" style="font-size: 0.65rem; padding: 2px 8px;"><i class="bi bi-patch-check-fill me-1"></i>Auditor SMKP</span>
                             @else
-                                <span class="badge bg-info text-dark badge-role" style="font-size: 0.65rem; padding: 2px 8px;">Auditor Internal Perusahaan</span>
+                                <span class="badge bg-info text-dark badge-role" style="font-size: 0.65rem; padding: 2px 8px;"><i class="bi bi-clipboard-check-fill me-1"></i>Auditor Perusahaan</span>
                             @endif
                         </div>
                     </div>
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-light border-0 text-danger p-2" title="Keluar dari Sistem">
-                            <i class="bi bi-box-arrow-right fs-5"></i>
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-sm btn-outline-light border-0 text-danger p-2 rounded-2" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal" title="Keluar dari Sistem">
+                        <i class="bi bi-box-arrow-right fs-5"></i>
+                    </button>
                 </div>
             </div>
         </aside>
+
+        <!-- Modal Konfirmasi Logout -->
+        <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmModalLabel" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                    <div class="modal-header border-0 pb-0 pt-4 px-4 justify-content-end">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center px-4 pt-1 pb-4">
+                        <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle" 
+                             style="width: 72px; height: 72px; background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.2);">
+                            <i class="bi bi-box-arrow-right text-danger" style="font-size: 2rem;"></i>
+                        </div>
+                        <h5 class="fw-bold text-slate-800 mb-2" id="logoutConfirmModalLabel">Konfirmasi Keluar</h5>
+                        <p class="text-secondary small mb-4">
+                            Apakah Anda yakin ingin keluar dari sistem <strong>SMKP Minerba</strong>? Sesi aktif Anda saat ini akan diakhiri.
+                        </p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="btn btn-light border px-4 py-2 rounded-3 fw-semibold flex-fill" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg me-1"></i> Batal
+                            </button>
+                            <form action="{{ route('logout') }}" method="POST" class="flex-fill m-0">
+                                @csrf
+                                <button type="submit" class="btn btn-danger px-4 py-2 rounded-3 fw-semibold w-100 shadow-sm" style="background: linear-gradient(135deg, #ef4444, #dc2626); border: none;">
+                                    <i class="bi bi-check2-circle me-1"></i> Ya, Keluar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     @endauth
 
     <!-- Main Content Area -->
