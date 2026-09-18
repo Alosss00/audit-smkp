@@ -8,6 +8,7 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230284c7'><path d='M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99-1.616 2.113-3.718 3.37-4.7 3.748a1.15 1.15 0 0 1-.694 0c-.981-.378-3.084-1.635-4.7-3.748C.786 10.518-.596 7.2.001 2.72A1.54 1.54 0 0 1 1.044 1.45C1.703 1.235 2.822.88 3.93.58z'/></svg>">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
 
     <!-- Plus Jakarta Sans Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
