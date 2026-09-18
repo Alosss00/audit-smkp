@@ -90,12 +90,8 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
             // Log Aktivitas User & Audit Trail Perubahan File
             Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
 
-            // Restore Points & System Snapshots & Trash Recovery
+            // Pusat Pemulihan Data Terhapus (Recycle Bin / Soft Delete Recovery)
             Route::get('/restore-points', [\App\Http\Controllers\Admin\RestorePointController::class, 'index'])->name('restore-points.index');
-            Route::post('/restore-points', [\App\Http\Controllers\Admin\RestorePointController::class, 'store'])->name('restore-points.store');
-            Route::post('/restore-points/{id}/restore', [\App\Http\Controllers\Admin\RestorePointController::class, 'restore'])->name('restore-points.restore');
-            Route::get('/restore-points/{id}/download', [\App\Http\Controllers\Admin\RestorePointController::class, 'download'])->name('restore-points.download');
-            Route::delete('/restore-points/{id}', [\App\Http\Controllers\Admin\RestorePointController::class, 'destroy'])->name('restore-points.destroy');
             Route::post('/restore-points/trash/{type}/{id}/restore', [\App\Http\Controllers\Admin\RestorePointController::class, 'restoreItem'])->name('restore-points.trash.restore');
             Route::delete('/restore-points/trash/{type}/{id}/force-delete', [\App\Http\Controllers\Admin\RestorePointController::class, 'forceDeleteItem'])->name('restore-points.trash.force-delete');
             Route::post('/restore-points/trash/restore-all', [\App\Http\Controllers\Admin\RestorePointController::class, 'restoreAll'])->name('restore-points.trash.restore-all');

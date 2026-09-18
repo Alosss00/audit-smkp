@@ -430,7 +430,7 @@
 
                     <a href="{{ route('admin.restore-points.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.restore-points.*') ? 'active' : '' }}">
                         <i class="bi bi-arrow-counterclockwise"></i>
-                        <span>Restore Point & Backup</span>
+                        <span>Pusat Pemulihan Data</span>
                     </a>
                 @endif
             </div>

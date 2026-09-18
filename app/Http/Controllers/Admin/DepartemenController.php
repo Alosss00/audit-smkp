@@ -120,7 +120,7 @@ class DepartemenController extends Controller
         ]);
 
         return redirect()->route('admin.departemens.index')
-            ->with('success', "Departemen '{$name}' berhasil dihapus dan dipindahkan ke Restore Point.");
+            ->with('success', "Departemen '{$name}' berhasil dihapus dan dipindahkan ke Pusat Pemulihan Data.");
     }
 
     /**

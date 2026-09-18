@@ -187,7 +187,7 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User berhasil dihapus dan dipindahkan ke Restore Point.');
+            ->with('success', 'User berhasil dihapus dan dipindahkan ke Pusat Pemulihan Data.');
     }
 
     /**

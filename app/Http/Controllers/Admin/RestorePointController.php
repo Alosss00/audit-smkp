@@ -9,49 +9,19 @@ use App\Models\Departemen;
 use App\Models\Elemen;
 use App\Models\Kriteria;
 use App\Models\Perusahaan;
-use App\Models\RestorePoint;
 use App\Models\SubElemen;
 use App\Models\User;
-use App\Services\RestorePointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Exception;
 
 class RestorePointController extends Controller
 {
-    protected RestorePointService $restoreService;
-
-    public function __construct(RestorePointService $restoreService)
-    {
-        $this->restoreService = $restoreService;
-    }
-
     /**
-     * Display listing of restore points & all soft-deleted records (Recycle Bin).
+     * Display listing of all soft-deleted application records (Recycle Bin / Pusat Pemulihan Data).
      */
     public function index(Request $request)
     {
-        // 1. System Restore Points Snapshots Query
-        $rpQuery = RestorePoint::with('user')->latest();
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $rpQuery->where(function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('kode', 'like', "%{$search}%")
-                  ->orWhere('deskripsi', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('tipe')) {
-            $rpQuery->where('tipe', $request->tipe);
-        }
-
-        $restorePoints = $rpQuery->paginate(15);
-        $totalCount = RestorePoint::count();
-        $latestPoint = RestorePoint::latest()->first();
-
-        // 2. Aggregate All Soft-Deleted Data Across All Modules
+        // 1. Aggregate All Soft-Deleted Data Across Application Modules
         $deletedList = collect();
 
         // Sesi Audit
@@ -77,7 +47,7 @@ class RestorePointController extends Controller
                 'badge_class' => 'bg-warning text-dark',
                 'icon'        => 'bi-person',
                 'title'       => $item->name . ' (' . $item->username . ')',
-                'info'        => 'Role: ' . ucfirst($item->role) . ' | Email: ' . ($item->email ?? '-'),
+                'info'        => 'Role: ' . ($item->role_label ?? ucfirst($item->role)) . ' | Email: ' . ($item->email ?? '-'),
                 'deleted_at'  => $item->deleted_at,
             ]);
         });
@@ -118,7 +88,7 @@ class RestorePointController extends Controller
                 'module'      => 'Elemen SMKP',
                 'badge_class' => 'bg-secondary',
                 'icon'        => 'bi-folder',
-                'title'       => 'Elemen ' . $item->nomor_elemen . ': ' . $item->nama_elemen,
+                'title'       => 'Elemen ' . ($item->kode_elemen ?? $item->nomor_elemen) . ': ' . $item->nama_elemen,
                 'info'        => 'Bobot: ' . ($item->bobot_persen ?? 0) . '%',
                 'deleted_at'  => $item->deleted_at,
             ]);
@@ -132,8 +102,8 @@ class RestorePointController extends Controller
                 'module'      => 'Sub-Elemen',
                 'badge_class' => 'bg-dark',
                 'icon'        => 'bi-diagram-3',
-                'title'       => 'Sub-Elemen ' . $item->nomor_sub_elemen . ': ' . $item->nama_sub_elemen,
-                'info'        => 'Induk: Elemen ' . ($item->elemen->nomor_elemen ?? '-'),
+                'title'       => 'Sub-Elemen ' . ($item->kode_sub_elemen ?? $item->nomor_sub_elemen) . ': ' . $item->nama_sub_elemen,
+                'info'        => 'Induk: Elemen ' . ($item->elemen->kode_elemen ?? $item->elemen->nomor_elemen ?? '-'),
                 'deleted_at'  => $item->deleted_at,
             ]);
         });
@@ -146,8 +116,8 @@ class RestorePointController extends Controller
                 'module'      => 'Kriteria',
                 'badge_class' => 'bg-danger',
                 'icon'        => 'bi-list-check',
-                'title'       => 'Kriteria ' . $item->nomor_kriteria . ': ' . substr($item->deskripsi_kriteria, 0, 80) . '...',
-                'info'        => 'Sub-Elemen: ' . ($item->subElemen->nomor_sub_elemen ?? '-'),
+                'title'       => 'Kriteria ' . ($item->nomor_kriteria ?? $item->kode_kriteria ?? '#') . ': ' . substr($item->deskripsi_kriteria ?? $item->pertanyaan, 0, 80) . '...',
+                'info'        => 'Sub-Elemen: ' . ($item->subElemen->kode_sub_elemen ?? $item->subElemen->nomor_sub_elemen ?? '-'),
                 'deleted_at'  => $item->deleted_at,
             ]);
         });
@@ -165,7 +135,7 @@ class RestorePointController extends Controller
         ];
 
         // Filter Trash List
-        if ($request->filled('trash_module')) {
+        if ($request->filled('trash_module') && $request->trash_module !== 'all') {
             $deletedList = $deletedList->where('type', $request->trash_module);
         }
 
@@ -183,9 +153,6 @@ class RestorePointController extends Controller
         $totalDeletedCount = $deletedCountsByModule['all'];
 
         return view('admin.restore_points.index', compact(
-            'restorePoints',
-            'totalCount',
-            'latestPoint',
             'deletedItems',
             'totalDeletedCount',
             'deletedCountsByModule'
@@ -207,15 +174,15 @@ class RestorePointController extends Controller
 
         AuditLog::create([
             'user_id'         => auth()->id(),
-            'modul'           => 'Restore Point',
+            'modul'           => 'Pusat Pemulihan Data',
             'tindakan'        => "Memulihkan data terhapus ({$type}): {$title}",
             'data_lama'       => null,
             'data_baru'       => ['type' => $type, 'id' => $id, 'title' => $title],
             'waktu_perubahan' => now(),
         ]);
 
-        return redirect()->route('admin.restore-points.index', ['tab' => 'trash'])
-            ->with('success', "Data '{$title}' berhasil dipulihkan kembali ke sistem!");
+        return redirect()->route('admin.restore-points.index')
+            ->with('success', "Data '{$title}' berhasil dipulihkan kembali ke aplikasi!");
     }
 
     /**
@@ -233,14 +200,14 @@ class RestorePointController extends Controller
 
         AuditLog::create([
             'user_id'         => auth()->id(),
-            'modul'           => 'Restore Point',
+            'modul'           => 'Pusat Pemulihan Data',
             'tindakan'        => "Menghapus PERMANEN data ({$type}): {$title}",
             'data_lama'       => ['type' => $type, 'id' => $id, 'title' => $title],
             'data_baru'       => null,
             'waktu_perubahan' => now(),
         ]);
 
-        return redirect()->route('admin.restore-points.index', ['tab' => 'trash'])
+        return redirect()->route('admin.restore-points.index')
             ->with('success', "Data '{$title}' berhasil dihapus permanen dari sistem.");
     }
 
@@ -269,14 +236,14 @@ class RestorePointController extends Controller
 
         AuditLog::create([
             'user_id'         => auth()->id(),
-            'modul'           => 'Restore Point',
+            'modul'           => 'Pusat Pemulihan Data',
             'tindakan'        => "Memulihkan SEMUA data terhapus ({$restoredCount} entri)",
             'data_lama'       => null,
             'data_baru'       => ['restored_count' => $restoredCount, 'module' => $module],
             'waktu_perubahan' => now(),
         ]);
 
-        return redirect()->route('admin.restore-points.index', ['tab' => 'trash'])
+        return redirect()->route('admin.restore-points.index')
             ->with('success', "Sebanyak {$restoredCount} data terhapus berhasil dipulihkan!");
     }
 
@@ -288,11 +255,11 @@ class RestorePointController extends Controller
         $request->validate([
             'password_confirmation' => 'required|string',
         ], [
-            'password_confirmation.required' => 'Kata sandi Admin wajib diisi untuk mengosongkan tempat sampah.',
+            'password_confirmation.required' => 'Kata sandi Administrator wajib diisi untuk mengosongkan kotak sampah.',
         ]);
 
         if (!Hash::check($request->password_confirmation, auth()->user()->password)) {
-            return back()->with('error', 'Konfirmasi Kata Sandi Admin tidak sesuai. Pengosongan data dibatalkan.');
+            return back()->with('error', 'Konfirmasi Kata Sandi Administrator tidak sesuai. Pengosongan data dibatalkan.');
         }
 
         $deletedCount = 0;
@@ -311,107 +278,15 @@ class RestorePointController extends Controller
 
         AuditLog::create([
             'user_id'         => auth()->id(),
-            'modul'           => 'Restore Point',
-            'tindakan'        => "Mengosongkan tempat sampah (Hapus Permanen {$deletedCount} entri data)",
+            'modul'           => 'Pusat Pemulihan Data',
+            'tindakan'        => "Mengosongkan kotak sampah (Hapus Permanen {$deletedCount} entri data)",
             'data_lama'       => ['deleted_count' => $deletedCount],
             'data_baru'       => null,
             'waktu_perubahan' => now(),
         ]);
 
-        return redirect()->route('admin.restore-points.index', ['tab' => 'trash'])
-            ->with('success', "Tempat sampah berhasil dikosongkan. Sebanyak {$deletedCount} data terhapus permanen.");
-    }
-
-    /**
-     * Create a new database restore point snapshot.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nama'      => 'required|string|max:255',
-            'deskripsi' => 'nullable|string|max:1000',
-        ], [
-            'nama.required' => 'Nama / Label Restore Point wajib diisi.',
-        ]);
-
-        try {
-            $rp = $this->restoreService->createSnapshot(
-                auth()->user(),
-                $request->nama,
-                $request->deskripsi,
-                'manual'
-            );
-
-            return redirect()->route('admin.restore-points.index', ['tab' => 'snapshots'])
-                ->with('success', "Restore Point '{$rp->nama}' (#{$rp->kode}) berhasil dibuat!");
-        } catch (Exception $e) {
-            return back()->withInput()->with('error', 'Gagal membuat Restore Point: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Restore / Rollback database to selected restore point.
-     */
-    public function restore(Request $request, $id)
-    {
-        $request->validate([
-            'password_confirmation' => 'required|string',
-        ], [
-            'password_confirmation.required' => 'Kata sandi konfirmasi Admin wajib diisi demi keamanan.',
-        ]);
-
-        if (!Hash::check($request->password_confirmation, auth()->user()->password)) {
-            return back()->with('error', 'Konfirmasi Kata Sandi Admin tidak sesuai. Proses pemulihan data dibatalkan.');
-        }
-
-        $restorePoint = RestorePoint::findOrFail($id);
-
-        try {
-            $summary = $this->restoreService->restoreSnapshot($restorePoint, auth()->user());
-
-            $totalRecords = array_sum($summary);
-            return redirect()->route('admin.restore-points.index', ['tab' => 'snapshots'])
-                ->with('success', "Sistem berhasil dipulihkan ke titik '{$restorePoint->nama}' ({$restorePoint->kode}). Total {$totalRecords} rekaman data telah disinkronkan.");
-        } catch (Exception $e) {
-            return back()->with('error', 'Gagal memulihkan sistem: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Download snapshot backup file.
-     */
-    public function download($id)
-    {
-        $restorePoint = RestorePoint::findOrFail($id);
-        $fullPath = storage_path('app/' . $restorePoint->file_path);
-
-        if (!file_exists($fullPath)) {
-            return back()->with('error', 'File snapshot tidak ditemukan di server penyimpanan.');
-        }
-
-        $downloadName = 'SMKP-Snapshot-' . $restorePoint->kode . '.json';
-        return response()->download($fullPath, $downloadName, [
-            'Content-Type' => 'application/json',
-        ]);
-    }
-
-    /**
-     * Delete a restore point.
-     */
-    public function destroy($id)
-    {
-        $restorePoint = RestorePoint::findOrFail($id);
-
-        try {
-            $nama = $restorePoint->nama;
-            $kode = $restorePoint->kode;
-            $this->restoreService->deleteSnapshot($restorePoint, auth()->user());
-
-            return redirect()->route('admin.restore-points.index', ['tab' => 'snapshots'])
-                ->with('success', "Restore Point '{$nama}' ({$kode}) berhasil dihapus beserta file snapshot fisiknya.");
-        } catch (Exception $e) {
-            return back()->with('error', 'Gagal menghapus Restore Point: ' . $e->getMessage());
-        }
+        return redirect()->route('admin.restore-points.index')
+            ->with('success', "Kotak sampah berhasil dikosongkan. Sebanyak {$deletedCount} data terhapus permanen.");
     }
 
     /**
@@ -453,9 +328,9 @@ class RestorePointController extends Controller
             'user'       => "{$model->name} ({$model->username})",
             'perusahaan' => $model->nama_perusahaan ?? "Perusahaan #{$model->id}",
             'departemen' => $model->nama_departemen ?? "Departemen #{$model->id}",
-            'elemen'     => "Elemen {$model->nomor_elemen}: {$model->nama_elemen}",
-            'sub_elemen' => "Sub-Elemen {$model->nomor_sub_elemen}: {$model->nama_sub_elemen}",
-            'kriteria'   => "Kriteria {$model->nomor_kriteria}",
+            'elemen'     => "Elemen " . ($model->kode_elemen ?? $model->nomor_elemen) . ": {$model->nama_elemen}",
+            'sub_elemen' => "Sub-Elemen " . ($model->kode_sub_elemen ?? $model->nomor_sub_elemen) . ": {$model->nama_sub_elemen}",
+            'kriteria'   => "Kriteria " . ($model->nomor_kriteria ?? $model->kode_kriteria ?? '#'),
             default      => "Data #{$model->id}",
         };
     }
