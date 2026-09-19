@@ -170,24 +170,128 @@
 
 <!-- Helper Functions for formatting blade values -->
 @php
+if (!function_exists('formatAuditKeyName')) {
+    function formatAuditKeyName($key) {
+        $map = [
+            'details'                     => 'Rincian Penilaian Kriteria',
+            'name'                        => 'Nama Lengkap',
+            'nama'                        => 'Nama Lengkap',
+            'username'                    => 'Username Akun',
+            'email'                       => 'Alamat Email',
+            'role'                        => 'Hak Akses / Role',
+            'area'                        => 'Area Kerja',
+            'is_active'                   => 'Status Akun Aktif',
+            'status'                      => 'Status',
+            'nilai'                       => 'Skor Nilai',
+            'catatan'                     => 'Catatan Temuan',
+            'lampiran'                    => 'File Lampiran',
+            'is_na'                       => 'Status N/A (Tidak Berlaku)',
+            'akar_masalah'                => 'Akar Masalah',
+            'tindakan_koreksi'            => 'Tindakan Koreksi',
+            'tindakan_pencegahan'         => 'Tindakan Pencegahan',
+            'tenggat_waktu'               => 'Tenggat Waktu',
+            'kategori_temuan'             => 'Kategori Temuan',
+            'deskripsi_temuan'            => 'Deskripsi Temuan',
+            'catatan_verifikasi_auditor'  => 'Catatan Verifikasi Auditor',
+            'nama_perusahaan'             => 'Nama Perusahaan',
+            'kode_perusahaan'             => 'Kode Perusahaan',
+            'penanggung_jawab'            => 'Penanggung Jawab (PIC)',
+            'nama_departemen'             => 'Nama Departemen',
+            'kode_departemen'             => 'Kode Departemen',
+            'nama_elemen'                 => 'Nama Elemen',
+            'kode_elemen'                 => 'Kode Elemen',
+            'bobot_persen'                => 'Bobot Persen',
+            'nama_sub_elemen'             => 'Nama Sub-Elemen',
+            'kode_sub_elemen'             => 'Kode Sub-Elemen',
+            'deskripsi_kriteria'          => 'Deskripsi Kriteria',
+            'nomor_kriteria'              => 'Nomor Kriteria',
+            'nilai_maksimal'              => 'Nilai Maksimal',
+            'ip'                          => 'Alamat IP',
+            'user_agent'                  => 'Perangkat / Browser',
+        ];
+
+        return $map[$key] ?? ucwords(str_replace('_', ' ', $key));
+    }
+}
+
 if (!function_exists('formatAuditValue')) {
-    function formatAuditValue($val) {
-        if (is_null($val)) {
-            return '<span class="text-muted fst-italic small">— Kosong / Null —</span>';
+    function formatAuditValue($val, $key = null) {
+        if (is_null($val) || $val === '') {
+            return '<span class="text-muted fst-italic small">— Kosong / Tidak Diisi —</span>';
         }
+
         if (is_bool($val)) {
             return $val 
-                ? '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1 small"><i class="bi bi-check-circle me-1"></i>True (Aktif)</span>' 
-                : '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2 py-1 small"><i class="bi bi-x-circle me-1"></i>False (Nonaktif)</span>';
+                ? '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1 small"><i class="bi bi-check-circle-fill me-1"></i>Aktif / Ya</span>' 
+                : '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2.5 py-1 small"><i class="bi bi-x-circle-fill me-1"></i>Nonaktif / Tidak</span>';
         }
+
         if (is_array($val)) {
-            return '<pre class="p-2 mb-0 bg-light border rounded small font-monospace" style="max-height: 120px; overflow-y: auto;">' . e(json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) . '</pre>';
+            if (empty($val)) {
+                return '<span class="text-muted fst-italic small">— Kosong / Tidak Ada Perubahan —</span>';
+            }
+
+            // Check if sequential numeric array
+            $isAssoc = array_keys($val) !== range(0, count($val) - 1);
+
+            if (!$isAssoc) {
+                // List of items (e.g. multiple criteria updates in matrix)
+                $html = '<div class="d-flex flex-column gap-2" style="max-height: 240px; overflow-y: auto;">';
+                foreach ($val as $idx => $item) {
+                    if (is_array($item)) {
+                        $filtered = array_filter($item, function($k) {
+                            return !in_array($k, ['created_at', 'updated_at', 'audit_sesi_id', 'id']);
+                        }, ARRAY_FILTER_USE_KEY);
+
+                        $html .= '<div class="p-2.5 rounded-3 border bg-white shadow-xs">';
+                        $html .= '<div class="d-flex flex-wrap gap-2 align-items-center">';
+                        foreach ($filtered as $subKey => $subVal) {
+                            $label = formatAuditKeyName($subKey);
+                            if ($subKey === 'nilai') {
+                                $html .= '<span class="badge bg-primary px-2.5 py-1.5 rounded-pill"><i class="bi bi-star-fill me-1 text-warning"></i>Skor: ' . e($subVal ?? 0) . '</span>';
+                            } elseif ($subKey === 'is_na') {
+                                $html .= $subVal 
+                                    ? '<span class="badge bg-secondary px-2.5 py-1.5 rounded-pill">Status: N/A (Tidak Berlaku)</span>' 
+                                    : '<span class="badge bg-success px-2.5 py-1.5 rounded-pill">Status: Dinilai</span>';
+                            } elseif ($subKey === 'catatan') {
+                                $html .= '<div class="w-100 mt-1 small text-slate-700 bg-light p-2 rounded border"><i class="bi bi-chat-left-text me-1 text-muted"></i><strong>Catatan:</strong> ' . e($subVal ?: '-') . '</div>';
+                            } elseif ($subKey === 'lampiran') {
+                                $html .= '<span class="badge bg-light text-dark border px-2.5 py-1.5 rounded-pill"><i class="bi bi-paperclip me-1 text-danger"></i>' . e($subVal ?: 'Tanpa Lampiran') . '</span>';
+                            } else {
+                                $html .= '<span class="small text-slate-700"><strong>' . e($label) . ':</strong> ' . e(is_array($subVal) ? json_encode($subVal) : ($subVal ?? '-')) . '</span>';
+                            }
+                        }
+                        $html .= '</div></div>';
+                    } else {
+                        $html .= '<div class="p-2 rounded-2 bg-white border small fw-semibold text-slate-700">' . e($item) . '</div>';
+                    }
+                }
+                $html .= '</div>';
+                return $html;
+            } else {
+                // Associative key-value array
+                $filtered = array_filter($val, function($k) {
+                    return !in_array($k, ['created_at', 'updated_at', 'audit_sesi_id']);
+                }, ARRAY_FILTER_USE_KEY);
+
+                $html = '<div class="p-2.5 rounded-3 border bg-white shadow-xs" style="max-height: 240px; overflow-y: auto;"><table class="table table-sm table-borderless mb-0 small">';
+                foreach ($filtered as $subKey => $subVal) {
+                    $label = formatAuditKeyName($subKey);
+                    $html .= '<tr class="border-bottom border-light">';
+                    $html .= '<td class="text-muted pe-2 py-1 fw-semibold" style="width: 38%;"><i class="bi bi-dot me-1 text-primary"></i>' . e($label) . '</td>';
+                    $html .= '<td class="text-slate-800 py-1 fw-bold">' . (is_array($subVal) ? formatAuditValue($subVal, $subKey) : e($subVal ?? '-')) . '</td>';
+                    $html .= '</tr>';
+                }
+                $html .= '</table></div>';
+                return $html;
+            }
         }
+
         $str = (string) $val;
-        if (strlen($str) > 100) {
-            return '<div class="text-break small">' . e($str) . '</div>';
+        if (strlen($str) > 120) {
+            return '<div class="text-break small text-slate-800 bg-white p-2.5 rounded-3 border">' . nl2br(e($str)) . '</div>';
         }
-        return '<span class="font-monospace fw-semibold small">' . e($str) . '</span>';
+        return '<span class="fw-semibold text-slate-800 small">' . e($str) . '</span>';
     }
 }
 @endphp
@@ -265,11 +369,11 @@ if (!function_exists('formatAuditValue')) {
                                             <table class="table table-bordered align-middle mb-0">
                                                 <thead class="bg-white text-slate-700">
                                                     <tr class="small text-uppercase">
-                                                        <th style="width: 22%;">Nama Atribut / Kolom</th>
-                                                        <th style="width: 34%;" class="text-danger bg-danger bg-opacity-10 border-danger border-opacity-25">
+                                                        <th style="width: 24%;">Nama Atribut / Kolom</th>
+                                                        <th style="width: 33%;" class="text-danger bg-danger bg-opacity-10 border-danger border-opacity-25">
                                                             <i class="bi bi-arrow-left-circle me-1"></i> Nilai Sebelum (Lama)
                                                         </th>
-                                                        <th style="width: 34%;" class="text-success bg-success bg-opacity-10 border-success border-opacity-25">
+                                                        <th style="width: 33%;" class="text-success bg-success bg-opacity-10 border-success border-opacity-25">
                                                             <i class="bi bi-arrow-right-circle me-1"></i> Nilai Sesudah (Baru)
                                                         </th>
                                                         <th style="width: 10%;" class="text-center">Status</th>
@@ -278,7 +382,7 @@ if (!function_exists('formatAuditValue')) {
                                                 <tbody>
                                                     @foreach($allKeys as $key)
                                                         @php
-                                                            $hasOld = array_key_exists($key, $oldData);
+                                                             $hasOld = array_key_exists($key, $oldData);
                                                             $hasNew = array_key_exists($key, $newData);
                                                             $valOld = $hasOld ? $oldData[$key] : null;
                                                             $valNew = $hasNew ? $newData[$key] : null;
@@ -288,21 +392,22 @@ if (!function_exists('formatAuditValue')) {
                                                             $isModified = ($hasOld && $hasNew && !$isEqual);
                                                         @endphp
                                                         <tr class="{{ $isModified ? 'table-warning bg-opacity-25' : ($isCreated ? 'table-success bg-opacity-25' : ($isDeleted ? 'table-danger bg-opacity-25' : '')) }}">
-                                                            <td class="fw-bold text-slate-800 font-monospace small">
-                                                                <i class="bi bi-tag-fill me-1 text-muted" style="font-size: 0.75rem;"></i>{{ $key }}
+                                                            <td class="small">
+                                                                <div class="fw-bold text-slate-800">{{ formatAuditKeyName($key) }}</div>
+                                                                <code class="text-muted" style="font-size: 0.72rem;">{{ $key }}</code>
                                                             </td>
                                                             <td class="{{ $isModified ? 'bg-danger bg-opacity-10' : '' }}">
                                                                 @if(!$hasOld)
                                                                     <span class="text-muted fst-italic small">— Tidak Ada —</span>
                                                                 @else
-                                                                    {!! formatAuditValue($valOld) !!}
+                                                                    {!! formatAuditValue($valOld, $key) !!}
                                                                 @endif
                                                             </td>
                                                             <td class="{{ $isModified ? 'bg-success bg-opacity-10' : '' }}">
                                                                 @if(!$hasNew)
                                                                     <span class="text-muted fst-italic small">— Dihapus —</span>
                                                                 @else
-                                                                    {!! formatAuditValue($valNew) !!}
+                                                                    {!! formatAuditValue($valNew, $key) !!}
                                                                 @endif
                                                             </td>
                                                             <td class="text-center">
