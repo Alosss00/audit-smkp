@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AuditSesi;
-use App\Models\Departemen;
 use App\Models\Elemen;
 use App\Models\Kriteria;
 use App\Models\Perusahaan;
@@ -25,7 +24,7 @@ class RestorePointController extends Controller
         $deletedList = collect();
 
         // Sesi Audit
-        AuditSesi::onlyTrashed()->with(['perusahaan', 'departemen'])->get()->each(function ($item) use ($deletedList) {
+        AuditSesi::onlyTrashed()->with('perusahaan')->get()->each(function ($item) use ($deletedList) {
             $deletedList->push([
                 'id'          => $item->id,
                 'type'        => 'audit_sesi',
@@ -33,7 +32,7 @@ class RestorePointController extends Controller
                 'badge_class' => 'bg-primary',
                 'icon'        => 'bi-journal-check',
                 'title'       => 'Sesi Audit #' . $item->id . ($item->perusahaan ? ' — ' . $item->perusahaan->nama_perusahaan : ''),
-                'info'        => 'Periode: ' . ($item->periode ?? '-') . ' | Area: ' . ($item->departemen->nama_departemen ?? 'Semua Area'),
+                'info'        => 'Periode: ' . ($item->periode ?? '-') . ' | Area: ' . ($item->perusahaan->nama_perusahaan ?? $item->area_audit ?? 'Perusahaan'),
                 'deleted_at'  => $item->deleted_at,
             ]);
         });
@@ -62,20 +61,6 @@ class RestorePointController extends Controller
                 'icon'        => 'bi-building',
                 'title'       => $item->nama_perusahaan,
                 'info'        => 'Kode: ' . ($item->kode_perusahaan ?? '-') . ' | PIC: ' . ($item->penanggung_jawab ?? '-'),
-                'deleted_at'  => $item->deleted_at,
-            ]);
-        });
-
-        // Departemen
-        Departemen::onlyTrashed()->get()->each(function ($item) use ($deletedList) {
-            $deletedList->push([
-                'id'          => $item->id,
-                'type'        => 'departemen',
-                'module'      => 'Departemen',
-                'badge_class' => 'bg-success',
-                'icon'        => 'bi-diagram-3-fill',
-                'title'       => $item->nama_departemen,
-                'info'        => 'Kode: ' . ($item->kode_departemen ?? '-'),
                 'deleted_at'  => $item->deleted_at,
             ]);
         });
@@ -128,7 +113,6 @@ class RestorePointController extends Controller
             'audit_sesi'  => $deletedList->where('type', 'audit_sesi')->count(),
             'user'        => $deletedList->where('type', 'user')->count(),
             'perusahaan'  => $deletedList->where('type', 'perusahaan')->count(),
-            'departemen'  => $deletedList->where('type', 'departemen')->count(),
             'elemen'      => $deletedList->where('type', 'elemen')->count(),
             'sub_elemen'  => $deletedList->where('type', 'sub_elemen')->count(),
             'kriteria'    => $deletedList->where('type', 'kriteria')->count(),
@@ -220,7 +204,7 @@ class RestorePointController extends Controller
         $restoredCount = 0;
 
         $targetTypes = ($module === 'all') 
-            ? ['audit_sesi', 'user', 'perusahaan', 'departemen', 'elemen', 'sub_elemen', 'kriteria']
+            ? ['audit_sesi', 'user', 'perusahaan', 'elemen', 'sub_elemen', 'kriteria']
             : [$module];
 
         foreach ($targetTypes as $type) {
@@ -263,7 +247,7 @@ class RestorePointController extends Controller
         }
 
         $deletedCount = 0;
-        $targetTypes = ['audit_sesi', 'user', 'perusahaan', 'departemen', 'elemen', 'sub_elemen', 'kriteria'];
+        $targetTypes = ['audit_sesi', 'user', 'perusahaan', 'elemen', 'sub_elemen', 'kriteria'];
 
         foreach ($targetTypes as $type) {
             $class = $this->getModelClass($type);
@@ -298,7 +282,6 @@ class RestorePointController extends Controller
             'audit_sesi' => AuditSesi::class,
             'user'       => User::class,
             'perusahaan' => Perusahaan::class,
-            'departemen' => Departemen::class,
             'elemen'     => Elemen::class,
             'sub_elemen' => SubElemen::class,
             'kriteria'   => Kriteria::class,
@@ -327,7 +310,6 @@ class RestorePointController extends Controller
             'audit_sesi' => "Sesi Audit #{$model->id}" . ($model->perusahaan ? " — {$model->perusahaan->nama_perusahaan}" : ""),
             'user'       => "{$model->name} ({$model->username})",
             'perusahaan' => $model->nama_perusahaan ?? "Perusahaan #{$model->id}",
-            'departemen' => $model->nama_departemen ?? "Departemen #{$model->id}",
             'elemen'     => "Elemen " . ($model->kode_elemen ?? $model->nomor_elemen) . ": {$model->nama_elemen}",
             'sub_elemen' => "Sub-Elemen " . ($model->kode_sub_elemen ?? $model->nomor_sub_elemen) . ": {$model->nama_sub_elemen}",
             'kriteria'   => "Kriteria " . ($model->nomor_kriteria ?? $model->kode_kriteria ?? '#'),

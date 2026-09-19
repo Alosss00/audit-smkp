@@ -17,9 +17,8 @@ class UserController extends Controller
     {
         $users = User::latest()->get();
         $perusahaans = \App\Models\Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
-        $departemens = \App\Models\Departemen::where('is_active', true)->orderBy('nama_departemen')->get();
 
-        return view('admin.users.index', compact('users', 'perusahaans', 'departemens'));
+        return view('admin.users.index', compact('users', 'perusahaans'));
     }
 
     /**

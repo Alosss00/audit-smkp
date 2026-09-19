@@ -81,11 +81,11 @@
 
 <!-- Visual Chart Analytics Section 1: Average Compliance & Session Status -->
 <div class="row g-4 mb-4">
-    <!-- Bar Chart Percentage -->
+    <!-- Bar Chart Percentage per Elemen -->
     <div class="col-lg-8">
         <div class="card card-custom p-4 h-100">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Perbandingan Pencapaian Nilai Audit Antar Area</h5>
-            <p class="text-muted small mb-3">Grafik evaluasi perbandingan persentase skor akhir hasil audit antar area / departemen.</p>
+            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Pencapaian Nilai Audit per Elemen</h5>
+            <p class="text-muted small mb-3">Grafik rata-rata persentase pencapaian nilai per elemen SMKP dari seluruh sesi audit yang dijalankan.</p>
             <div style="height: 260px;">
                 <canvas id="elementBarChart"></canvas>
             </div>
@@ -229,7 +229,7 @@
                 <h5 class="fw-bold mb-0">Monitoring Audit</h5>
                 <span class="badge bg-success rounded-pill">{{ $stats['audits_selesai'] }} Selesai</span>
             </div>
-            <p class="text-muted small">Pantau status pelaksanaan audit lintas perusahaan, departemen, dan unduh laporan.</p>
+            <p class="text-muted small">Pantau status pelaksanaan audit internal lintas perusahaan dan unduh laporan.</p>
             <a href="{{ route('admin.rekap-audit.index') }}" class="btn btn-outline-success btn-sm rounded-3 mt-auto">
                 <i class="bi bi-shield-check me-1"></i> Buka Monitoring
             </a>
@@ -255,16 +255,17 @@
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Bar Chart Area Audit Score Comparison
+        // 1. Bar Chart Average Compliance per Elemen
         const ctxBar = document.getElementById('elementBarChart').getContext('2d');
+        const elementFullNames = {!! json_encode($elementFullNames) !!};
         new Chart(ctxBar, {
             type: 'bar',
             data: {
-                labels: {!! json_encode($areaLabels) !!},
+                labels: {!! json_encode($elementLabels) !!},
                 datasets: [{
-                    label: 'Skor Akhir Pencapaian (%)',
-                    data: {!! json_encode($areaScores) !!},
-                    backgroundColor: {!! json_encode($areaColors) !!},
+                    label: 'Rata-Rata Pencapaian (%)',
+                    data: {!! json_encode($elementScores) !!},
+                    backgroundColor: {!! json_encode($elementColors) !!},
                     borderColor: 'rgba(15, 23, 42, 0.1)',
                     borderWidth: 1,
                     borderRadius: 8,
@@ -285,6 +286,17 @@
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return elementFullNames[index] || context[0].label;
+                            },
+                            label: function(context) {
+                                return 'Rata-Rata Pencapaian: ' + context.raw + '%';
+                            }
+                        }
                     }
                 }
             }

@@ -15,7 +15,6 @@ class AuditSesi extends Model
     protected $fillable = [
         'user_id',
         'perusahaan_id',
-        'departemen_id',
         'tanggal_mulai',
         'tanggal_selesai',
         'area_audit',
@@ -43,14 +42,6 @@ class AuditSesi extends Model
     public function perusahaan()
     {
         return $this->belongsTo(Perusahaan::class, 'perusahaan_id');
-    }
-
-    /**
-     * Relationship to Departemen.
-     */
-    public function departemen()
-    {
-        return $this->belongsTo(Departemen::class, 'departemen_id');
     }
 
     /**

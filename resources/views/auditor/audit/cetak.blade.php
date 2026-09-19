@@ -279,7 +279,7 @@
             <tbody>
                 <tr>
                     <td class="label-cell">Area / Lokasi Audit</td>
-                    <td class="fw-bold text-uppercase">{{ $sesi->departemen->nama_departemen ?? $sesi->area_audit }}</td>
+                    <td class="fw-bold text-uppercase">{{ $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit }}</td>
                     <td class="label-cell">Periode Pelaksanaan</td>
                     <td>{{ $sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('d F Y') : '-' }} s/d {{ $sesi->tanggal_selesai ? $sesi->tanggal_selesai->format('d F Y') : '-' }}</td>
                 </tr>

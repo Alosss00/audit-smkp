@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditDetail;
 use App\Models\AuditLog;
 use App\Models\AuditSesi;
-use App\Models\Departemen;
 use App\Models\Elemen;
 use App\Models\Kriteria;
 use App\Models\Perusahaan;
@@ -25,27 +24,25 @@ class AuditSesiAdminController extends Controller
      */
     public function index(Request $request)
     {
-        $query = AuditSesi::with(['user', 'perusahaan', 'departemen'])->latest();
+        $query = AuditSesi::with(['user', 'perusahaan'])->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('area_selection')) {
+        if ($request->filled('perusahaan_id')) {
+            $query->where('perusahaan_id', $request->perusahaan_id);
+        } elseif ($request->filled('area_selection')) {
             $sel = $request->area_selection;
-            if (str_starts_with($sel, 'p:')) {
-                $query->where('perusahaan_id', substr($sel, 2));
-            } elseif (str_starts_with($sel, 'd:')) {
-                $query->where('departemen_id', substr($sel, 2));
-            }
+            $pId = str_starts_with($sel, 'p:') ? substr($sel, 2) : $sel;
+            $query->where('perusahaan_id', $pId);
         }
 
         $auditSesis = $query->paginate(10);
-        $trashedSesis = AuditSesi::onlyTrashed()->with(['user', 'perusahaan', 'departemen'])->latest()->get();
+        $trashedSesis = AuditSesi::onlyTrashed()->with(['user', 'perusahaan'])->latest()->get();
         $perusahaans = Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
-        $departemens = Departemen::where('is_active', true)->orderBy('nama_departemen')->get();
 
-        return view('admin.audit-sesi.index', compact('auditSesis', 'trashedSesis', 'perusahaans', 'departemens'));
+        return view('admin.audit-sesi.index', compact('auditSesis', 'trashedSesis', 'perusahaans'));
     }
 
     /**
@@ -54,8 +51,7 @@ class AuditSesiAdminController extends Controller
     public function create()
     {
         $perusahaans = Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
-        $departemens = Departemen::where('is_active', true)->orderBy('nama_departemen')->get();
-        return view('admin.audit-sesi.create', compact('perusahaans', 'departemens'));
+        return view('admin.audit-sesi.create', compact('perusahaans'));
     }
 
     /**
@@ -63,39 +59,34 @@ class AuditSesiAdminController extends Controller
      */
     public function store(Request $request)
     {
+        // Support both perusahaan_id directly or area_selection
+        if ($request->filled('area_selection') && !$request->filled('perusahaan_id')) {
+            $sel = $request->area_selection;
+            $request->merge([
+                'perusahaan_id' => str_starts_with($sel, 'p:') ? substr($sel, 2) : $sel,
+            ]);
+        }
+
         $request->validate([
-            'area_selection'  => 'required|string',
+            'perusahaan_id'   => 'required|exists:perusahaans,id',
             'tanggal_mulai'   => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
         ], [
-            'area_selection.required'          => 'Pilihan area audit wajib dipilih.',
-            'tanggal_mulai.required'           => 'Tanggal mulai wajib diisi.',
-            'tanggal_selesai.required'         => 'Tanggal selesai wajib diisi.',
-            'tanggal_selesai.after_or_equal'   => 'Tanggal selesai harus sama atau setelah tanggal mulai.',
+            'perusahaan_id.required'          => 'Perusahaan area audit wajib dipilih.',
+            'perusahaan_id.exists'            => 'Perusahaan yang dipilih tidak valid.',
+            'tanggal_mulai.required'          => 'Tanggal mulai wajib diisi.',
+            'tanggal_selesai.required'        => 'Tanggal selesai wajib diisi.',
+            'tanggal_selesai.after_or_equal'  => 'Tanggal selesai harus sama atau setelah tanggal mulai.',
         ]);
 
-        $perusahaanId = null;
-        $departemenId = null;
-        $areaAudit = '';
-
-        if (str_starts_with($request->area_selection, 'p:')) {
-            $perusahaanId = (int) substr($request->area_selection, 2);
-            $perusahaan = Perusahaan::find($perusahaanId);
-            $areaAudit = $perusahaan ? $perusahaan->nama_perusahaan : 'Perusahaan Audit';
-        } elseif (str_starts_with($request->area_selection, 'd:')) {
-            $departemenId = (int) substr($request->area_selection, 2);
-            $departemen = Departemen::find($departemenId);
-            $areaAudit = $departemen ? $departemen->nama_departemen : 'Departemen Audit';
-        } else {
-            $areaAudit = $request->area_selection;
-        }
+        $perusahaan = Perusahaan::findOrFail($request->perusahaan_id);
+        $areaAudit = $perusahaan->nama_perusahaan;
 
         DB::beginTransaction();
         try {
             $sesi = AuditSesi::create([
                 'user_id'         => auth()->id(),
-                'perusahaan_id'   => $perusahaanId,
-                'departemen_id'   => $departemenId,
+                'perusahaan_id'   => $perusahaan->id,
                 'tanggal_mulai'   => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
                 'area_audit'      => $areaAudit,

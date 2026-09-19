@@ -20,22 +20,13 @@
 <div class="card card-custom p-3 mb-4">
     <form method="GET" action="{{ route('admin.audit-sesi.index') }}" class="row g-2 align-items-center">
         <div class="col-md-5">
-            <select name="area_selection" class="form-select select-searchable rounded-3" placeholder="-- Ketik untuk mencari area audit --" onchange="this.form.submit()">
-                <option value="">-- Pilih Area Audit (Semua) --</option>
-                <optgroup label="Perusahaan Ter-audit">
-                    @foreach($perusahaans as $comp)
-                        <option value="p:{{ $comp->id }}" {{ request('area_selection') == 'p:'.$comp->id ? 'selected' : '' }}>
-                            {{ $comp->nama_perusahaan }}
-                        </option>
-                    @endforeach
-                </optgroup>
-                <optgroup label="Departemen Ter-audit">
-                    @foreach($departemens as $dept)
-                        <option value="d:{{ $dept->id }}" {{ request('area_selection') == 'd:'.$dept->id ? 'selected' : '' }}>
-                            {{ $dept->nama_departemen }}
-                        </option>
-                    @endforeach
-                </optgroup>
+            <select name="perusahaan_id" class="form-select select-searchable rounded-3" placeholder="-- Cari perusahaan --" onchange="this.form.submit()">
+                <option value="">-- Pilih Perusahaan Area Audit (Semua) --</option>
+                @foreach($perusahaans as $comp)
+                    <option value="{{ $comp->id }}" {{ (request('perusahaan_id') == $comp->id || request('area_selection') == 'p:'.$comp->id) ? 'selected' : '' }}>
+                        {{ $comp->nama_perusahaan }} @if($comp->kategori) ({{ $comp->kategori }}) @endif
+                    </option>
+                @endforeach
             </select>
         </div>
         <div class="col-md-4">
@@ -46,7 +37,7 @@
                 <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
             </select>
         </div>
-        @if(request()->filled('status') || request()->filled('area_selection'))
+        @if(request()->filled('status') || request()->filled('perusahaan_id') || request()->filled('area_selection'))
             <div class="col-md-2">
                 <a href="{{ route('admin.audit-sesi.index') }}" class="btn btn-outline-secondary rounded-3 w-100">Reset</a>
             </div>
@@ -71,7 +62,7 @@
                     <tr>
                         <th style="width: 50px;">No</th>
                         <th>Periode Audit</th>
-                        <th>Perusahaan / Departemen</th>
+                        <th>Perusahaan (Area Audit)</th>
                         <th>Status</th>
                         <th>Skor Akhir</th>
                         <th class="text-end">Aksi</th>
@@ -83,37 +74,12 @@
                             <td>{{ $auditSesis->firstItem() + $index }}</td>
                             <td><i class="bi bi-calendar-event me-1 text-muted"></i>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</td>
                             <td>
-                                @if($sesi->departemen_id && $sesi->departemen)
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2.5 py-1 rounded-pill small fw-semibold">
-                                            <i class="bi bi-diagram-3 me-1"></i>Departemen
-                                        </span>
-                                        <span class="fw-bold text-slate-800">{{ $sesi->departemen->nama_departemen }}</span>
-                                    </div>
-                                @elseif($sesi->perusahaan_id && $sesi->perusahaan)
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-semibold">
-                                            <i class="bi bi-building me-1"></i>Perusahaan
-                                        </span>
-                                        <span class="fw-bold text-slate-800">{{ $sesi->perusahaan->nama_perusahaan }}</span>
-                                    </div>
-                                @elseif($sesi->departemen)
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2.5 py-1 rounded-pill small fw-semibold">
-                                            <i class="bi bi-diagram-3 me-1"></i>Departemen
-                                        </span>
-                                        <span class="fw-bold text-slate-800">{{ $sesi->departemen->nama_departemen }}</span>
-                                    </div>
-                                @elseif($sesi->perusahaan)
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-semibold">
-                                            <i class="bi bi-building me-1"></i>Perusahaan
-                                        </span>
-                                        <span class="fw-bold text-slate-800">{{ $sesi->perusahaan->nama_perusahaan }}</span>
-                                    </div>
-                                @else
-                                    <span class="fw-bold text-slate-800">{{ $sesi->area_audit }}</span>
-                                @endif
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-semibold">
+                                        <i class="bi bi-building me-1"></i>Perusahaan
+                                    </span>
+                                    <span class="fw-bold text-slate-800">{{ $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit }}</span>
+                                </div>
                             </td>
                             <td>
                                 @if($sesi->status === 'draft')

@@ -15,7 +15,6 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             SMKPSeeder::class,
             PerusahaanSeeder::class,
-            DepartemenSeeder::class,
             SampleAuditSeeder::class,
             KriteriaGatingRuleSeeder::class,
         ]);

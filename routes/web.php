@@ -6,7 +6,6 @@ use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
 use App\Http\Controllers\Admin\PicaController as AdminPicaController;
 use App\Http\Controllers\Admin\PerusahaanController;
-use App\Http\Controllers\Admin\DepartemenController;
 use App\Http\Controllers\Admin\SubElemenController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auditor\AuditSesiController;
@@ -81,11 +80,6 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
             Route::post('/perusahaans/{id}/restore', [PerusahaanController::class, 'restore'])->name('perusahaans.restore');
             Route::delete('/perusahaans/{id}/force-delete', [PerusahaanController::class, 'forceDelete'])->name('perusahaans.force-delete');
             Route::resource('perusahaans', PerusahaanController::class);
-
-            Route::patch('/departemens/{id}/toggle-status', [DepartemenController::class, 'toggleStatus'])->name('departemens.toggle-status');
-            Route::post('/departemens/{id}/restore', [DepartemenController::class, 'restore'])->name('departemens.restore');
-            Route::delete('/departemens/{id}/force-delete', [DepartemenController::class, 'forceDelete'])->name('departemens.force-delete');
-            Route::resource('departemens', DepartemenController::class);
 
             // Log Aktivitas User & Audit Trail Perubahan File
             Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');

@@ -20,7 +20,7 @@
         </tr>
         <tr>
             <td></td>
-            <td style="font-weight: bold;" colspan="2">Area / Departemen Audit:</td>
+            <td style="font-weight: bold;" colspan="2">Perusahaan / Area Audit:</td>
             <td colspan="11">{{ $sesi->area_audit }}</td>
         </tr>
         <tr>

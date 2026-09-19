@@ -22,22 +22,13 @@
             </div>
         </div>
         <div class="col-md-4">
-            <select name="area_selection" class="form-select select-searchable" placeholder="-- Ketik untuk mencari area audit --" onchange="this.form.submit()">
-                <option value="">-- Pilih Area Audit (Semua) --</option>
-                <optgroup label="Perusahaan Ter-audit">
-                    @foreach($perusahaans as $comp)
-                        <option value="p:{{ $comp->id }}" {{ request('area_selection') == 'p:'.$comp->id ? 'selected' : '' }}>
-                            {{ $comp->nama_perusahaan }}
-                        </option>
-                    @endforeach
-                </optgroup>
-                <optgroup label="Departemen Ter-audit">
-                    @foreach($departemens as $dept)
-                        <option value="d:{{ $dept->id }}" {{ request('area_selection') == 'd:'.$dept->id ? 'selected' : '' }}>
-                            {{ $dept->nama_departemen }}
-                        </option>
-                    @endforeach
-                </optgroup>
+            <select name="perusahaan_id" class="form-select select-searchable" placeholder="-- Pilih Perusahaan --" onchange="this.form.submit()">
+                <option value="">-- Pilih Perusahaan Area Audit (Semua) --</option>
+                @foreach($perusahaans as $comp)
+                    <option value="{{ $comp->id }}" {{ (request('perusahaan_id') == $comp->id || request('area_selection') == 'p:'.$comp->id) ? 'selected' : '' }}>
+                        {{ $comp->nama_perusahaan }} @if($comp->kategori) ({{ $comp->kategori }}) @endif
+                    </option>
+                @endforeach
             </select>
         </div>
         <div class="col-md-3">
@@ -51,7 +42,7 @@
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary w-100 rounded-3">Filter</button>
         </div>
-        @if(request()->filled('search') || request()->filled('status') || request()->filled('area_selection'))
+        @if(request()->filled('search') || request()->filled('status') || request()->filled('perusahaan_id') || request()->filled('area_selection'))
             <div class="col-md-2">
                 <a href="{{ route('admin.rekap-audit.index') }}" class="btn btn-outline-secondary w-100 rounded-3">Reset</a>
             </div>
@@ -69,9 +60,7 @@
                 <thead class="table-light">
                     <tr>
                         <th style="width: 50px;">No</th>
-                        <th>Perusahaan</th>
-                        <th>Departemen</th>
-                        <th>Area / Lokasi Audit</th>
+                        <th>Perusahaan (Area Audit)</th>
                         <th>Periode Audit</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
@@ -85,15 +74,9 @@
                             <td>{{ $auditSesis->firstItem() + $index }}</td>
                             <td>
                                 <span class="fw-bold text-primary">
-                                    <i class="bi bi-building me-1"></i>{{ $sesi->perusahaan->nama_perusahaan ?? 'Perusahaan Umum' }}
+                                    <i class="bi bi-building me-1"></i>{{ $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit }}
                                 </span>
                             </td>
-                            <td>
-                                <span class="badge bg-light text-dark border px-2 py-1">
-                                    <i class="bi bi-diagram-3 me-1 text-secondary"></i>{{ $sesi->departemen->nama_departemen ?? '-' }}
-                                </span>
-                            </td>
-                            <td class="fw-bold text-slate-800">{{ $sesi->area_audit }}</td>
                             <td>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">

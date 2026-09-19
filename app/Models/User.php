@@ -24,17 +24,8 @@ class User extends Authenticatable
         'password',
         'role',
         'area',
-        'departemen_id',
         'is_active',
     ];
-
-    /**
-     * Relationship to Departemen.
-     */
-    public function departemen()
-    {
-        return $this->belongsTo(Departemen::class, 'departemen_id');
-    }
 
     /**
      * The attributes that should be hidden for serialization.

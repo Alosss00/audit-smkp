@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\AuditSesi;
-use App\Models\Departemen;
 use App\Models\Elemen;
 use App\Models\Kriteria;
 use App\Models\Perusahaan;
@@ -122,10 +121,6 @@ class UserRolePermissionsTest extends TestCase
 
         $this->actingAs($this->auditorSmkp)
             ->get(route('admin.perusahaans.index'))
-            ->assertStatus(403);
-
-        $this->actingAs($this->auditorSmkp)
-            ->get(route('admin.departemens.index'))
             ->assertStatus(403);
 
         $this->actingAs($this->auditorSmkp)

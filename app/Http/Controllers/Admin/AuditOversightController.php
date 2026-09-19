@@ -19,13 +19,12 @@ class AuditOversightController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('area_selection')) {
+        if ($request->filled('perusahaan_id')) {
+            $query->where('perusahaan_id', $request->perusahaan_id);
+        } elseif ($request->filled('area_selection')) {
             $sel = $request->area_selection;
-            if (str_starts_with($sel, 'p:')) {
-                $query->where('perusahaan_id', substr($sel, 2));
-            } elseif (str_starts_with($sel, 'd:')) {
-                $query->where('departemen_id', substr($sel, 2));
-            }
+            $pId = str_starts_with($sel, 'p:') ? substr($sel, 2) : $sel;
+            $query->where('perusahaan_id', $pId);
         }
 
         if ($request->filled('search')) {
@@ -37,18 +36,14 @@ class AuditOversightController extends Controller
                   })
                   ->orWhereHas('perusahaan', function ($qp) use ($search) {
                       $qp->where('nama_perusahaan', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('departemen', function ($qd) use ($search) {
-                      $qd->where('nama_departemen', 'like', "%{$search}%");
                   });
             });
         }
 
         $auditSesis = $query->paginate(10);
         $perusahaans = \App\Models\Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
-        $departemens = \App\Models\Departemen::where('is_active', true)->orderBy('nama_departemen')->get();
 
-        return view('admin.audits.index', compact('auditSesis', 'perusahaans', 'departemens'));
+        return view('admin.audits.index', compact('auditSesis', 'perusahaans'));
     }
 
     /**

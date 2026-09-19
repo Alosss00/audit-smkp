@@ -39,23 +39,59 @@ class DashboardController extends Controller
         $findingLabels = [];
         $findingCounts = [];
 
-        // 1. Comparison of Final Compliance Score per Area Audit
-        $allSessions = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen'])->latest()->get();
-        $areaLabels = [];
-        $areaScores = [];
-        $areaColors = [];
+        // 1. Average Compliance Percentage per Elemen across all audit sessions
+        $allSessions = AuditSesi::with(['auditDetails.kriteria.subElemen'])->get();
+        $totalSessionsCount = $allSessions->count();
 
-        foreach ($allSessions as $session) {
-            $skor = (float) ($session->skor_akhir ?? $session->hitungSkorAkhir());
-            $areaLabels[] = $session->area_audit;
-            $areaScores[] = round($skor, 2);
+        $elementLabels = [];
+        $elementScores = [];
+        $elementColors = [];
+        $elementFullNames = [];
 
-            if ($skor >= 80) {
-                $areaColors[] = 'rgba(34, 197, 94, 0.75)'; // Green (>= 80%)
-            } elseif ($skor >= 70) {
-                $areaColors[] = 'rgba(234, 179, 8, 0.75)'; // Yellow (70-79%)
+        foreach ($elemens as $el) {
+            $elementLabels[] = 'Elemen ' . $el->kode_elemen;
+            $elementFullNames[] = 'Elemen ' . $el->kode_elemen . ': ' . $el->nama_elemen;
+
+            if ($totalSessionsCount === 0) {
+                $elementScores[] = 0;
+                $elementColors[] = 'rgba(148, 163, 184, 0.75)';
+                continue;
+            }
+
+            $sessionPercentages = [];
+            foreach ($allSessions as $session) {
+                $details = $session->auditDetails->filter(function ($d) use ($el) {
+                    return $d->kriteria
+                        && $d->kriteria->subElemen
+                        && $d->kriteria->subElemen->elemen_id == $el->id;
+                });
+
+                $elAktual = 0;
+                $elMaks = 0;
+                foreach ($details as $d) {
+                    if (!$d->is_na) {
+                        $elAktual += (float) $d->nilai;
+                        $elMaks += (float) ($d->kriteria->nilai_maksimal ?? 4);
+                    }
+                }
+
+                if ($elMaks > 0) {
+                    $sessionPercentages[] = ($elAktual / $elMaks) * 100;
+                }
+            }
+
+            $avgScore = count($sessionPercentages) > 0
+                ? round(array_sum($sessionPercentages) / count($sessionPercentages), 2)
+                : 0;
+
+            $elementScores[] = $avgScore;
+
+            if ($avgScore >= 80) {
+                $elementColors[] = 'rgba(34, 197, 94, 0.75)'; // Green (>= 80%)
+            } elseif ($avgScore >= 70) {
+                $elementColors[] = 'rgba(234, 179, 8, 0.75)'; // Yellow (70-79%)
             } else {
-                $areaColors[] = 'rgba(239, 68, 68, 0.75)'; // Red (< 70%)
+                $elementColors[] = 'rgba(239, 68, 68, 0.75)'; // Red (< 70%)
             }
         }
 
@@ -91,9 +127,10 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'stats',
-            'areaLabels',
-            'areaScores',
-            'areaColors',
+            'elementLabels',
+            'elementScores',
+            'elementColors',
+            'elementFullNames',
             'findingLabels',
             'findingCounts',
             'topFindings'

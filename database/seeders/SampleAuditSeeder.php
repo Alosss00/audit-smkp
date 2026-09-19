@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\AuditDetail;
 use App\Models\AuditSesi;
-use App\Models\Departemen;
 use App\Models\Kriteria;
 use App\Models\Perusahaan;
 use App\Models\Pica;
@@ -15,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class SampleAuditSeeder extends Seeder
 {
     /**
-     * Run the database seeds for 10 realistic audit sessions and PICA entries.
+     * Run the database seeds for 10 realistic audit sessions and PICA entries across companies.
      */
     public function run(): void
     {
@@ -30,7 +29,6 @@ class SampleAuditSeeder extends Seeder
         }
 
         $perusahaans = Perusahaan::all();
-        $departemens = Departemen::all();
 
         // Clean existing sessions & picas to prevent duplicates
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -39,11 +37,10 @@ class SampleAuditSeeder extends Seeder
         AuditSesi::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // 10 Realistic Audit Session Definitions (5 Perusahaan & 5 Departemen)
+        // Realistic Audit Session Definitions for Perusahaan
         $sessionsData = [
             [
                 'perusahaan_nama' => 'PT. Meares Soputan Mining',
-                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(5)->toDateString(),
                 'tanggal_selesai' => now()->subDays(2)->toDateString(),
                 'status' => 'berjalan',
@@ -55,7 +52,6 @@ class SampleAuditSeeder extends Seeder
             ],
             [
                 'perusahaan_nama' => 'PT. Macmahon Indonesia',
-                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(10)->toDateString(),
                 'tanggal_selesai' => now()->subDays(5)->toDateString(),
                 'status' => 'selesai',
@@ -66,7 +62,6 @@ class SampleAuditSeeder extends Seeder
             ],
             [
                 'perusahaan_nama' => 'PT. Samudera Mulia Abadi',
-                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(12)->toDateString(),
                 'tanggal_selesai' => now()->subDays(8)->toDateString(),
                 'status' => 'selesai',
@@ -76,7 +71,6 @@ class SampleAuditSeeder extends Seeder
             ],
             [
                 'perusahaan_nama' => 'PT. Hanwha Mining Services Indonesia',
-                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(16)->toDateString(),
                 'tanggal_selesai' => now()->subDays(12)->toDateString(),
                 'status' => 'berjalan',
@@ -87,25 +81,22 @@ class SampleAuditSeeder extends Seeder
             ],
             [
                 'perusahaan_nama' => 'PT. Tambang Tondano Nusajaya',
-                'departemen_nama' => null,
                 'tanggal_mulai' => now()->subDays(18)->toDateString(),
                 'tanggal_selesai' => now()->subDays(15)->toDateString(),
                 'status' => 'draft',
                 'findings' => []
             ],
             [
-                'perusahaan_nama' => null,
-                'departemen_nama' => 'Departemen HCCS',
+                'perusahaan_nama' => 'PT. United Tractors Tbk',
                 'tanggal_mulai' => now()->subDays(22)->toDateString(),
                 'tanggal_selesai' => now()->subDays(18)->toDateString(),
                 'status' => 'selesai',
                 'findings' => [
-                    8 => ['nilai' => 3, 'catatan' => 'Sertifikat laik higiene sanitasi dapur belum diperpanjang.', 'pica' => ['status' => 'closed', 'kategori' => 'minor', 'akar' => 'Pengurusan dokumen terhambat jadwal inspeksi dinkes.', 'koreksi' => 'Penyelesaian sertifikasi higiene dengan Dinkes.', 'pencegahan' => 'Pengajuan perpanjangan 3 bulan sebelum masa berlaku habis.', 'tenggat' => now()->subDays(5)->toDateString(), 'verifikasi' => 'Sertifikat Laik Higiene Sanitasi baru telah diterbitkan Dinkes.']],
+                    8 => ['nilai' => 3, 'catatan' => 'Sertifikasi laik pakai overhead crane workshop belum diperpanjang.', 'pica' => ['status' => 'closed', 'kategori' => 'minor', 'akar' => 'Pengurusan dokumen terhambat jadwal inspeksi Disnaker/ESDM.', 'koreksi' => 'Penyelesaian uji riksa crane dengan PJK3.', 'pencegahan' => 'Pengajuan perpanjangan 3 bulan sebelum masa berlaku habis.', 'tenggat' => now()->subDays(5)->toDateString(), 'verifikasi' => 'Sertifikat Laik Pakai baru telah diterbitkan.']],
                 ]
             ],
             [
-                'perusahaan_nama' => null,
-                'departemen_nama' => 'Departemen Supply Chain',
+                'perusahaan_nama' => 'PT. Pamapersada Nusantara',
                 'tanggal_mulai' => now()->subDays(25)->toDateString(),
                 'tanggal_selesai' => now()->subDays(21)->toDateString(),
                 'status' => 'berjalan',
@@ -114,62 +105,49 @@ class SampleAuditSeeder extends Seeder
                 ]
             ],
             [
-                'perusahaan_nama' => null,
-                'departemen_nama' => 'Departemen Environmental',
+                'perusahaan_nama' => 'PT. Bukit Makmur Mandiri Utama (BUMA)',
                 'tanggal_mulai' => now()->subDays(28)->toDateString(),
                 'tanggal_selesai' => now()->subDays(25)->toDateString(),
                 'status' => 'selesai',
                 'findings' => [
-                    3 => ['nilai' => 3, 'catatan' => 'Laporan Pemantauan Kualitas Udara Ambien terlambat disahkan KTT.', 'pica' => ['status' => 'closed', 'kategori' => 'minor', 'akar' => 'KTT berada di luar site saat laporan selesai disusun.', 'koreksi' => 'Penandatanganan digital laporan KTT.', 'pencegahan' => 'Penerapan e-signature untuk dokumen K3PL.', 'tenggat' => now()->subDays(10)->toDateString(), 'verifikasi' => 'Laporan lengkap dengan tanda tangan digital KTT telah diunggah.']],
+                    3 => ['nilai' => 3, 'catatan' => 'Laporan Pemantauan Emisi Genset belum diarsipkan lengkap.', 'pica' => ['status' => 'closed', 'kategori' => 'minor', 'akar' => 'Pengarsipan manual belum terpusat di server internal.', 'koreksi' => 'Digitalisasi laporan emisi genset.', 'pencegahan' => 'Implementasi e-filing dokumen lingkungan.', 'tenggat' => now()->subDays(10)->toDateString(), 'verifikasi' => 'Dokumen pemantauan emisi lengkap telah diunggah ke repositori.']],
                 ]
             ],
             [
-                'perusahaan_nama' => null,
-                'departemen_nama' => 'Departemen Mining Tech Service',
+                'perusahaan_nama' => 'PT. Ricobana Abadi',
                 'tanggal_mulai' => now()->subDays(32)->toDateString(),
                 'tanggal_selesai' => now()->subDays(28)->toDateString(),
                 'status' => 'berjalan',
                 'findings' => [
-                    0 => ['nilai' => 1, 'catatan' => 'Tinggit berm di sepanjang haulroad disposal kurang dari 3/4 diameter roda terbesar.', 'pica' => ['status' => 'open', 'kategori' => 'mayor', 'akar' => null]],
-                    5 => ['nilai' => 2, 'catatan' => 'Lampu penerangan tower malam di dumping area 2 redup.', 'pica' => ['status' => 'in_progress', 'kategori' => 'minor', 'akar' => 'Baterai solar cell tower penerangan mengalami penurunan daya.', 'koreksi' => 'Penggantian modul baterai solar cell baru.', 'pencegahan' => 'Jadwal pembersihan panel surya mingguan.', 'tenggat' => now()->addDays(6)->toDateString()]],
+                    0 => ['nilai' => 1, 'catatan' => 'Tinggi tanggul pengaman (safety berm) di jalan tambang belum sesuai standar.', 'pica' => ['status' => 'open', 'kategori' => 'mayor', 'akar' => null]],
+                    5 => ['nilai' => 2, 'catatan' => 'Lampu tower penerangan malam di pit redup.', 'pica' => ['status' => 'in_progress', 'kategori' => 'minor', 'akar' => 'Baterai solar cell tower penerangan mengalami penurunan daya.', 'koreksi' => 'Penggantian modul baterai solar cell baru.', 'pencegahan' => 'Jadwal pembersihan panel surya mingguan.', 'tenggat' => now()->addDays(6)->toDateString()]],
                 ]
             ],
             [
-                'perusahaan_nama' => null,
-                'departemen_nama' => 'Departemen OHS',
+                'perusahaan_nama' => 'PT. Petrosea Tbk',
                 'tanggal_mulai' => now()->subDays(35)->toDateString(),
                 'tanggal_selesai' => now()->subDays(30)->toDateString(),
                 'status' => 'selesai',
                 'findings' => [
-                    2 => ['nilai' => 3, 'catatan' => 'Jadwal simulasi tanggap darurat kebakaran gedung admin terlewat 1 triwulan.', 'pica' => ['status' => 'closed', 'kategori' => 'minor', 'akar' => 'Bentrok jadwal dengan audit eksternal ESDM.', 'koreksi' => 'Pelaksanaan simulasi evakuasi gedung admin.', 'pencegahan' => 'Penetapan jadwal simulasi di awal tahun fiskal.', 'tenggat' => now()->subDays(15)->toDateString(), 'verifikasi' => 'Simulasi evakuasi kebakaran gedung admin telah sukses dilaksanakan.']],
+                    2 => ['nilai' => 3, 'catatan' => 'Jadwal simulasi tanggap darurat tumpahan B3 terlambat dari rencana tahunan.', 'pica' => ['status' => 'closed', 'kategori' => 'minor', 'akar' => 'Bentrok jadwal operasional pit blasting.', 'koreksi' => 'Pelaksanaan simulasi tanggap darurat tumpahan B3.', 'pencegahan' => 'Sinkronisasi jadwal simulasi darurat terintegrasi.', 'tenggat' => now()->subDays(15)->toDateString(), 'verifikasi' => 'Simulasi darurat telah dilaksanakan dan didokumentasikan lengkap.']],
                 ]
             ],
         ];
 
         foreach ($sessionsData as $data) {
-            $perusahaanId = null;
-            $departemenId = null;
-            $areaAudit = '';
-
-            if (!empty($data['perusahaan_nama'])) {
-                $perusahaanObj = Perusahaan::where('nama_perusahaan', $data['perusahaan_nama'])->first();
-                $perusahaanId = $perusahaanObj ? $perusahaanObj->id : null;
-                $areaAudit = $perusahaanObj ? $perusahaanObj->nama_perusahaan : $data['perusahaan_nama'];
-            } elseif (!empty($data['departemen_nama'])) {
-                $departemenObj = Departemen::where('nama_departemen', $data['departemen_nama'])->first();
-                $departemenId = $departemenObj ? $departemenObj->id : null;
-                $areaAudit = $departemenObj ? $departemenObj->nama_departemen : $data['departemen_nama'];
-            }
+            $perusahaanObj = Perusahaan::firstOrCreate(
+                ['nama_perusahaan' => $data['perusahaan_nama']],
+                ['is_active' => true, 'kategori' => 'Kontraktor']
+            );
 
             $sesi = AuditSesi::create([
-                'user_id' => $auditor->id,
-                'perusahaan_id' => $perusahaanId,
-                'departemen_id' => $departemenId,
-                'tanggal_mulai' => $data['tanggal_mulai'],
+                'user_id'         => $auditor->id,
+                'perusahaan_id'   => $perusahaanObj->id,
+                'tanggal_mulai'   => $data['tanggal_mulai'],
                 'tanggal_selesai' => $data['tanggal_selesai'],
-                'area_audit' => $areaAudit,
-                'status' => $data['status'],
-                'skor_akhir' => 0.00,
+                'area_audit'      => $perusahaanObj->nama_perusahaan,
+                'status'          => $data['status'],
+                'skor_akhir'      => 0.00,
             ]);
 
             foreach ($kriterias as $index => $kriteria) {

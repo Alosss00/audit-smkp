@@ -398,11 +398,6 @@
                         <span>Master Perusahaan</span>
                     </a>
 
-                    <a href="{{ route('admin.departemens.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.departemens.*') ? 'active' : '' }}">
-                        <i class="bi bi-diagram-3-fill"></i>
-                        <span>Master Departemen</span>
-                    </a>
-
                     <a href="{{ route('admin.elemens.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.elemens.*') ? 'active' : '' }}">
                         <i class="bi bi-folder"></i>
                         <span>Master Elemen</span>

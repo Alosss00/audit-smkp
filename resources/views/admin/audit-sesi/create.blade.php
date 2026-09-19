@@ -48,25 +48,16 @@
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label for="area_selection" class="form-label fw-semibold small text-secondary">Pilih Area Audit <span class="text-danger">*</span></label>
+                    <label for="perusahaan_id" class="form-label fw-semibold small text-secondary">Pilih Perusahaan Area Audit <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="bi bi-geo-alt-fill text-primary"></i></span>
-                        <select name="area_selection" id="area_selection" class="form-select select-searchable fw-semibold" placeholder="-- Cari perusahaan / departemen --" required>
-                            <option value="">-- Pilih Perusahaan atau Departemen Ter-audit --</option>
-                            <optgroup label="PERUSAHAAN TER-AUDIT (42 Data)">
-                                @foreach($perusahaans as $comp)
-                                    <option value="p:{{ $comp->id }}" {{ old('area_selection') == 'p:'.$comp->id ? 'selected' : '' }}>
-                                        {{ $comp->nama_perusahaan }} ({{ $comp->kategori }})
-                                    </option>
-                                @endforeach
-                            </optgroup>
-                            <optgroup label="DEPARTEMEN TER-AUDIT (27 Data)">
-                                @foreach($departemens as $dept)
-                                    <option value="d:{{ $dept->id }}" {{ old('area_selection') == 'd:'.$dept->id ? 'selected' : '' }}>
-                                        {{ $dept->nama_departemen }}
-                                    </option>
-                                @endforeach
-                            </optgroup>
+                        <span class="input-group-text bg-light"><i class="bi bi-building text-primary"></i></span>
+                        <select name="perusahaan_id" id="perusahaan_id" class="form-select select-searchable fw-semibold" placeholder="-- Cari nama perusahaan --" required>
+                            <option value="">-- Pilih Perusahaan Ter-audit --</option>
+                            @foreach($perusahaans as $comp)
+                                <option value="{{ $comp->id }}" {{ (old('perusahaan_id') == $comp->id || old('area_selection') == 'p:'.$comp->id) ? 'selected' : '' }}>
+                                    {{ $comp->nama_perusahaan }} @if($comp->kategori) ({{ $comp->kategori }}) @endif
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                 </div>

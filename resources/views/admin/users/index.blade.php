@@ -195,39 +195,26 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold small">Area Kerja (Khusus Auditor Perusahaan)</label>
-                            <select name="area" class="form-select select-searchable" data-allow-create="true" placeholder="-- Ketik untuk mencari perusahaan / departemen --">
-                                <option value="">-- Pilih Perusahaan / Departemen Area Kerja --</option>
+                            <label class="form-label fw-semibold small">Area Kerja Perusahaan (Khusus Auditor Perusahaan)</label>
+                            <select name="area" class="form-select select-searchable" data-allow-create="true" placeholder="-- Ketik untuk mencari perusahaan --">
+                                <option value="">-- Pilih Perusahaan Area Kerja --</option>
                                 @php $areaFound = false; @endphp
-                                <optgroup label="🏢 PERUSAHAAN (KONTRAKTOR / SUBKONTRAKTOR)">
-                                    @foreach($perusahaans as $p)
-                                        @php
-                                             $isSelected = ($u->area === $p->nama_perusahaan);
-                                            if ($isSelected) $areaFound = true;
-                                        @endphp
-                                        <option value="{{ $p->nama_perusahaan }}" {{ $isSelected ? 'selected' : '' }}>
-                                            {{ $p->nama_perusahaan }} @if($p->kode_perusahaan) ({{ $p->kode_perusahaan }}) @endif
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                                <optgroup label="🏛️ DEPARTEMEN INTERNAL">
-                                    @foreach($departemens as $d)
-                                        @php
-                                            $isSelected = ($u->area === $d->nama_departemen);
-                                            if ($isSelected) $areaFound = true;
-                                        @endphp
-                                        <option value="{{ $d->nama_departemen }}" {{ $isSelected ? 'selected' : '' }}>
-                                            {{ $d->nama_departemen }} @if($d->kode_departemen) ({{ $d->kode_departemen }}) @endif
-                                        </option>
-                                    @endforeach
-                                </optgroup>
+                                @foreach($perusahaans as $p)
+                                    @php
+                                         $isSelected = ($u->area === $p->nama_perusahaan);
+                                        if ($isSelected) $areaFound = true;
+                                    @endphp
+                                    <option value="{{ $p->nama_perusahaan }}" {{ $isSelected ? 'selected' : '' }}>
+                                        {{ $p->nama_perusahaan }} @if($p->kode_perusahaan) ({{ $p->kode_perusahaan }}) @endif
+                                    </option>
+                                @endforeach
                                 @if(!empty($u->area) && !$areaFound)
                                     <optgroup label="⚠️ AREA KERJA TERDAFTAR SAAT INI">
                                         <option value="{{ $u->area }}" selected>{{ $u->area }}</option>
                                     </optgroup>
                                 @endif
                             </select>
-                            <small class="text-muted" style="font-size: 0.75rem;">Wajib untuk Auditor Perusahaan. Mengisolasi akses temuan PICA & sesi audit sesuai area.</small>
+                            <small class="text-muted" style="font-size: 0.75rem;">Wajib untuk Auditor Perusahaan. Mengisolasi akses temuan PICA & sesi audit sesuai area perusahaan.</small>
                         </div>
                         <div class="mb-3">
                             <div class="form-check form-switch">
@@ -284,25 +271,16 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Area Kerja (Khusus Auditor Perusahaan)</label>
-                        <select name="area" class="form-select select-searchable" data-allow-create="true" placeholder="-- Ketik untuk mencari perusahaan / departemen --">
-                            <option value="">-- Pilih Perusahaan / Departemen Area Kerja --</option>
-                            <optgroup label="🏢 PERUSAHAAN (KONTRAKTOR / SUBKONTRAKTOR)">
-                                @foreach($perusahaans as $p)
-                                    <option value="{{ $p->nama_perusahaan }}" {{ old('area') == $p->nama_perusahaan ? 'selected' : '' }}>
-                                        {{ $p->nama_perusahaan }} @if($p->kode_perusahaan) ({{ $p->kode_perusahaan }}) @endif
-                                    </option>
-                                @endforeach
-                            </optgroup>
-                            <optgroup label="🏛️ DEPARTEMEN INTERNAL">
-                                @foreach($departemens as $d)
-                                    <option value="{{ $d->nama_departemen }}" {{ old('area') == $d->nama_departemen ? 'selected' : '' }}>
-                                        {{ $d->nama_departemen }} @if($d->kode_departemen) ({{ $d->kode_departemen }}) @endif
-                                    </option>
-                                @endforeach
-                            </optgroup>
+                        <label class="form-label fw-semibold small">Area Kerja Perusahaan (Khusus Auditor Perusahaan)</label>
+                        <select name="area" class="form-select select-searchable" data-allow-create="true" placeholder="-- Ketik untuk mencari perusahaan --">
+                            <option value="">-- Pilih Perusahaan Area Kerja --</option>
+                            @foreach($perusahaans as $p)
+                                <option value="{{ $p->nama_perusahaan }}" {{ old('area') == $p->nama_perusahaan ? 'selected' : '' }}>
+                                    {{ $p->nama_perusahaan }} @if($p->kode_perusahaan) ({{ $p->kode_perusahaan }}) @endif
+                                </option>
+                            @endforeach
                         </select>
-                        <small class="text-muted" style="font-size: 0.75rem;">Wajib untuk Auditor Perusahaan. Mengisolasi akses temuan PICA & sesi audit sesuai area.</small>
+                        <small class="text-muted" style="font-size: 0.75rem;">Wajib untuk Auditor Perusahaan. Mengisolasi akses temuan PICA & sesi audit sesuai area perusahaan.</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Password</label>

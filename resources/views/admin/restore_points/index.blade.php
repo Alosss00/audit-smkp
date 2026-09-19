@@ -8,7 +8,7 @@
         <h2 class="fw-bold text-slate-800 mb-1">
             <i class="bi bi-arrow-counterclockwise text-primary me-2"></i>Pusat Pemulihan Data
         </h2>
-        <p class="text-muted mb-0">Kelola dan pulihkan data aplikasi yang terhapus (*Elemen, Sub-Elemen, Kriteria, Perusahaan, Departemen, User, Sesi Audit*) untuk menjaga konsistensi pengkodean.</p>
+        <p class="text-muted mb-0">Kelola dan pulihkan data aplikasi yang terhapus (*Elemen, Sub-Elemen, Kriteria, Perusahaan, User, Sesi Audit*) untuk menjaga konsistensi pengkodean.</p>
     </div>
     <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
         <a href="{{ route('admin.audit-logs.index') }}" class="btn btn-outline-secondary rounded-3 px-3">
@@ -91,9 +91,6 @@
                 </option>
                 <option value="perusahaan" {{ request('trash_module') == 'perusahaan' ? 'selected' : '' }}>
                     Perusahaan ({{ $deletedCountsByModule['perusahaan'] }})
-                </option>
-                <option value="departemen" {{ request('trash_module') == 'departemen' ? 'selected' : '' }}>
-                    Departemen ({{ $deletedCountsByModule['departemen'] }})
                 </option>
                 <option value="audit_sesi" {{ request('trash_module') == 'audit_sesi' ? 'selected' : '' }}>
                     Sesi Audit ({{ $deletedCountsByModule['audit_sesi'] }})
@@ -294,9 +291,6 @@
                                 @endif
                                 @if($deletedCountsByModule['perusahaan'] > 0)
                                     <option value="perusahaan">Khusus Perusahaan ({{ $deletedCountsByModule['perusahaan'] }} data)</option>
-                                @endif
-                                @if($deletedCountsByModule['departemen'] > 0)
-                                    <option value="departemen">Khusus Departemen ({{ $deletedCountsByModule['departemen'] }} data)</option>
                                 @endif
                                 @if($deletedCountsByModule['audit_sesi'] > 0)
                                     <option value="audit_sesi">Khusus Sesi Audit ({{ $deletedCountsByModule['audit_sesi'] }} data)</option>
