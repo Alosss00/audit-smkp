@@ -53,6 +53,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::get('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'matrix'])->name('audit-sesi.matrix');
         Route::post('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'updateMatrix'])->name('audit-sesi.matrix.update');
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiAdminController::class, 'rekap'])->name('audit-sesi.rekap');
+        Route::get('/audit-sesi/{id}/laporan-detail', [AuditSesiAdminController::class, 'laporanDetail'])->name('audit-sesi.laporan-detail');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('audit-sesi.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiAdminController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
@@ -108,6 +109,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         // Audit Session Read-Only Views
         Route::get('/audit-sesi', [AuditSesiController::class, 'index'])->name('audit-sesi.index');
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiController::class, 'rekap'])->name('audit-sesi.rekap');
+        Route::get('/audit-sesi/{id}/laporan-detail', [AuditSesiController::class, 'laporanDetail'])->name('audit-sesi.laporan-detail');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('audit-sesi.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 

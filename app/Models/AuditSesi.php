@@ -167,7 +167,7 @@ class AuditSesi extends Model
     {
         $details = $this->relationLoaded('auditDetails')
             ? $this->auditDetails
-            : $this->auditDetails()->with('kriteria.subElemen.elemen')->get();
+            : $this->auditDetails()->with(['kriteria.subElemen.elemen', 'pica'])->get();
 
         $elemens = Elemen::with(['subElemens.kriterias'])->orderBy('kode_elemen')->get();
 
@@ -199,12 +199,16 @@ class AuditSesi extends Model
                         'kriteria_id'    => $d->kriteria_id,
                         'kode_kriteria'  => $d->kriteria->kode_kriteria ?? '-',
                         'deskripsi'      => $d->kriteria->deskripsi ?? '-',
+                        'nama_kriteria'  => $d->kriteria->deskripsi ?? '-',
                         'nilai'          => (int) round($d->nilai),
+                        'nilai_aktual'   => (int) round($d->nilai),
                         'nilai_maksimal' => (int) round($d->kriteria->nilai_maksimal ?? 4),
                         'is_na'          => (bool) $d->is_na,
                         'catatan'        => $d->catatan,
                         'lampiran_url'   => $d->lampiran_url,
                         'lampiran_urls'  => $d->lampiran_urls,
+                        'has_pica'       => (bool) $d->pica,
+                        'pica_kategori'  => $d->pica ? $d->pica->kategori_temuan : null,
                     ];
                 }
 
@@ -213,16 +217,22 @@ class AuditSesi extends Model
                 $elAktual += $subAktual;
                 $elMaks   += $subMaks;
 
-                $isDirect = count($subDetails) === 1 && ($subDetails[0]['kode_kriteria'] === $sub->kode_sub || $subDetails[0]['deskripsi'] === $sub->nama_sub);
+                $isDirect = count($subDetails) === 1;
 
                 $subList[] = [
                     'sub_elemen_id'            => $sub->id,
                     'kode_sub'                 => $sub->kode_sub,
+                    'kode_sub_elemen'          => $sub->kode_sub,
                     'nama_sub'                 => $sub->nama_sub,
+                    'nama_sub_elemen'          => $sub->nama_sub,
+                    'bobot'                    => (float) ($sub->bobot ?? 0),
                     'total_nilai_aktual'       => (int) round($subAktual),
+                    'nilai_aktual'             => (int) round($subAktual),
                     'total_nilai_maks_efektif' => (int) round($subMaks),
+                    'nilai_maks_efektif'       => (int) round($subMaks),
                     'persentase'               => round($subPct, 2),
                     'details'                  => $subDetails,
+                    'kriterias'                => $subDetails,
                     'is_direct'                => $isDirect,
                     'direct_detail'            => $isDirect ? ($subDetails[0] ?? null) : null,
                 ];
@@ -242,7 +252,9 @@ class AuditSesi extends Model
                 'nama_elemen'              => $elemen->nama_elemen,
                 'bobot'                    => (float) $elemen->bobot,
                 'total_nilai_aktual'       => (int) round($elAktual),
+                'nilai_aktual'             => (int) round($elAktual),
                 'total_nilai_maks_efektif' => (int) round($elMaks),
+                'nilai_maks_efektif'       => (int) round($elMaks),
                 'persentase'               => round($persentase, 2),
                 'skor_elemen'              => round($skorElemen, 2),
                 'sub_elemens'              => $subList,
@@ -287,5 +299,71 @@ class AuditSesi extends Model
         $persentase = $data['total_nilai_aktual'] / $data['total_nilai_maks_efektif'];
 
         return $persentase < 0.5 ? 'mayor' : 'minor';
+    }
+
+    /**
+     * Build reusable tree structure of Elemen -> SubElemen -> Kriteria.
+     */
+    public function buildMatrixTree(): array
+    {
+        return $this->getRekapHierarkis();
+    }
+
+    /**
+     * Get list of sub elements with 100% compliance ("Praktik Terbaik").
+     */
+    public function getSubElemenPraktekTerbaik(): \Illuminate\Support\Collection
+    {
+        $rekapSubElemen = $this->getRekapPerSubElemen();
+
+        return collect($rekapSubElemen)
+            ->filter(fn ($data) =>
+                $data['total_nilai_maks_efektif'] > 0 &&
+                $data['total_nilai_aktual'] == $data['total_nilai_maks_efektif']
+            )
+            ->map(function ($data) {
+                $subElemen = SubElemen::with('elemen')->find($data['sub_elemen_id']);
+                $catatanList = $this->auditDetails()
+                    ->whereHas('kriteria', fn ($q) => $q->where('sub_elemen_id', $data['sub_elemen_id']))
+                    ->whereNotNull('catatan')
+                    ->where('catatan', '!=', '')
+                    ->pluck('catatan');
+
+                return [
+                    'sub_elemen_id'      => $data['sub_elemen_id'],
+                    'kode_sub'           => $data['kode_sub'] ?? ($subElemen->kode_sub ?? '-'),
+                    'kode_sub_elemen'    => $data['kode_sub'] ?? ($subElemen->kode_sub ?? '-'),
+                    'nama_sub'           => $data['nama_sub'] ?? ($subElemen->nama_sub ?? '-'),
+                    'nama_sub_elemen'    => $data['nama_sub'] ?? ($subElemen->nama_sub ?? '-'),
+                    'elemen_kode'        => $subElemen->elemen->kode_elemen ?? '-',
+                    'elemen_nama'        => $subElemen->elemen->nama_elemen ?? '-',
+                    'nama_elemen'        => $subElemen->elemen->nama_elemen ?? '-',
+                    'nilai_aktual'       => $data['total_nilai_aktual'],
+                    'nilai_maks_efektif' => $data['total_nilai_maks_efektif'],
+                    'nilai_maks'         => $data['total_nilai_maks_efektif'],
+                    'nilai_label'        => $data['total_nilai_aktual'] . ' / ' . $data['total_nilai_maks_efektif'],
+                    'persentase'         => 100.0,
+                    'catatan'            => $catatanList->isNotEmpty() ? $catatanList->toArray() : 'Kesesuaian penuh memenuhi standar evaluasi SMKP Minerba Kepdirjen 185.',
+                    'keterangan'         => $catatanList->isNotEmpty() ? $catatanList->implode(' | ') : 'Kesesuaian penuh memenuhi standar evaluasi SMKP Minerba Kepdirjen 185.',
+                ];
+            })
+            ->values();
+    }
+
+    /**
+     * Get findings grouped by category (kritikal, mayor, minor).
+     */
+    public function getTemuanPerKategori(): array
+    {
+        $picas = Pica::whereHas('auditDetail', fn ($q) => $q->where('audit_sesi_id', $this->id))
+            ->with(['auditDetail.kriteria.subElemen.elemen'])
+            ->get()
+            ->groupBy('kategori_temuan');
+
+        return [
+            'kritikal' => $picas->get('kritikal', collect())->values(),
+            'mayor'    => $picas->get('mayor', collect())->values(),
+            'minor'    => $picas->get('minor', collect())->values(),
+        ];
     }
 }

@@ -12,13 +12,16 @@
         <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Periode: <strong>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</strong></p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ route('auditor.audit-sesi.laporan-detail', $sesi->id) }}" class="btn btn-outline-info text-dark fw-semibold rounded-3 px-3">
+            <i class="bi bi-file-earmark-text me-1"></i> Laporan Detail Sesi
+        </a>
         <a href="{{ route('auditor.audit-sesi.export-excel', $sesi->id) }}" class="btn btn-success rounded-3 px-3">
             <i class="bi bi-file-earmark-excel me-1"></i> Export Excel (.xlsx)
         </a>
         <a href="{{ route('auditor.audit-sesi.cetak', $sesi->id) }}" target="_blank" class="btn btn-dark rounded-3 px-3">
             <i class="bi bi-printer me-1"></i> Cetak Laporan (PDF)
         </a>
-        <a href="{{ route('auditor.pica.index') }}" class="btn btn-outline-info text-dark fw-semibold rounded-3 px-3">
+        <a href="{{ route('auditor.pica.index') }}" class="btn btn-outline-primary fw-semibold rounded-3 px-3">
             <i class="bi bi-tools me-1"></i> Tindak Lanjut PICA
         </a>
     </div>

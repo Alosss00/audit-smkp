@@ -402,7 +402,7 @@ class AuditSesiAdminController extends Controller
      */
     public function cetak($id)
     {
-        $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'perusahaan', 'departemen'])->findOrFail($id);
+        $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'perusahaan'])->findOrFail($id);
         $rekap     = $sesi->getRekapPerElemen();
         $hierarki  = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->hitungSkorAkhir();
@@ -415,11 +415,27 @@ class AuditSesiAdminController extends Controller
      */
     public function exportExcel($id)
     {
-        $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'perusahaan', 'departemen'])->findOrFail($id);
+        $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'perusahaan'])->findOrFail($id);
         $safeArea = preg_replace('/[^A-Za-z0-9_\-]/', '_', $sesi->area_audit);
         $fileName = 'TT-MGT-FRS-026B_Audit_SMKP_' . $safeArea . '_' . ($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y-m-d') : date('Y-m-d')) . '.xlsx';
 
         return AuditSesiExport::downloadTemplateWithScores($sesi, $fileName);
+    }
+
+    /**
+     * Display comprehensive audit detail report (Tree Matrix, Best Practices, PICA findings).
+     */
+    public function laporanDetail($id)
+    {
+        $sesi           = AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
+        $rekapElemen    = $sesi->getRekapPerElemen();
+        $hierarki       = $sesi->buildMatrixTree();
+        $praktekBaik    = $sesi->getSubElemenPraktekTerbaik();
+        $temuanKategori = $sesi->getTemuanPerKategori();
+        $skorAkhir      = $sesi->hitungSkorAkhir();
+        $isReadOnly     = false;
+
+        return view('laporan.detail', compact('sesi', 'rekapElemen', 'hierarki', 'praktekBaik', 'temuanKategori', 'skorAkhir', 'isReadOnly'));
     }
 
     /**

@@ -21,7 +21,7 @@ class AuditSesiController extends Controller
             abort(403, 'Akun Anda belum ditugaskan ke area kerja manapun. Hubungi Administrator.');
         }
 
-        $query = AuditSesi::with(['user', 'perusahaan', 'departemen'])
+        $query = AuditSesi::with(['user', 'perusahaan'])
             ->where('area_audit', 'like', '%' . $userArea . '%')
             ->latest();
 
@@ -79,6 +79,22 @@ class AuditSesiController extends Controller
     }
 
     /**
+     * Display comprehensive audit detail report (Tree Matrix, Best Practices, PICA findings) for Auditor.
+     */
+    public function laporanDetail($id)
+    {
+        $sesi           = $this->findAuditorSession($id);
+        $rekapElemen    = $sesi->getRekapPerElemen();
+        $hierarki       = $sesi->buildMatrixTree();
+        $praktekBaik    = $sesi->getSubElemenPraktekTerbaik();
+        $temuanKategori = $sesi->getTemuanPerKategori();
+        $skorAkhir      = $sesi->hitungSkorAkhir();
+        $isReadOnly     = true;
+
+        return view('laporan.detail', compact('sesi', 'rekapElemen', 'hierarki', 'praktekBaik', 'temuanKategori', 'skorAkhir', 'isReadOnly'));
+    }
+
+    /**
      * Helper to find audit session scoped to auditor's area.
      */
     private function findAuditorSession($id)
@@ -88,7 +104,7 @@ class AuditSesiController extends Controller
             abort(403, 'Akun Anda belum ditugaskan ke area kerja manapun. Hubungi Administrator.');
         }
 
-        return AuditSesi::with(['user', 'perusahaan', 'departemen', 'auditDetails.kriteria.subElemen.elemen'])
+        return AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])
             ->where('area_audit', 'like', '%' . $userArea . '%')
             ->findOrFail($id);
     }
