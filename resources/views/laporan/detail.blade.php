@@ -473,43 +473,64 @@
                             <p class="text-muted small mb-0">Belum ada sub-elemen yang mencapai kepatuhan 100% pada sesi audit ini.</p>
                         </div>
                     @else
-                        <div class="row g-3">
-                            @foreach($praktekBaik as $idx => $item)
-                                <div class="col-12 col-md-6 col-xl-4">
-                                    <div class="card card-custom h-100 border-start border-4 border-success p-3 bg-light bg-opacity-25">
-                                        <div class="d-flex align-items-start justify-content-between mb-2">
-                                            <span class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-1 rounded-pill">
-                                                <i class="bi bi-check2-circle me-1"></i> Kepatuhan 100%
-                                            </span>
-                                            <span class="badge bg-white text-slate-700 border px-2 py-1 small fw-bold">
-                                                {{ $item['kode_sub_elemen'] }}
-                                            </span>
-                                        </div>
-                                        <h6 class="fw-bold text-slate-800 mb-1">{{ $item['nama_sub_elemen'] }}</h6>
-                                        <p class="text-muted small mb-2"><i class="bi bi-layers me-1"></i> {{ $item['nama_elemen'] }}</p>
-                                        
-                                        <div class="p-2 bg-white rounded-3 border mb-3">
-                                            <div class="d-flex justify-content-between align-items-center small">
-                                                <span class="text-muted">Skor Tercapai:</span>
-                                                <strong class="text-success">{{ $item['nilai_aktual'] }} / {{ $item['nilai_maks_efektif'] }} Poin</strong>
-                                            </div>
-                                        </div>
-
-                                        <div class="small">
-                                            <span class="fw-semibold text-slate-700 d-block mb-1"><i class="bi bi-chat-left-quote text-primary me-1"></i> Catatan & Evaluasi:</span>
-                                            @if(is_array($item['catatan']))
-                                                <ul class="ps-3 mb-0 text-muted small">
-                                                    @foreach($item['catatan'] as $ct)
-                                                        <li>{{ $ct }}</li>
-                                                    @endforeach
-                                                </ul>
-                                            @else
-                                                <p class="text-muted small fst-italic mb-0">{{ $item['catatan'] }}</p>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 matrix-tree-table">
+                                <thead class="table-light text-slate-700 small text-uppercase">
+                                    <tr>
+                                        <th style="width: 50px;" class="ps-3 text-center">No</th>
+                                        <th style="width: 130px;">Kode Sub</th>
+                                        <th style="min-width: 250px;">Sub-Elemen SMKP</th>
+                                        <th style="min-width: 180px;">Elemen Induk</th>
+                                        <th style="width: 130px;" class="text-center">Skor / Nilai</th>
+                                        <th style="width: 120px;" class="text-center">Pencapaian</th>
+                                        <th style="min-width: 280px;" class="pe-3">Catatan Evaluasi / Bukti Praktik Baik</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($praktekBaik as $idx => $item)
+                                        <tr>
+                                            <td class="ps-3 text-center text-muted small fw-semibold">{{ $idx + 1 }}</td>
+                                            <td class="text-nowrap">
+                                                <span class="badge bg-light text-primary border px-2 py-1 fw-bold">
+                                                    <i class="bi bi-folder2 me-1"></i>{{ $item['kode_sub_elemen'] ?? $item['kode_sub'] }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold text-slate-800">{{ $item['nama_sub_elemen'] ?? $item['nama_sub'] }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-slate-100 text-slate-700 border px-2 py-1 small">
+                                                    <i class="bi bi-layers me-1 text-primary"></i>{{ $item['nama_elemen'] ?? $item['elemen_nama'] }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center font-monospace">
+                                                <strong class="text-success">{{ $item['nilai_aktual'] }}</strong> 
+                                                <span class="text-muted">/ {{ $item['nilai_maks_efektif'] ?? $item['nilai_maks'] }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold rounded-pill px-3 py-1">
+                                                    <i class="bi bi-check2-circle me-1"></i> 100%
+                                                </span>
+                                            </td>
+                                            <td class="pe-3">
+                                                @if(is_array($item['catatan']))
+                                                    <ul class="ps-3 mb-0 text-slate-700 small">
+                                                        @foreach($item['catatan'] as $ct)
+                                                            <li>{{ $ct }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                @elseif(!empty($item['catatan']))
+                                                    <div class="small text-slate-700">
+                                                        {!! nl2br(e($item['catatan'])) !!}
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted small fst-italic">Kesesuaian penuh memenuhi standar evaluasi SMKP Minerba Kepdirjen 185.</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     @endif
                 </div>
@@ -551,11 +572,7 @@
                                 <span>Tidak ditemukan ketidaksesuaian kategori <strong>Kritikal</strong> pada sesi audit ini.</span>
                             </div>
                         @else
-                            <div class="row g-3">
-                                @foreach($temuanKategori['kritikal'] as $pica)
-                                    @include('laporan._pica_card', ['pica' => $pica, 'borderClass' => 'border-danger', 'badgeClass' => 'bg-danger', 'isReadOnly' => $isReadOnly])
-                                @endforeach
-                            </div>
+                            @include('laporan._pica_table', ['items' => $temuanKategori['kritikal'], 'isReadOnly' => $isReadOnly])
                         @endif
                     </div>
 
@@ -575,11 +592,7 @@
                                 <span>Tidak ditemukan ketidaksesuaian kategori <strong>Mayor</strong> pada sesi audit ini.</span>
                             </div>
                         @else
-                            <div class="row g-3">
-                                @foreach($temuanKategori['mayor'] as $pica)
-                                    @include('laporan._pica_card', ['pica' => $pica, 'borderClass' => 'border-warning', 'badgeClass' => 'bg-warning text-dark', 'isReadOnly' => $isReadOnly])
-                                @endforeach
-                            </div>
+                            @include('laporan._pica_table', ['items' => $temuanKategori['mayor'], 'isReadOnly' => $isReadOnly])
                         @endif
                     </div>
 
@@ -599,11 +612,7 @@
                                 <span>Tidak ditemukan ketidaksesuaian kategori <strong>Minor</strong> pada sesi audit ini.</span>
                             </div>
                         @else
-                            <div class="row g-3">
-                                @foreach($temuanKategori['minor'] as $pica)
-                                    @include('laporan._pica_card', ['pica' => $pica, 'borderClass' => 'border-info', 'badgeClass' => 'bg-info text-dark', 'isReadOnly' => $isReadOnly])
-                                @endforeach
-                            </div>
+                            @include('laporan._pica_table', ['items' => $temuanKategori['minor'], 'isReadOnly' => $isReadOnly])
                         @endif
                     </div>
 
