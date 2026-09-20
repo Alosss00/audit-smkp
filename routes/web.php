@@ -42,6 +42,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         // Audit System Monitoring & Oversight
         Route::get('/rekap-audit', [AuditOversightController::class, 'index'])->name('rekap-audit.index');
         Route::get('/rekap-audit/{id}', [AuditOversightController::class, 'show'])->name('rekap-audit.show');
+        Route::get('/rekap-audit/{id}/laporan-detail', [AuditSesiAdminController::class, 'laporanDetail'])->name('rekap-audit.laporan-detail');
         Route::get('/rekap-audit/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('rekap-audit.cetak');
         Route::get('/rekap-audit/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('rekap-audit.export-excel');
 

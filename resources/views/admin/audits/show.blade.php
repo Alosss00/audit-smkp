@@ -11,7 +11,10 @@
         <h2 class="fw-bold text-slate-800 mb-0 mt-1">Detail Rekap Audit Internal SMKP</h2>
         <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Auditor: <strong>{{ $sesi->user->name }}</strong></p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ route('admin.rekap-audit.laporan-detail', $sesi->id) }}" class="btn btn-outline-info text-dark fw-semibold rounded-3 px-3">
+            <i class="bi bi-file-earmark-text me-1"></i> Laporan Detail Sesi
+        </a>
         <a href="{{ route('admin.rekap-audit.export-excel', $sesi->id) }}" class="btn btn-success rounded-3 px-3">
             <i class="bi bi-file-earmark-excel me-1"></i> Export Excel (.xlsx)
         </a>

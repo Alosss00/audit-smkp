@@ -12,9 +12,6 @@
         <p class="text-muted small mb-0">Area: <strong>{{ $sesi->area_audit }}</strong> | Periode: <strong>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</strong></p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="{{ route('admin.audit-sesi.laporan-detail', $sesi->id) }}" class="btn btn-outline-info text-dark fw-semibold rounded-3 px-3">
-            <i class="bi bi-file-earmark-text me-1"></i> Laporan Detail Sesi
-        </a>
         <a href="{{ route('admin.audit-sesi.export-excel', $sesi->id) }}" class="btn btn-success rounded-3 px-3">
             <i class="bi bi-file-earmark-excel me-1"></i> Export Excel (.xlsx)
         </a>

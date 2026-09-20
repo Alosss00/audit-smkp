@@ -12,14 +12,14 @@
                     <ol class="breadcrumb mb-0 small">
                         <li class="breadcrumb-item">
                             @if(auth()->user()->role === 'admin')
-                                <a href="{{ route('admin.audit-sesi.index') }}" class="text-decoration-none text-muted">Audit SMKP</a>
+                                <a href="{{ route('admin.rekap-audit.index') }}" class="text-decoration-none text-muted">Monitoring Audit</a>
                             @else
                                 <a href="{{ route('auditor.audit-sesi.index') }}" class="text-decoration-none text-muted">Audit SMKP</a>
                             @endif
                         </li>
                         <li class="breadcrumb-item">
                             @if(auth()->user()->role === 'admin')
-                                <a href="{{ route('admin.audit-sesi.rekap', $sesi->id) }}" class="text-decoration-none text-muted">Rekap Hasil</a>
+                                <a href="{{ route('admin.rekap-audit.show', $sesi->id) }}" class="text-decoration-none text-muted">Detail Rekap</a>
                             @else
                                 <a href="{{ route('auditor.audit-sesi.rekap', $sesi->id) }}" class="text-decoration-none text-muted">Rekap Hasil</a>
                             @endif
@@ -45,13 +45,13 @@
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('admin.audit-sesi.rekap', $sesi->id) }}" class="btn btn-outline-secondary rounded-3 px-3">
-                        <i class="bi bi-arrow-left me-1"></i> Kembali ke Rekap
+                    <a href="{{ route('admin.rekap-audit.show', $sesi->id) }}" class="btn btn-outline-secondary rounded-3 px-3">
+                        <i class="bi bi-arrow-left me-1"></i> Kembali ke Monitoring
                     </a>
-                    <a href="{{ route('admin.audit-sesi.export-excel', $sesi->id) }}" class="btn btn-success rounded-3 px-3">
+                    <a href="{{ route('admin.rekap-audit.export-excel', $sesi->id) }}" class="btn btn-success rounded-3 px-3">
                         <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
                     </a>
-                    <a href="{{ route('admin.audit-sesi.cetak', $sesi->id) }}" target="_blank" class="btn btn-dark rounded-3 px-3">
+                    <a href="{{ route('admin.rekap-audit.cetak', $sesi->id) }}" target="_blank" class="btn btn-dark rounded-3 px-3">
                         <i class="bi bi-printer me-1"></i> Cetak Laporan
                     </a>
                 @else

@@ -102,6 +102,9 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group gap-1">
+                                    <a href="{{ route('admin.rekap-audit.laporan-detail', $sesi->id) }}" class="btn btn-sm btn-outline-info text-dark fw-semibold rounded-2">
+                                        <i class="bi bi-file-earmark-text me-1"></i> Laporan Detail
+                                    </a>
                                     <a href="{{ route('admin.rekap-audit.show', $sesi->id) }}" class="btn btn-sm btn-outline-primary rounded-2">
                                         <i class="bi bi-eye me-1"></i> Detail Rekap
                                     </a>
