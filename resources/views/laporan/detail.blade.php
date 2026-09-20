@@ -183,10 +183,10 @@
                         <p class="text-muted small mb-0">Rincian terstruktur per Elemen, Sub-Elemen, dan Kriteria Penilaian Kepdirjen Minerba 185.K/37.04/DJB/2019.</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="toggleAllAccordions(true)">
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btnExpandAll">
                             <i class="bi bi-arrows-expand me-1"></i> Buka Semua Elemen
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="toggleAllAccordions(false)">
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btnCollapseAll">
                             <i class="bi bi-arrows-collapse me-1"></i> Tutup Semua
                         </button>
                     </div>
@@ -614,19 +614,35 @@
     </div>
 </div>
 
-<!-- Accordion Toggle Helper Script -->
-<script>
-    function toggleAllAccordions(open) {
-        const accordionItems = document.querySelectorAll('#accordionElemen .accordion-collapse');
-        accordionItems.forEach(item => {
-            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(item, { toggle: false });
-            if (open) {
-                bsCollapse.show();
-            } else {
-                bsCollapse.hide();
-            }
-        });
-    }
+<!-- Accordion Toggle Helper Script with CSP Nonce -->
+<script nonce="{{ $cspNonce ?? '' }}">
+    document.addEventListener('DOMContentLoaded', function() {
+        function toggleAllAccordions(open) {
+            const accordionItems = document.querySelectorAll('#accordionElemen .accordion-collapse');
+            accordionItems.forEach(item => {
+                const bsCollapse = bootstrap.Collapse.getOrCreateInstance(item, { toggle: false });
+                if (open) {
+                    bsCollapse.show();
+                } else {
+                    bsCollapse.hide();
+                }
+            });
+        }
+
+        const btnExpand = document.getElementById('btnExpandAll');
+        if (btnExpand) {
+            btnExpand.addEventListener('click', function() {
+                toggleAllAccordions(true);
+            });
+        }
+
+        const btnCollapse = document.getElementById('btnCollapseAll');
+        if (btnCollapse) {
+            btnCollapse.addEventListener('click', function() {
+                toggleAllAccordions(false);
+            });
+        }
+    });
 </script>
 
 <style>
