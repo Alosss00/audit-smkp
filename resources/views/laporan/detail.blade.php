@@ -499,9 +499,10 @@
                                                 <div class="fw-semibold text-slate-800">{{ $item['nama_sub_elemen'] ?? $item['nama_sub'] }}</div>
                                             </td>
                                             <td>
-                                                <span class="badge bg-slate-100 text-slate-700 border px-2 py-1 small">
-                                                    <i class="bi bi-layers me-1 text-primary"></i>{{ $item['nama_elemen'] ?? $item['elemen_nama'] }}
-                                                </span>
+                                                <div class="d-inline-flex align-items-center px-2.5 py-1 rounded-2 bg-light border small fw-semibold text-dark">
+                                                    <i class="bi bi-layers-fill text-primary me-1.5"></i>
+                                                    <span class="text-dark">{{ $item['nama_elemen'] ?? $item['elemen_nama'] }}</span>
+                                                </div>
                                             </td>
                                             <td class="text-center font-monospace">
                                                 <strong class="text-success">{{ $item['nilai_aktual'] }}</strong> 
