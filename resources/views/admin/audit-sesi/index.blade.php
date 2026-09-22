@@ -61,7 +61,8 @@
                 <thead class="table-light">
                     <tr>
                         <th style="width: 50px;">No</th>
-                        <th>Periode Audit</th>
+                        <th>Tahun Periode</th>
+                        <th>Pelaksanaan Sesi</th>
                         <th>Perusahaan (Area Audit)</th>
                         <th>Status</th>
                         <th>Progres Penilaian</th>
@@ -70,12 +71,27 @@
                 </thead>
                 <tbody>
                     @foreach($auditSesis as $index => $sesi)
+                        @php
+                            $thn = $sesi->tahun_periode ?? $sesi->tanggal_mulai->format('Y');
+                        @endphp
                         <tr>
                             <td>{{ $auditSesis->firstItem() + $index }}</td>
-                            <td><i class="bi bi-calendar-event me-1 text-muted"></i>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-semibold w-fit mb-1">
+                                        <i class="bi bi-calendar-check me-1"></i>Tahun {{ $thn }}
+                                    </span>
+                                    <span class="text-muted small" style="font-size: 0.78rem;">1 Jan {{ $thn }} – 31 Des {{ $thn }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-slate-800 fw-medium small">
+                                    <i class="bi bi-calendar-event me-1 text-muted"></i>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}
+                                </span>
+                            </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-semibold">
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2.5 py-1 rounded-pill small fw-semibold">
                                         <i class="bi bi-building me-1"></i>Perusahaan
                                     </span>
                                     <span class="fw-bold text-slate-800">{{ $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit }}</span>

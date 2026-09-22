@@ -69,14 +69,17 @@ class AuditSesiAdminController extends Controller
 
         $request->validate([
             'perusahaan_id'   => 'required|exists:perusahaans,id',
+            'tahun_periode'   => 'required|integer|min:2000|max:2100',
             'tanggal_mulai'   => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
         ], [
             'perusahaan_id.required'          => 'Perusahaan area audit wajib dipilih.',
             'perusahaan_id.exists'            => 'Perusahaan yang dipilih tidak valid.',
-            'tanggal_mulai.required'          => 'Tanggal mulai wajib diisi.',
-            'tanggal_selesai.required'        => 'Tanggal selesai wajib diisi.',
-            'tanggal_selesai.after_or_equal'  => 'Tanggal selesai harus sama atau setelah tanggal mulai.',
+            'tahun_periode.required'          => 'Tahun periode audit wajib dipilih.',
+            'tahun_periode.integer'           => 'Tahun periode audit harus berupa angka tahun.',
+            'tanggal_mulai.required'          => 'Tanggal mulai sesi wajib diisi.',
+            'tanggal_selesai.required'        => 'Tanggal selesai sesi wajib diisi.',
+            'tanggal_selesai.after_or_equal'  => 'Tanggal selesai sesi harus sama atau setelah tanggal mulai.',
         ]);
 
         $perusahaan = Perusahaan::findOrFail($request->perusahaan_id);
@@ -87,6 +90,7 @@ class AuditSesiAdminController extends Controller
             $sesi = AuditSesi::create([
                 'user_id'         => auth()->id(),
                 'perusahaan_id'   => $perusahaan->id,
+                'tahun_periode'   => (int) $request->tahun_periode,
                 'tanggal_mulai'   => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
                 'area_audit'      => $areaAudit,

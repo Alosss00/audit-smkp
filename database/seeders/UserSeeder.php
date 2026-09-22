@@ -45,7 +45,7 @@ class UserSeeder extends Seeder
                 'email'     => 'auditor.msm@smkp.id',
                 'password'  => Hash::make('password'),
                 'role'      => 'auditor',
-                'area'      => 'PT. Meares Soputan Mining',
+                'area'      => 'PT Meares Soputan Mining',
                 'is_active' => true,
             ]
         );

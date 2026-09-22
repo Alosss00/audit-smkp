@@ -61,7 +61,8 @@
                     <tr>
                         <th style="width: 50px;">No</th>
                         <th>Perusahaan (Area Audit)</th>
-                        <th>Periode Audit</th>
+                        <th>Tahun Periode</th>
+                        <th>Pelaksanaan Sesi</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
                         <th>Progres Penilaian</th>
@@ -70,6 +71,9 @@
                 </thead>
                 <tbody>
                     @foreach($auditSesis as $index => $sesi)
+                        @php
+                            $thn = $sesi->tahun_periode ?? $sesi->tanggal_mulai->format('Y');
+                        @endphp
                         <tr>
                             <td>{{ $auditSesis->firstItem() + $index }}</td>
                             <td>
@@ -77,7 +81,19 @@
                                     <i class="bi bi-building me-1"></i>{{ $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit }}
                                 </span>
                             </td>
-                            <td>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill small fw-semibold w-fit mb-1">
+                                        <i class="bi bi-calendar-check me-1"></i>Tahun {{ $thn }}
+                                    </span>
+                                    <span class="text-muted small" style="font-size: 0.75rem;">1 Jan – 31 Des {{ $thn }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="small text-slate-800">
+                                    <i class="bi bi-calendar-event me-1 text-muted"></i>{{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}
+                                </span>
+                            </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="bi bi-person-circle text-secondary"></i>

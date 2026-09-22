@@ -23,9 +23,17 @@
             <td style="font-weight: bold;" colspan="2">Perusahaan / Area Audit:</td>
             <td colspan="11">{{ $sesi->area_audit }}</td>
         </tr>
+        @php
+            $thn = $sesi->tahun_periode ?? $sesi->tanggal_mulai->format('Y');
+        @endphp
         <tr>
             <td></td>
-            <td style="font-weight: bold;" colspan="2">Periode Audit:</td>
+            <td style="font-weight: bold;" colspan="2">Tahun Periode Audit:</td>
+            <td colspan="11">Tahun {{ $thn }} (1 Januari {{ $thn }} - 31 Desember {{ $thn }})</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td style="font-weight: bold;" colspan="2">Jadwal Pelaksanaan Sesi:</td>
             <td colspan="11">{{ $sesi->tanggal_mulai->format('d F Y') }} - {{ $sesi->tanggal_selesai->format('d F Y') }}</td>
         </tr>
         <tr>
