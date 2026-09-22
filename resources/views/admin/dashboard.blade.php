@@ -45,6 +45,7 @@
                 <div>
                     <div class="text-muted small fw-semibold">PICA Status Open</div>
                     <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['open_pica'] }}</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ number_format($stats['open_pica_kriteria']) }} Kriteria Open</small>
                 </div>
             </div>
         </div>
@@ -59,6 +60,7 @@
                 <div>
                     <div class="text-muted small fw-semibold">PICA In Progress</div>
                     <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['in_progress_pica'] }}</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ number_format($stats['in_progress_pica_kriteria']) }} Kriteria In Progress</small>
                 </div>
             </div>
         </div>
@@ -73,6 +75,7 @@
                 <div>
                     <div class="text-muted small fw-semibold">PICA Closed</div>
                     <h3 class="fw-bold text-slate-800 mb-0">{{ $stats['closed_pica'] }}</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ number_format($stats['closed_pica_kriteria']) }} Kriteria Selesai</small>
                 </div>
             </div>
         </div>
@@ -112,8 +115,13 @@
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <div>
                     <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-exclamation-octagon-fill me-2 text-danger"></i>Frekuensi Temuan Audit per Elemen</h5>
-                    <p class="text-muted small mb-0">Grafik jumlah akumulasi temuan ketidaksesuaian/catatan audit per elemen SMKP.</p>
+                    <p class="text-muted small mb-0">Grafik persentase akumulasi temuan ketidaksesuaian/catatan audit per elemen SMKP.</p>
                 </div>
+                @if(isset($totalAllFindings) && $totalAllFindings > 0)
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                        Total: {{ number_format($totalAllFindings) }} Temuan
+                    </span>
+                @endif
             </div>
             <div style="height: 260px;">
                 <canvas id="findingsBarChart"></canvas>
@@ -139,7 +147,7 @@
                             </div>
                         </div>
                         <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1 font-monospace">
-                            {{ $top['total_findings'] }} Temuan
+                            {{ $top['percentage'] }}% <small class="text-muted">({{ $top['total_findings'] }}/{{ $top['total_assessed'] ?? 0 }})</small>
                         </span>
                     </div>
                 @empty
@@ -327,15 +335,17 @@
             }
         });
 
-        // 3. Horizontal Bar Chart Audit Findings Frequency
+        // 3. Horizontal Bar Chart Audit Findings Frequency (Skala 100% per Elemen)
         const ctxFindings = document.getElementById('findingsBarChart').getContext('2d');
+        const rawFindingCounts = {!! json_encode($findingCounts) !!};
+        const rawFindingTotals = {!! json_encode($findingTotalsPerElemen ?? []) !!};
         new Chart(ctxFindings, {
             type: 'bar',
             data: {
                 labels: {!! json_encode($findingLabels) !!},
                 datasets: [{
-                    label: 'Jumlah Temuan Ketidaksesuaian',
-                    data: {!! json_encode($findingCounts) !!},
+                    label: 'Persentase Temuan per Elemen (%)',
+                    data: {!! json_encode($findingPercentages) !!},
                     backgroundColor: 'rgba(239, 68, 68, 0.75)',
                     borderColor: '#ef4444',
                     borderWidth: 2,
@@ -349,7 +359,21 @@
                 scales: {
                     x: {
                         beginAtZero: true,
-                        ticks: { stepSize: 1 }
+                        max: 100,
+                        ticks: {
+                            callback: function(value) { return value + '%'; }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const count = rawFindingCounts[context.dataIndex] || 0;
+                                const total = rawFindingTotals[context.dataIndex] || 0;
+                                return `Persentase Temuan: ${context.parsed.x}% (${count}/${total} Kriteria)`;
+                            }
+                        }
                     }
                 }
             }

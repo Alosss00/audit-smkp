@@ -53,15 +53,40 @@ class PicaController extends Controller
 
         $auditSesis = $query->latest()->paginate(10);
 
-        $basePicaQuery = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
+        $basePicas = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
             $q->where('area_audit', $userArea);
+        })->with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
+
+        $groupedSubTemuan = $basePicas->groupBy(function($p) {
+            $sesiId = $p->auditDetail->audit_sesi_id ?? 0;
+            $subId = $p->auditDetail->kriteria->sub_elemen_id ?? 0;
+            return "{$sesiId}_{$subId}";
         });
 
+        $subTotal = $groupedSubTemuan->count();
+        $subOpen = 0;
+        $subInProgress = 0;
+        $subClosed = 0;
+
+        foreach ($groupedSubTemuan as $subGroup) {
+            if ($subGroup->contains('status', 'open')) {
+                $subOpen++;
+            } elseif ($subGroup->contains('status', 'in_progress')) {
+                $subInProgress++;
+            } else {
+                $subClosed++;
+            }
+        }
+
         $stats = [
-            'total'       => (clone $basePicaQuery)->count(),
-            'open'        => (clone $basePicaQuery)->where('status', 'open')->count(),
-            'in_progress' => (clone $basePicaQuery)->where('status', 'in_progress')->count(),
-            'closed'      => (clone $basePicaQuery)->where('status', 'closed')->count(),
+            'total'               => $subTotal,
+            'open'                => $subOpen,
+            'in_progress'         => $subInProgress,
+            'closed'              => $subClosed,
+            'total_kriteria'      => $basePicas->count(),
+            'open_kriteria'       => $basePicas->where('status', 'open')->count(),
+            'in_progress_kriteria'=> $basePicas->where('status', 'in_progress')->count(),
+            'closed_kriteria'     => $basePicas->where('status', 'closed')->count(),
         ];
 
         return view('auditor.pica.index', compact('auditSesis', 'stats', 'userArea'));

@@ -55,6 +55,11 @@ class SubElemenPenilaianStandaloneTest extends TestCase
 
     public function test_audit_sesi_matrix_includes_standalone_sub_elemen()
     {
+        $perusahaan = \App\Models\Perusahaan::create([
+            'nama_perusahaan' => 'Area Test Standalone',
+            'is_active'       => true,
+        ]);
+
         $sub = SubElemen::create([
             'elemen_id'      => $this->elemen->id,
             'kode_sub'       => 'TEST.2',
@@ -66,7 +71,7 @@ class SubElemenPenilaianStandaloneTest extends TestCase
         $this->actingAs($this->admin);
 
         $response = $this->post(route('admin.audit-sesi.store'), [
-            'area_selection'  => 'Area Test Standalone',
+            'perusahaan_id'   => $perusahaan->id,
             'tanggal_mulai'   => now()->toDateString(),
             'tanggal_selesai' => now()->addDays(2)->toDateString(),
         ]);

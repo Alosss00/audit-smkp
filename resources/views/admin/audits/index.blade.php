@@ -64,7 +64,7 @@
                         <th>Periode Audit</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
-                        <th>Skor Akhir</th>
+                        <th>Progres Penilaian</th>
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
@@ -94,11 +94,18 @@
                                 @endif
                             </td>
                             <td>
-                                @if($sesi->skor_akhir !== null)
-                                    <span class="fw-bold text-primary fs-6">{{ number_format($sesi->skor_akhir, 2) }}%</span>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
+                                @php
+                                    $progress = $sesi->hitungProgressPenilaian();
+                                @endphp
+                                <div class="d-flex align-items-center gap-2" style="min-width: 110px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar {{ $progress == 100 ? 'bg-success' : ($progress >= 50 ? 'bg-warning' : 'bg-danger') }}" 
+                                             role="progressbar" style="width: {{ $progress }}%"></div>
+                                    </div>
+                                    <span class="fw-bold {{ $progress == 100 ? 'text-success' : ($progress >= 50 ? 'text-warning' : 'text-danger') }}">
+                                        {{ number_format($progress, 1) }}%
+                                    </span>
+                                </div>
                             </td>
                             <td class="text-end">
                                 <div class="btn-group gap-1">

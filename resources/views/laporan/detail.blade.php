@@ -118,10 +118,12 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-baseline gap-2">
-                    <h2 class="fw-bold text-danger mb-0">{{ count($temuanKategori['kritikal']) + count($temuanKategori['mayor']) }}</h2>
-                    <small class="text-muted">temuan ({{ count($temuanKategori['kritikal']) }} Kritikal, {{ count($temuanKategori['mayor']) }} Mayor)</small>
+                    <h2 class="fw-bold text-danger mb-0">{{ ($temuanKategori['kritikal_count'] ?? 0) + ($temuanKategori['mayor_count'] ?? 0) }}</h2>
+                    <small class="text-muted">sub-elemen temuan</small>
                 </div>
-                <p class="text-muted small mb-0 mt-2">Prioritas tindak lanjut PICA</p>
+                <p class="text-muted small mb-0 mt-2">
+                    {{ count($temuanKategori['kritikal']) + count($temuanKategori['mayor']) }} tindakan koreksi kriteria
+                </p>
             </div>
         </div>
 
@@ -135,10 +137,12 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-baseline gap-2">
-                    <h2 class="fw-bold text-info mb-0">{{ count($temuanKategori['minor']) }}</h2>
-                    <small class="text-muted">ketidaksesuaian minor</small>
+                    <h2 class="fw-bold text-info mb-0">{{ $temuanKategori['minor_count'] ?? 0 }}</h2>
+                    <small class="text-muted">sub-elemen temuan</small>
                 </div>
-                <p class="text-muted small mb-0 mt-2">Peluang peningkatan (OFI)</p>
+                <p class="text-muted small mb-0 mt-2">
+                    {{ count($temuanKategori['minor']) }} tindakan koreksi kriteria
+                </p>
             </div>
         </div>
     </div>
@@ -162,7 +166,7 @@
                 <li class="nav-item" role="presentation">
                     <a class="nav-link rounded-3 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" 
                        id="tab-temuan" data-bs-toggle="tab" href="#section-temuan" role="tab" aria-selected="false">
-                        <i class="bi bi-exclamation-diamond"></i> 2.3 Temuan & Tindak Lanjut PICA ({{ count($temuanKategori['kritikal']) + count($temuanKategori['mayor']) + count($temuanKategori['minor']) }})
+                        <i class="bi bi-exclamation-diamond"></i> 2.3 Temuan & Tindak Lanjut PICA ({{ $temuanKategori['total_temuan'] ?? count($temuanKategori['kritikal']) + count($temuanKategori['mayor']) + count($temuanKategori['minor']) }})
                     </a>
                 </li>
             </ul>
@@ -556,13 +560,22 @@
                 </div>
 
                 <div class="card-body p-4">
+                    <!-- Informative Banner SMKP Sub-element Counting Rule -->
+                    <div class="alert alert-primary bg-primary bg-opacity-10 border-0 rounded-3 py-2 px-3 mb-4 d-flex align-items-center gap-2 small">
+                        <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+                        <div>
+                            <strong>Ketentuan Temuan SMKP Minerba:</strong> Akumulasi temuan pada kriteria-kriteria dihitung sebagai <strong>1 unit temuan sub-elemen</strong> (maksimal sejumlah total sub-elemen non-N/A). Untuk tindak lanjut, seluruh <strong>{{ $temuanKategori['total_items'] ?? 0 }} rincian kriteria</strong> di bawah ini wajib dieksekusi dan diverifikasi hingga status closed.
+                        </div>
+                    </div>
 
                     <!-- Sub-section 1: Temuan Kritikal -->
                     <div class="mb-5">
                         <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                             <h5 class="fw-bold text-danger mb-0 d-flex align-items-center gap-2">
                                 <i class="bi bi-exclamation-octagon-fill"></i> Temuan Kritikal
-                                <span class="badge bg-danger rounded-pill px-3 py-1 fs-6">{{ count($temuanKategori['kritikal']) }}</span>
+                                <span class="badge bg-danger rounded-pill px-3 py-1 fs-6">
+                                    {{ $temuanKategori['kritikal_count'] ?? 0 }} Sub-Elemen ({{ count($temuanKategori['kritikal']) }} Tindakan)
+                                </span>
                             </h5>
                             <small class="text-muted">Kondisi berbahaya fatal atau pelanggaran regulasi mutlak</small>
                         </div>
@@ -582,7 +595,9 @@
                         <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                             <h5 class="fw-bold text-warning-emphasis mb-0 d-flex align-items-center gap-2">
                                 <i class="bi bi-exclamation-triangle-fill text-warning"></i> Temuan Mayor
-                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fs-6">{{ count($temuanKategori['mayor']) }}</span>
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fs-6">
+                                    {{ $temuanKategori['mayor_count'] ?? 0 }} Sub-Elemen ({{ count($temuanKategori['mayor']) }} Tindakan)
+                                </span>
                             </h5>
                             <small class="text-muted">Kepatuhan sub-elemen &lt; 50% atau tidak terpenuhinya klausul wajib</small>
                         </div>
@@ -602,7 +617,9 @@
                         <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                             <h5 class="fw-bold text-info-emphasis mb-0 d-flex align-items-center gap-2">
                                 <i class="bi bi-info-circle-fill text-info"></i> Temuan Minor
-                                <span class="badge bg-info text-dark rounded-pill px-3 py-1 fs-6">{{ count($temuanKategori['minor']) }}</span>
+                                <span class="badge bg-info text-dark rounded-pill px-3 py-1 fs-6">
+                                    {{ $temuanKategori['minor_count'] ?? 0 }} Sub-Elemen ({{ count($temuanKategori['minor']) }} Tindakan)
+                                </span>
                             </h5>
                             <small class="text-muted">Ketidaksesuaian administratif atau tidak sistemik</small>
                         </div>

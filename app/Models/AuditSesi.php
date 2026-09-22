@@ -352,18 +352,85 @@ class AuditSesi extends Model
 
     /**
      * Get findings grouped by category (kritikal, mayor, minor).
+     * Rule: Multi-criteria findings within the same sub-element count as 1 sub-element finding for summary statistics,
+     * while preserving all individual criteria finding items for PICA remediation execution.
      */
     public function getTemuanPerKategori(): array
     {
         $picas = Pica::whereHas('auditDetail', fn ($q) => $q->where('audit_sesi_id', $this->id))
             ->with(['auditDetail.kriteria.subElemen.elemen'])
-            ->get()
-            ->groupBy('kategori_temuan');
+            ->get();
+
+        // Group PICA records by sub_elemen_id
+        $groupedBySubElemen = $picas->groupBy(function ($pica) {
+            return $pica->auditDetail->kriteria->sub_elemen_id ?? 0;
+        });
+
+        $kritikalItems = collect();
+        $mayorItems    = collect();
+        $minorItems    = collect();
+
+        $kritikalSubCount = 0;
+        $mayorSubCount    = 0;
+        $minorSubCount    = 0;
+
+        foreach ($groupedBySubElemen as $subElemenId => $subPicas) {
+            // Determine severity category for this sub-element:
+            // 1. Kritikal if any item is kritikal
+            // 2. Mayor if any item is mayor or sub-elemen score < 50%
+            // 3. Minor otherwise
+            $hasKritikal = $subPicas->contains('kategori_temuan', 'kritikal');
+            $hasMayor    = $subPicas->contains('kategori_temuan', 'mayor');
+
+            if ($hasKritikal) {
+                $kritikalSubCount++;
+                $kritikalItems = $kritikalItems->concat($subPicas);
+            } elseif ($hasMayor) {
+                $mayorSubCount++;
+                $mayorItems = $mayorItems->concat($subPicas);
+            } else {
+                $minorSubCount++;
+                $minorItems = $minorItems->concat($subPicas);
+            }
+        }
 
         return [
-            'kritikal' => $picas->get('kritikal', collect())->values(),
-            'mayor'    => $picas->get('mayor', collect())->values(),
-            'minor'    => $picas->get('minor', collect())->values(),
+            'kritikal'           => $kritikalItems->values(),
+            'mayor'              => $mayorItems->values(),
+            'minor'              => $minorItems->values(),
+            'total_items'        => $picas->count(),
+            'total_sub_temuan'   => $groupedBySubElemen->count(),
+            'total_temuan'       => $groupedBySubElemen->count(),
+            'kritikal_count'     => $kritikalSubCount,
+            'mayor_count'        => $mayorSubCount,
+            'minor_count'        => $minorSubCount,
         ];
+    }
+
+    /**
+     * Hitung persentase progres pengisian matriks penilaian sesi audit.
+     *
+     * @return float
+     */
+    public function hitungProgressPenilaian(): float
+    {
+        if ($this->status === 'selesai') {
+            return 100.0;
+        }
+
+        $details = $this->relationLoaded('auditDetails')
+            ? $this->auditDetails
+            : $this->auditDetails()->get();
+
+        $totalKriteria = $details->count();
+        if ($totalKriteria === 0) {
+            return 0.0;
+        }
+
+        $assessedCount = $details->filter(function ($d) {
+            return (float) $d->nilai > 0 || $d->is_na || !empty($d->catatan) || !empty($d->lampiran);
+        })->count();
+
+        return round(($assessedCount / $totalKriteria) * 100, 1);
     }
 }

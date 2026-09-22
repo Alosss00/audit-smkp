@@ -25,8 +25,9 @@
         <div class="card card-custom p-3">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <span class="text-muted small fw-semibold d-block">Total Temuan PICA</span>
+                    <span class="text-muted small fw-semibold d-block">Total Temuan (Sub-Elemen)</span>
                     <h3 class="fw-bold text-slate-800 mb-0 mt-1">{{ number_format($stats['total']) }}</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ number_format($stats['total_kriteria']) }} Tindakan Kriteria</small>
                 </div>
                 <div class="stat-icon-box bg-primary bg-opacity-10 text-primary">
                     <i class="bi bi-card-checklist"></i>
@@ -40,6 +41,7 @@
                 <div>
                     <span class="text-muted small fw-semibold d-block">Status Open</span>
                     <h3 class="fw-bold text-danger mb-0 mt-1">{{ number_format($stats['open']) }}</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ number_format($stats['open_kriteria']) }} Kriteria Open</small>
                 </div>
                 <div class="stat-icon-box bg-danger bg-opacity-10 text-danger">
                     <i class="bi bi-exclamation-octagon"></i>
@@ -53,6 +55,7 @@
                 <div>
                     <span class="text-muted small fw-semibold d-block">In Progress</span>
                     <h3 class="fw-bold text-warning mb-0 mt-1">{{ number_format($stats['in_progress']) }}</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ number_format($stats['in_progress_kriteria']) }} Kriteria In Progress</small>
                 </div>
                 <div class="stat-icon-box bg-warning bg-opacity-10 text-warning">
                     <i class="bi bi-hourglass-split"></i>
@@ -66,6 +69,7 @@
                 <div>
                     <span class="text-muted small fw-semibold d-block">Closed / Verifikasi</span>
                     <h3 class="fw-bold text-success mb-0 mt-1">{{ number_format($stats['closed']) }}</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ number_format($stats['closed_kriteria']) }} Kriteria Selesai</small>
                 </div>
                 <div class="stat-icon-box bg-success bg-opacity-10 text-success">
                     <i class="bi bi-check-circle"></i>
@@ -135,13 +139,31 @@
                 @forelse($auditSesis as $index => $sesi)
                     @php
                         $auditor = $sesi->user;
-                        $picas = $sesi->auditDetails->map(fn($d) => $d->pica)->filter();
-                        $totalPica = $picas->count();
-                        $openCount = $picas->where('status', 'open')->count();
-                        $progressCount = $picas->where('status', 'in_progress')->count();
-                        $closedCount = $picas->where('status', 'closed')->count();
-                        $overdueCount = $picas->where('status', '!=', 'closed')->filter(fn($p) => $p->tenggat_waktu && $p->tenggat_waktu->isPast())->count();
-                        $pctClosed = $totalPica > 0 ? round(($closedCount / $totalPica) * 100) : 0;
+                        $detailsWithPica = $sesi->auditDetails->filter(fn($d) => $d->pica != null);
+                        $groupedBySubElemen = $detailsWithPica->groupBy(fn($d) => $d->kriteria->sub_elemen_id ?? 0);
+                        $subElemenCount = $groupedBySubElemen->count();
+                        $totalPica = $detailsWithPica->count();
+                        
+                        // Perhitungan Status Temuan per Sub-Elemen (Jika ada 1 kriteria Open, Sub-Elemen tercatat Open)
+                        $subOpenCount = 0;
+                        $subProgressCount = 0;
+                        $subClosedCount = 0;
+                        
+                        foreach ($groupedBySubElemen as $subDetails) {
+                            $hasOpen = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'open');
+                            $hasProgress = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'in_progress');
+                            
+                            if ($hasOpen) {
+                                $subOpenCount++;
+                            } elseif ($hasProgress) {
+                                $subProgressCount++;
+                            } else {
+                                $subClosedCount++;
+                            }
+                        }
+                        
+                        $overdueCount = $detailsWithPica->filter(fn($d) => $d->pica->status !== 'closed' && $d->pica->tenggat_waktu && $d->pica->tenggat_waktu->isPast())->count();
+                        $pctClosed = $subElemenCount > 0 ? round(($subClosedCount / $subElemenCount) * 100) : 0;
                     @endphp
                     <tr>
                         <td class="ps-4 fw-semibold text-muted">{{ $auditSesis->firstItem() + $index }}</td>
@@ -161,8 +183,8 @@
                             <small class="text-muted"><i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }}</small>
                         </td>
                         <td>
-                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
-                                {{ $totalPica }} Temuan
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold" title="{{ $totalPica }} rincian tindakan kriteria">
+                                {{ $subElemenCount }} Sub-Elemen <small class="text-muted font-normal">({{ $totalPica }} Kriteria)</small>
                             </span>
                             @if($overdueCount > 0)
                                 <span class="badge bg-danger rounded-pill px-2 py-1 ms-1" style="font-size: 0.65rem;" title="{{ $overdueCount }} temuan overdue">
@@ -172,9 +194,9 @@
                         </td>
                         <td>
                             <div class="d-flex gap-1">
-                                <span class="badge bg-danger rounded-pill px-2 py-1" title="Open">{{ $openCount }} Open</span>
-                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1" title="In Progress">{{ $progressCount }} In Progress</span>
-                                <span class="badge bg-success rounded-pill px-2 py-1" title="Closed">{{ $closedCount }} Closed</span>
+                                <span class="badge bg-danger rounded-pill px-2 py-1" title="{{ $subOpenCount }} Sub-Elemen Open">{{ $subOpenCount }} Open</span>
+                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1" title="{{ $subProgressCount }} Sub-Elemen In Progress">{{ $subProgressCount }} In Progress</span>
+                                <span class="badge bg-success rounded-pill px-2 py-1" title="{{ $subClosedCount }} Sub-Elemen Closed">{{ $subClosedCount }} Closed</span>
                             </div>
                         </td>
                         <td style="min-width: 180px;">
@@ -184,11 +206,12 @@
                                 </div>
                                 <span class="small fw-bold text-slate-700">{{ $pctClosed }}%</span>
                             </div>
+                            <small class="text-muted d-block mt-0.5" style="font-size: 0.7rem;">{{ $subClosedCount }}/{{ $subElemenCount }} Sub-Elemen Selesai</small>
                         </td>
                         <td class="pe-4 text-end">
                             <button class="btn btn-sm btn-danger rounded-pill px-3 fw-semibold" 
                                 data-bs-toggle="modal" data-bs-target="#adminAreaPicaModal{{ $sesi->id }}">
-                                <i class="bi bi-pencil-square me-1"></i> Detail & Edit PICA ({{ $totalPica }})
+                                <i class="bi bi-pencil-square me-1"></i> Detail & Edit PICA ({{ $subElemenCount }})
                             </button>
                         </td>
                     </tr>
@@ -222,6 +245,9 @@
     @php
         $auditor = $sesi->user;
         $detailsWithPica = $sesi->auditDetails->filter(fn($d) => $d->pica != null);
+        $groupedBySubElemen = $detailsWithPica->groupBy(fn($d) => $d->kriteria->sub_elemen_id ?? 0);
+        $subElemenCount = $groupedBySubElemen->count();
+        $totalPicaCount = $detailsWithPica->count();
     @endphp
     <div class="modal fade" id="adminAreaPicaModal{{ $sesi->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
@@ -232,49 +258,93 @@
                             <i class="bi bi-tools text-danger me-2"></i> Pengawasan PICA — Area: {{ $sesi->area_audit }}
                         </h5>
                         <small class="text-slate-300" style="font-size: 0.8rem; color: #cbd5e1;">
-                            <i class="bi bi-person me-1"></i> Auditor: {{ $auditor ? $auditor->name : '-' }} | <i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }} | Total {{ $detailsWithPica->count() }} Temuan PICA
+                            <i class="bi bi-person me-1"></i> Auditor: {{ $auditor ? $auditor->name : '-' }} | <i class="bi bi-calendar me-1"></i> {{ $sesi->tanggal_mulai->format('d M Y') }} - {{ $sesi->tanggal_selesai->format('d M Y') }} | <strong>Total {{ $subElemenCount }} Temuan Sub-Elemen (Maks. 51)</strong> &bull; {{ $totalPicaCount }} Tindakan Kriteria
                         </small>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
                     
-                    <div class="accordion" id="adminAccordionPicaSesi{{ $sesi->id }}">
-                        @foreach($detailsWithPica as $detailIndex => $detail)
+                    <div class="alert alert-primary bg-primary bg-opacity-10 border-0 rounded-3 py-2 px-3 mb-3 d-flex align-items-center gap-2 small">
+                        <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+                        <div>
+                            Daftar temuan ditampilkan per <strong>Sub-Elemen</strong> (maksimal 51 temuan). Jika salah satu temuan sub-sub kriteria berstatus <em>Open</em>, maka sub-elemen tersebut tercatat <strong>Open</strong> sampai seluruh tindakannya selesai diverifikasi (<em>Closed</em>).
+                        </div>
+                    </div>
+
+                    <!-- Accordion Tingkat 1: Sub-Elemen (Maksimal 51 Sub-Elemen) -->
+                    <div class="accordion" id="adminAccordionSubSesi{{ $sesi->id }}">
+                        @php $subIndex = 0; @endphp
+                        @foreach($groupedBySubElemen as $subElemenId => $subDetails)
                             @php
-                                $pica = $detail->pica;
-                                $kriteria = $detail->kriteria;
-                                $isOverdue = $pica->status !== 'closed' && $pica->tenggat_waktu && $pica->tenggat_waktu->isPast();
+                                $subIndex++;
+                                $firstDetail = $subDetails->first();
+                                $subElemen = $firstDetail->kriteria->subElemen ?? null;
+                                $subKode = $subElemen->kode_sub ?? '-';
+                                $subNama = $subElemen->nama_sub ?? '-';
+                                
+                                // Deteksi apakah sub-elemen memiliki sub-sub elemen / beberapa kriteria
+                                $hasSubSub = $subDetails->count() > 1 
+                                    || ($subElemen && $subElemen->kriterias && $subElemen->kriterias->count() > 1) 
+                                    || ($firstDetail->kriteria && $firstDetail->kriteria->kode_kriteria !== $subKode);
+                                
+                                // Severity Sub-Elemen
+                                $hasKritikal = $subDetails->contains(fn($d) => $d->pica && $d->pica->kategori_temuan === 'kritikal');
+                                $hasMayor = $subDetails->contains(fn($d) => $d->pica && $d->pica->kategori_temuan === 'mayor');
+                                $subKategori = $hasKritikal ? 'kritikal' : ($hasMayor ? 'mayor' : 'minor');
+                                
+                                // Status Sub-Elemen: Jika ada 1 yang open => Open; Jika tidak ada open tapi ada in_progress => In Progress; Lainnya => Closed
+                                $hasOpen = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'open');
+                                $hasProgress = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'in_progress');
+                                $subStatus = $hasOpen ? 'open' : ($hasProgress ? 'in_progress' : 'closed');
+                                
+                                $kriClosedCount = $subDetails->filter(fn($d) => $d->pica && $d->pica->status === 'closed')->count();
+                                $kriTotalCount = $subDetails->count();
+                                
+                                // Overdue Sub-Elemen
+                                $isSubOverdue = $subDetails->contains(fn($d) => $d->pica && $d->pica->status !== 'closed' && $d->pica->tenggat_waktu && $d->pica->tenggat_waktu->isPast());
                             @endphp
+
                             <div class="accordion-item border rounded-3 mb-3 shadow-sm overflow-hidden">
-                                <h2 class="accordion-header" id="adminHeadingPica{{ $pica->id }}">
-                                    <button class="accordion-button {{ $detailIndex > 0 ? 'collapsed' : '' }} bg-white py-3" type="button" 
-                                        data-bs-toggle="collapse" data-bs-target="#adminCollapsePica{{ $pica->id }}" 
-                                        aria-expanded="{{ $detailIndex == 0 ? 'true' : 'false' }}">
+                                <h2 class="accordion-header" id="adminHeadingSub{{ $sesi->id }}_{{ $subElemenId }}">
+                                    <button class="accordion-button {{ $subIndex > 1 ? 'collapsed' : '' }} bg-white py-3" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#adminCollapseSub{{ $sesi->id }}_{{ $subElemenId }}" 
+                                        aria-expanded="{{ $subIndex == 1 ? 'true' : 'false' }}">
                                         <div class="d-flex align-items-center justify-content-between w-100 me-3">
                                             <div class="d-flex align-items-center gap-2">
-                                                <span class="badge bg-secondary font-monospace">{{ $kriteria ? $kriteria->kode_kriteria : '-' }}</span>
-                                                <strong class="text-slate-800 text-truncate" style="max-width: 450px;" title="{{ $pica->deskripsi_temuan }}">
-                                                    {{ $pica->deskripsi_temuan }}
+                                                <span class="badge bg-secondary font-monospace fs-6 px-2.5 py-1">{{ $subKode }}</span>
+                                                <strong class="text-slate-800 text-truncate" style="max-width: 480px;" title="{{ $subNama }}">
+                                                    {{ $subNama }}
                                                 </strong>
+                                                @if($hasSubSub)
+                                                    <span class="badge bg-light text-primary border rounded-pill px-2.5 py-1 small fw-bold">
+                                                        <i class="bi bi-diagram-3 me-1"></i>{{ $kriTotalCount }} Sub-Sub Kriteria
+                                                        @if($kriClosedCount > 0 && $kriClosedCount < $kriTotalCount)
+                                                            <span class="text-success ms-1">({{ $kriClosedCount }}/{{ $kriTotalCount }} Closed)</span>
+                                                        @endif
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">
+                                                        Penilaian Langsung
+                                                    </span>
+                                                @endif
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
-                                                @if($pica->kategori_temuan === 'kritikal')
+                                                @if($subKategori === 'kritikal')
                                                     <span class="badge bg-danger rounded-pill px-3 py-1"><i class="bi bi-shield-exclamation me-1"></i> Kritikal</span>
-                                                @elseif($pica->kategori_temuan === 'mayor')
+                                                @elseif($subKategori === 'mayor')
                                                     <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Mayor</span>
                                                 @else
                                                     <span class="badge bg-info text-white rounded-pill px-3 py-1"><i class="bi bi-info-circle-fill me-1"></i> Minor</span>
                                                 @endif
-                                                @if($pica->kategori_ditetapkan_manual)
-                                                    <span class="badge bg-dark rounded-pill px-2 py-1" style="font-size: 0.65rem;" title="Kategori ditetapkan secara manual oleh Lead Auditor">Manual</span>
-                                                @endif
-                                                @if($isOverdue)
+
+                                                @if($isSubOverdue)
                                                     <span class="badge bg-danger">Overdue</span>
                                                 @endif
-                                                @if($pica->status === 'open')
+
+                                                @if($subStatus === 'open')
                                                     <span class="badge bg-danger rounded-pill px-3 py-1">Open</span>
-                                                @elseif($pica->status === 'in_progress')
+                                                @elseif($subStatus === 'in_progress')
                                                     <span class="badge bg-warning text-dark rounded-pill px-3 py-1">In Progress</span>
                                                 @else
                                                     <span class="badge bg-success rounded-pill px-3 py-1">Closed</span>
@@ -283,108 +353,274 @@
                                         </div>
                                     </button>
                                 </h2>
-                                <div id="adminCollapsePica{{ $pica->id }}" class="accordion-collapse collapse {{ $detailIndex == 0 ? 'show' : '' }}" 
-                                    data-bs-parent="#adminAccordionPicaSesi{{ $sesi->id }}">
-                                    <div class="accordion-body bg-white p-4 border-top">
-                                        
-                                        <!-- Form Input Per Temuan PICA (Admin) -->
-                                        <form action="{{ route('admin.pica.update', $pica->id) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            
-                                            <!-- Detail Info Kriteria & Deskripsi -->
-                                            <div class="p-3 bg-light rounded-3 border mb-4">
-                                                <div class="row g-2">
-                                                    <div class="col-md-4">
-                                                        <small class="text-muted d-block">Kode Kriteria Audit:</small>
-                                                        <strong class="text-slate-800">{{ $kriteria ? $kriteria->kode_kriteria : '-' }}</strong>
-                                                    </div>
-                                                    <div class="col-md-8">
-                                                        <small class="text-muted d-block">Persyaratan Dokumen / Deskripsi Kriteria:</small>
-                                                        <div class="small text-slate-700 fw-semibold">{{ $kriteria ? $kriteria->deskripsi : '-' }}</div>
-                                                    </div>
-                                                    <div class="col-12 mt-2">
-                                                        <small class="text-muted d-block">Deskripsi Temuan Audit:</small>
-                                                        <div class="fw-bold text-danger p-2 bg-white rounded border border-danger border-opacity-25">
-                                                            {{ $pica->deskripsi_temuan }}
+                                <div id="adminCollapseSub{{ $sesi->id }}_{{ $subElemenId }}" class="accordion-collapse collapse {{ $subIndex == 1 ? 'show' : '' }}" 
+                                    data-bs-parent="#adminAccordionSubSesi{{ $sesi->id }}">
+                                    <div class="accordion-body bg-light p-3 border-top">
+
+                                        @if($hasSubSub)
+                                            <!-- Sub-Elemen memiliki Sub-Sub Elemen: Munculkan Drop Box Bertingkat untuk Tiap Kriteria -->
+                                            <div class="mb-2 px-1 text-muted small fw-semibold d-flex align-items-center gap-1">
+                                                <i class="bi bi-chevron-down text-primary"></i> Rincian Sub-Sub Elemen / Kriteria Temuan:
+                                            </div>
+                                            <div class="accordion" id="adminNestedAccordion_{{ $sesi->id }}_{{ $subElemenId }}">
+                                                @foreach($subDetails as $kriIndex => $detail)
+                                                    @php
+                                                        $pica = $detail->pica;
+                                                        $kriteria = $detail->kriteria;
+                                                        $isOverdue = $pica->status !== 'closed' && $pica->tenggat_waktu && $pica->tenggat_waktu->isPast();
+                                                    @endphp
+                                                    <div class="accordion-item border rounded-3 mb-2 bg-white shadow-xs overflow-hidden">
+                                                        <h3 class="accordion-header" id="adminNestedHeading{{ $pica->id }}">
+                                                            <button class="accordion-button {{ $kriIndex > 0 ? 'collapsed' : '' }} bg-white py-2.5 px-3" type="button"
+                                                                data-bs-toggle="collapse" data-bs-target="#adminNestedCollapse{{ $pica->id }}"
+                                                                aria-expanded="{{ $kriIndex == 0 ? 'true' : 'false' }}">
+                                                                <div class="d-flex align-items-center justify-content-between w-100 me-3">
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <span class="badge bg-dark font-monospace">{{ $kriteria ? $kriteria->kode_kriteria : '-' }}</span>
+                                                                        <span class="text-slate-800 fw-semibold small text-truncate" style="max-width: 420px;" title="{{ $pica->deskripsi_temuan }}">
+                                                                            Ketidaksesuaian {{ $kriteria ? $kriteria->kode_kriteria : '-' }} (Skor {{ $detail->nilai }} / {{ $kriteria->nilai_maksimal ?? 4 }})
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        @if($pica->kategori_temuan === 'kritikal')
+                                                                            <span class="badge bg-danger rounded-pill px-2.5 py-1 small">Kritikal</span>
+                                                                        @elseif($pica->kategori_temuan === 'mayor')
+                                                                            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 small">Mayor</span>
+                                                                        @else
+                                                                            <span class="badge bg-info text-white rounded-pill px-2.5 py-1 small">Minor</span>
+                                                                        @endif
+
+                                                                        @if($isOverdue)
+                                                                            <span class="badge bg-danger small">Overdue</span>
+                                                                        @endif
+
+                                                                        @if($pica->status === 'open')
+                                                                            <span class="badge bg-danger rounded-pill px-2.5 py-1 small">Open</span>
+                                                                        @elseif($pica->status === 'in_progress')
+                                                                            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 small">In Progress</span>
+                                                                        @else
+                                                                            <span class="badge bg-success rounded-pill px-2.5 py-1 small">Closed</span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                        </h3>
+                                                        <div id="adminNestedCollapse{{ $pica->id }}" class="accordion-collapse collapse {{ $kriIndex == 0 ? 'show' : '' }}"
+                                                            data-bs-parent="#adminNestedAccordion_{{ $sesi->id }}_{{ $subElemenId }}">
+                                                            <div class="accordion-body bg-white p-4 border-top">
+                                                                
+                                                                <!-- Form PICA Sub-Sub Elemen -->
+                                                                <form action="{{ route('admin.pica.update', $pica->id) }}" method="POST">
+                                                                    @csrf
+                                                                    @method('PUT')
+                                                                    
+                                                                    <!-- Detail Info Kriteria & Deskripsi -->
+                                                                    <div class="p-3 bg-light rounded-3 border mb-4">
+                                                                        <div class="row g-2">
+                                                                            <div class="col-md-3">
+                                                                                <small class="text-muted d-block">Kode Kriteria / Sub-Sub:</small>
+                                                                                <strong class="text-slate-800">{{ $kriteria ? $kriteria->kode_kriteria : '-' }}</strong>
+                                                                            </div>
+                                                                            <div class="col-md-9">
+                                                                                <small class="text-muted d-block">Persyaratan Dokumen / Deskripsi Kriteria:</small>
+                                                                                <div class="small text-slate-700 fw-semibold">{{ $kriteria ? $kriteria->deskripsi : '-' }}</div>
+                                                                            </div>
+                                                                            <div class="col-12 mt-2">
+                                                                                <small class="text-muted d-block">Deskripsi Temuan Audit:</small>
+                                                                                <div class="fw-bold text-danger p-2 bg-white rounded border border-danger border-opacity-25">
+                                                                                    {{ $pica->deskripsi_temuan }}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="row g-3">
+                                                                        <!-- Penetapan Kategori Temuan & Justifikasi -->
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label fw-semibold small text-secondary">Kategori Temuan Audit <span class="text-danger">*</span></label>
+                                                                            <select name="kategori_temuan" class="form-select bg-light fw-bold" id="kategoriSelect{{ $pica->id }}" onchange="toggleJustifikasi({{ $pica->id }})">
+                                                                                <option value="kritikal" {{ old('kategori_temuan', $pica->kategori_temuan) == 'kritikal' ? 'selected' : '' }}>🔴 Kritikal (Potensi Fatality)</option>
+                                                                                <option value="mayor" {{ old('kategori_temuan', $pica->kategori_temuan) == 'mayor' ? 'selected' : '' }}>🟠 Mayor (Sub Elemen < 50% / >30% Lokasi)</option>
+                                                                                <option value="minor" {{ old('kategori_temuan', $pica->kategori_temuan) == 'minor' ? 'selected' : '' }}>🔵 Minor (Ketidaksesuaian Standard)</option>
+                                                                            </select>
+                                                                            <small class="text-muted d-block mt-1" style="font-size: 0.725rem;">
+                                                                                * Mayor Jalur 1 dihitung otomatis (< 50% Sub Elemen). Kritikal & Mayor Jalur 2 memerlukan penetapan manual Lead Auditor.
+                                                                            </small>
+                                                                        </div>
+
+                                                                        <div class="col-md-6" id="justifikasiContainer{{ $pica->id }}" style="{{ old('kategori_temuan', $pica->kategori_temuan) == 'kritikal' || $pica->kategori_ditetapkan_manual ? '' : 'display: none;' }}">
+                                                                            <label class="form-label fw-semibold small text-secondary">Justifikasi Penetapan Kategori <span class="text-danger" id="justifikasiReqLabel{{ $pica->id }}">*</span></label>
+                                                                            <textarea name="justifikasi_kategori" rows="2" class="form-control bg-light" 
+                                                                                placeholder="Alasan penetapan kategori manual (wajib diisi untuk Kritikal)...">{{ old('justifikasi_kategori', $pica->justifikasi_kategori) }}</textarea>
+                                                                        </div>
+
+                                                                        <div class="col-12">
+                                                                            <label class="form-label fw-semibold small text-secondary">Akar Masalah (Root Cause) <span class="text-danger">*</span></label>
+                                                                            <textarea name="akar_masalah" rows="2" class="form-control bg-light" 
+                                                                                placeholder="Jelaskan analisis penyebab utama terjadinya temuan ini...">{{ old('akar_masalah', $pica->akar_masalah) }}</textarea>
+                                                                        </div>
+
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label fw-semibold small text-secondary">Tindakan Koreksi (Corrective Action)</label>
+                                                                            <textarea name="tindakan_koreksi" rows="2" class="form-control bg-light" 
+                                                                                placeholder="Tindakan langsung perbaikan temuan...">{{ old('tindakan_koreksi', $pica->tindakan_koreksi) }}</textarea>
+                                                                        </div>
+
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label fw-semibold small text-secondary">Tindakan Pencegahan (Preventive Action)</label>
+                                                                            <textarea name="tindakan_pencegahan" rows="2" class="form-control bg-light" 
+                                                                                placeholder="Tindakan agar temuan tidak terulang...">{{ old('tindakan_pencegahan', $pica->tindakan_pencegahan) }}</textarea>
+                                                                        </div>
+
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label fw-semibold small text-secondary">PIC Penanggung Jawab Perbaikan</label>
+                                                                            <input type="text" name="pic_perbaikan" class="form-control bg-light" 
+                                                                                placeholder="Nama PIC perbaikan..." value="{{ old('pic_perbaikan', $pica->pic_perbaikan) }}">
+                                                                        </div>
+
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label fw-semibold small text-secondary">Tenggat Waktu Selesai (Target Date)</label>
+                                                                            <input type="date" name="tenggat_waktu" class="form-control bg-light" 
+                                                                                value="{{ old('tenggat_waktu', $pica->tenggat_waktu ? $pica->tenggat_waktu->format('Y-m-d') : '') }}">
+                                                                        </div>
+
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label fw-semibold small text-secondary">Status PICA <span class="text-danger">*</span></label>
+                                                                            <select name="status" class="form-select bg-light fw-bold">
+                                                                                <option value="open" {{ old('status', $pica->status) == 'open' ? 'selected' : '' }}>🔴 Open (Belum Ditindaklanjuti)</option>
+                                                                                <option value="in_progress" {{ old('status', $pica->status) == 'in_progress' ? 'selected' : '' }}>🟡 In Progress (Dalam Perbaikan)</option>
+                                                                                <option value="closed" {{ old('status', $pica->status) == 'closed' ? 'selected' : '' }}>🟢 Closed (Selesai Verifikasi)</option>
+                                                                            </select>
+                                                                        </div>
+
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label fw-semibold small text-secondary">Catatan Verifikasi / Pengawasan (Admin)</label>
+                                                                            <textarea name="catatan_verifikasi_auditor" rows="2" class="form-control bg-light" 
+                                                                                placeholder="Wajib diisi saat status diubah ke Closed...">{{ old('catatan_verifikasi_auditor', $pica->catatan_verifikasi_auditor) }}</textarea>
+                                                                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">* Wajib diisi jika status diubah ke Closed.</small>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="mt-3 text-end">
+                                                                        <button type="submit" class="btn btn-danger px-4 rounded-3 fw-semibold">
+                                                                            <i class="bi bi-save me-1"></i> Simpan PICA {{ $kriteria ? $kriteria->kode_kriteria : '' }}
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <!-- Penilaian Langsung Sub-Elemen (1 Kriteria Standalone): Tampilkan Form Langsung -->
+                                            @php
+                                                $singleDetail = $subDetails->first();
+                                                $pica = $singleDetail->pica;
+                                                $kriteria = $singleDetail->kriteria;
+                                                $isOverdue = $pica->status !== 'closed' && $pica->tenggat_waktu && $pica->tenggat_waktu->isPast();
+                                            @endphp
+                                            <div class="card border-0 shadow-sm rounded-3">
+                                                <div class="card-body p-4 bg-white">
+                                                    <form action="{{ route('admin.pica.update', $pica->id) }}" method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        
+                                                        <div class="p-3 bg-light rounded-3 border mb-4">
+                                                            <div class="row g-2">
+                                                                <div class="col-md-3">
+                                                                    <small class="text-muted d-block">Kode Sub-Elemen:</small>
+                                                                    <strong class="text-slate-800">{{ $subKode }}</strong>
+                                                                </div>
+                                                                <div class="col-md-9">
+                                                                    <small class="text-muted d-block">Deskripsi Persyaratan Standar:</small>
+                                                                    <div class="small text-slate-700 fw-semibold">{{ $subNama }}</div>
+                                                                </div>
+                                                                <div class="col-12 mt-2">
+                                                                    <small class="text-muted d-block">Deskripsi Temuan Audit:</small>
+                                                                    <div class="fw-bold text-danger p-2 bg-white rounded border border-danger border-opacity-25">
+                                                                        {{ $pica->deskripsi_temuan }}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-semibold small text-secondary">Kategori Temuan Audit <span class="text-danger">*</span></label>
+                                                                <select name="kategori_temuan" class="form-select bg-light fw-bold" id="kategoriSelect{{ $pica->id }}" onchange="toggleJustifikasi({{ $pica->id }})">
+                                                                    <option value="kritikal" {{ old('kategori_temuan', $pica->kategori_temuan) == 'kritikal' ? 'selected' : '' }}>🔴 Kritikal (Potensi Fatality)</option>
+                                                                    <option value="mayor" {{ old('kategori_temuan', $pica->kategori_temuan) == 'mayor' ? 'selected' : '' }}>🟠 Mayor (Sub Elemen < 50% / >30% Lokasi)</option>
+                                                                    <option value="minor" {{ old('kategori_temuan', $pica->kategori_temuan) == 'minor' ? 'selected' : '' }}>🔵 Minor (Ketidaksesuaian Standard)</option>
+                                                                </select>
+                                                                <small class="text-muted d-block mt-1" style="font-size: 0.725rem;">
+                                                                    * Mayor Jalur 1 dihitung otomatis (< 50% Sub Elemen). Kritikal & Mayor Jalur 2 memerlukan penetapan manual Lead Auditor.
+                                                                </small>
+                                                            </div>
+
+                                                            <div class="col-md-6" id="justifikasiContainer{{ $pica->id }}" style="{{ old('kategori_temuan', $pica->kategori_temuan) == 'kritikal' || $pica->kategori_ditetapkan_manual ? '' : 'display: none;' }}">
+                                                                <label class="form-label fw-semibold small text-secondary">Justifikasi Penetapan Kategori <span class="text-danger" id="justifikasiReqLabel{{ $pica->id }}">*</span></label>
+                                                                <textarea name="justifikasi_kategori" rows="2" class="form-control bg-light" 
+                                                                    placeholder="Alasan penetapan kategori manual (wajib diisi untuk Kritikal)...">{{ old('justifikasi_kategori', $pica->justifikasi_kategori) }}</textarea>
+                                                            </div>
+
+                                                            <div class="col-12">
+                                                                <label class="form-label fw-semibold small text-secondary">Akar Masalah (Root Cause) <span class="text-danger">*</span></label>
+                                                                <textarea name="akar_masalah" rows="2" class="form-control bg-light" 
+                                                                    placeholder="Jelaskan analisis penyebab utama terjadinya temuan ini...">{{ old('akar_masalah', $pica->akar_masalah) }}</textarea>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-semibold small text-secondary">Tindakan Koreksi (Corrective Action)</label>
+                                                                <textarea name="tindakan_koreksi" rows="2" class="form-control bg-light" 
+                                                                    placeholder="Tindakan langsung perbaikan temuan...">{{ old('tindakan_koreksi', $pica->tindakan_koreksi) }}</textarea>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-semibold small text-secondary">Tindakan Pencegahan (Preventive Action)</label>
+                                                                <textarea name="tindakan_pencegahan" rows="2" class="form-control bg-light" 
+                                                                    placeholder="Tindakan agar temuan tidak terulang...">{{ old('tindakan_pencegahan', $pica->tindakan_pencegahan) }}</textarea>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-semibold small text-secondary">PIC Penanggung Jawab Perbaikan</label>
+                                                                <input type="text" name="pic_perbaikan" class="form-control bg-light" 
+                                                                    placeholder="Nama PIC perbaikan..." value="{{ old('pic_perbaikan', $pica->pic_perbaikan) }}">
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-semibold small text-secondary">Tenggat Waktu Selesai (Target Date)</label>
+                                                                <input type="date" name="tenggat_waktu" class="form-control bg-light" 
+                                                                    value="{{ old('tenggat_waktu', $pica->tenggat_waktu ? $pica->tenggat_waktu->format('Y-m-d') : '') }}">
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-semibold small text-secondary">Status PICA <span class="text-danger">*</span></label>
+                                                                <select name="status" class="form-select bg-light fw-bold">
+                                                                    <option value="open" {{ old('status', $pica->status) == 'open' ? 'selected' : '' }}>🔴 Open (Belum Ditindaklanjuti)</option>
+                                                                    <option value="in_progress" {{ old('status', $pica->status) == 'in_progress' ? 'selected' : '' }}>🟡 In Progress (Dalam Perbaikan)</option>
+                                                                    <option value="closed" {{ old('status', $pica->status) == 'closed' ? 'selected' : '' }}>🟢 Closed (Selesai Verifikasi)</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-semibold small text-secondary">Catatan Verifikasi / Pengawasan (Admin)</label>
+                                                                <textarea name="catatan_verifikasi_auditor" rows="2" class="form-control bg-light" 
+                                                                    placeholder="Wajib diisi saat status diubah ke Closed...">{{ old('catatan_verifikasi_auditor', $pica->catatan_verifikasi_auditor) }}</textarea>
+                                                                <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">* Wajib diisi jika status diubah ke Closed.</small>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="mt-3 text-end">
+                                                            <button type="submit" class="btn btn-danger px-4 rounded-3 fw-semibold">
+                                                                <i class="bi bi-save me-1"></i> Simpan PICA Sub-Elemen {{ $subKode }}
+                                                            </button>
+                                                        </div>
+                                                    </form>
                                                 </div>
                                             </div>
-
-                                            <div class="row g-3">
-                                                <!-- Penetapan Kategori Temuan & Justifikasi -->
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Kategori Temuan Audit <span class="text-danger">*</span></label>
-                                                    <select name="kategori_temuan" class="form-select bg-light fw-bold" id="kategoriSelect{{ $pica->id }}" onchange="toggleJustifikasi({{ $pica->id }})">
-                                                        <option value="kritikal" {{ old('kategori_temuan', $pica->kategori_temuan) == 'kritikal' ? 'selected' : '' }}>🔴 Kritikal (Potensi Fatality)</option>
-                                                        <option value="mayor" {{ old('kategori_temuan', $pica->kategori_temuan) == 'mayor' ? 'selected' : '' }}>🟠 Mayor (Sub Elemen < 50% / >30% Lokasi)</option>
-                                                        <option value="minor" {{ old('kategori_temuan', $pica->kategori_temuan) == 'minor' ? 'selected' : '' }}>🔵 Minor (Ketidaksesuaian Standard)</option>
-                                                    </select>
-                                                    <small class="text-muted d-block mt-1" style="font-size: 0.725rem;">
-                                                        * Mayor Jalur 1 dihitung otomatis (< 50% Sub Elemen). Kritikal & Mayor Jalur 2 memerlukan penetapan manual Lead Auditor.
-                                                    </small>
-                                                </div>
-
-                                                <div class="col-md-6" id="justifikasiContainer{{ $pica->id }}" style="{{ old('kategori_temuan', $pica->kategori_temuan) == 'kritikal' || $pica->kategori_ditetapkan_manual ? '' : 'display: none;' }}">
-                                                    <label class="form-label fw-semibold small text-secondary">Justifikasi Penetapan Kategori <span class="text-danger" id="justifikasiReqLabel{{ $pica->id }}">*</span></label>
-                                                    <textarea name="justifikasi_kategori" rows="2" class="form-control bg-light" 
-                                                        placeholder="Alasan penetapan kategori manual (wajib diisi untuk Kritikal)...">{{ old('justifikasi_kategori', $pica->justifikasi_kategori) }}</textarea>
-                                                </div>
-
-                                                <div class="col-12">
-                                                    <label class="form-label fw-semibold small text-secondary">Akar Masalah (Root Cause) <span class="text-danger">*</span></label>
-                                                    <textarea name="akar_masalah" rows="2" class="form-control bg-light" 
-                                                        placeholder="Jelaskan analisis penyebab utama terjadinya temuan ini...">{{ old('akar_masalah', $pica->akar_masalah) }}</textarea>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Tindakan Koreksi (Corrective Action)</label>
-                                                    <textarea name="tindakan_koreksi" rows="2" class="form-control bg-light" 
-                                                        placeholder="Tindakan langsung perbaikan temuan...">{{ old('tindakan_koreksi', $pica->tindakan_koreksi) }}</textarea>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Tindakan Pencegahan (Preventive Action)</label>
-                                                    <textarea name="tindakan_pencegahan" rows="2" class="form-control bg-light" 
-                                                        placeholder="Tindakan agar temuan tidak terulang...">{{ old('tindakan_pencegahan', $pica->tindakan_pencegahan) }}</textarea>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">PIC Penanggung Jawab Perbaikan</label>
-                                                    <input type="text" name="pic_perbaikan" class="form-control bg-light" 
-                                                        placeholder="Nama PIC perbaikan..." value="{{ old('pic_perbaikan', $pica->pic_perbaikan) }}">
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Tenggat Waktu Selesai (Target Date)</label>
-                                                    <input type="date" name="tenggat_waktu" class="form-control bg-light" 
-                                                        value="{{ old('tenggat_waktu', $pica->tenggat_waktu ? $pica->tenggat_waktu->format('Y-m-d') : '') }}">
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Status PICA <span class="text-danger">*</span></label>
-                                                    <select name="status" class="form-select bg-light fw-bold">
-                                                        <option value="open" {{ old('status', $pica->status) == 'open' ? 'selected' : '' }}>🔴 Open (Belum Ditindaklanjuti)</option>
-                                                        <option value="in_progress" {{ old('status', $pica->status) == 'in_progress' ? 'selected' : '' }}>🟡 In Progress (Dalam Perbaikan)</option>
-                                                        <option value="closed" {{ old('status', $pica->status) == 'closed' ? 'selected' : '' }}>🟢 Closed (Selesai Verifikasi)</option>
-                                                    </select>
-                                                </div>
-
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-semibold small text-secondary">Catatan Verifikasi / Pengawasan (Admin)</label>
-                                                    <textarea name="catatan_verifikasi_auditor" rows="2" class="form-control bg-light" 
-                                                        placeholder="Wajib diisi saat status diubah ke Closed...">{{ old('catatan_verifikasi_auditor', $pica->catatan_verifikasi_auditor) }}</textarea>
-                                                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">* Wajib diisi jika status diubah ke Closed.</small>
-                                                </div>
-                                            </div>
-
-                                            <div class="mt-3 text-end">
-                                                <button type="submit" class="btn btn-danger px-4 rounded-3 fw-semibold">
-                                                    <i class="bi bi-save me-1"></i> Simpan PICA {{ $kriteria ? $kriteria->kode_kriteria : '' }}
-                                                </button>
-                                            </div>
-                                        </form>
+                                        @endif
 
                                     </div>
                                 </div>

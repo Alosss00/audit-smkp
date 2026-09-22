@@ -56,16 +56,40 @@ class PicaController extends Controller
 
         $auditSesis = $query->latest()->paginate(10);
 
-        // Global Stats Summary
+        // Global Stats Summary (Agregasi berbasis Sub-Elemen per Sesi Audit)
+        $allPicas = Pica::with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
+        
+        $groupedSubTemuan = $allPicas->groupBy(function($p) {
+            $sesiId = $p->auditDetail->audit_sesi_id ?? 0;
+            $subId = $p->auditDetail->kriteria->sub_elemen_id ?? 0;
+            return "{$sesiId}_{$subId}";
+        });
+
+        $subTotal = $groupedSubTemuan->count();
+        $subOpen = 0;
+        $subInProgress = 0;
+        $subClosed = 0;
+
+        foreach ($groupedSubTemuan as $subGroup) {
+            if ($subGroup->contains('status', 'open')) {
+                $subOpen++;
+            } elseif ($subGroup->contains('status', 'in_progress')) {
+                $subInProgress++;
+            } else {
+                $subClosed++;
+            }
+        }
+
         $stats = [
-            'total' => Pica::count(),
-            'open' => Pica::where('status', 'open')->count(),
-            'in_progress' => Pica::where('status', 'in_progress')->count(),
-            'closed' => Pica::where('status', 'closed')->count(),
-            'overdue' => Pica::where('status', '!=', 'closed')
-                ->whereNotNull('tenggat_waktu')
-                ->where('tenggat_waktu', '<', now()->startOfDay())
-                ->count(),
+            'total'               => $subTotal,
+            'open'                => $subOpen,
+            'in_progress'         => $subInProgress,
+            'closed'              => $subClosed,
+            'total_kriteria'      => $allPicas->count(),
+            'open_kriteria'       => $allPicas->where('status', 'open')->count(),
+            'in_progress_kriteria'=> $allPicas->where('status', 'in_progress')->count(),
+            'closed_kriteria'     => $allPicas->where('status', 'closed')->count(),
+            'overdue'             => $allPicas->filter(fn($p) => $p->status !== 'closed' && $p->tenggat_waktu && $p->tenggat_waktu->isPast())->count(),
         ];
 
         // Auditor list for filter dropdown
