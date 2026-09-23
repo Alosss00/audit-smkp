@@ -42,14 +42,6 @@
                                     <i class="bi bi-file-earmark-text text-primary me-1"></i><strong>Dokumen Wajib:</strong> {{ Str::limit($kriteria->persyaratan_dokumen, 90) }}
                                 </div>
                             @endif
-                            @if($kriteria->dependency)
-                                <div class="small text-dark bg-warning bg-opacity-10 p-2 rounded border border-warning border-opacity-50">
-                                    <i class="bi bi-link-45deg text-warning me-1 fw-bold"></i><strong>Prasyarat:</strong> {{ $kriteria->dependency->kode_kriteria }} - {{ Str::limit($kriteria->dependency->deskripsi, 60) }}
-                                    @if($kriteria->dependency_note)
-                                        <div class="fst-italic text-muted small mt-1"><i class="bi bi-info-circle me-1"></i>{{ $kriteria->dependency_note }}</div>
-                                    @endif
-                                </div>
-                            @endif
                         </td>
                         <td>
                             <small class="text-muted d-block">Sub {{ $kriteria->subElemen ? $kriteria->subElemen->kode_sub : '-' }}</small>

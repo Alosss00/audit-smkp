@@ -48,9 +48,8 @@ class AuditSesiController extends Controller
         $rekap     = $sesi->getRekapPerElemen();
         $hierarki  = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->hitungSkorAkhir();
-        $gatingViolations = app(\App\Services\GatingRuleService::class)->evaluate($sesi);
 
-        return view('auditor.audit.rekap', compact('sesi', 'rekap', 'hierarki', 'skorAkhir', 'gatingViolations'));
+        return view('auditor.audit.rekap', compact('sesi', 'rekap', 'hierarki', 'skorAkhir'));
     }
 
     /**

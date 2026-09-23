@@ -16,7 +16,7 @@ class KriteriaController extends Controller
      */
     public function index()
     {
-        $kriterias = Kriteria::with(['subElemen.elemen', 'dependency'])->latest()->get();
+        $kriterias = Kriteria::with(['subElemen.elemen'])->latest()->get();
         $trashedKriterias = Kriteria::onlyTrashed()->with(['subElemen.elemen'])->latest()->get();
         $subElemens = SubElemen::with('elemen')->orderBy('kode_sub')->get();
 

@@ -168,10 +168,8 @@ class AuditSesiAdminController extends Controller
         }])->orderBy('kode_elemen')->get();
 
         $rekap = $sesi->getRekapPerElemen();
-        $gatingRules = \App\Models\KriteriaGatingRule::active()->with(['kriteriaHulu', 'kriteriaHilir'])->get();
-        $gatingViolations = app(GatingRuleService::class)->evaluate($sesi);
 
-        return view('auditor.audit.matrix', compact('sesi', 'elemens', 'rekap', 'gatingRules', 'gatingViolations'));
+        return view('auditor.audit.matrix', compact('sesi', 'elemens', 'rekap'));
     }
 
     /**
@@ -197,16 +195,6 @@ class AuditSesiAdminController extends Controller
             'details.*.lampirans.*'    => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             'details.*.hapus_lampiran' => 'nullable|array',
         ]);
-
-        // Cross-Check / Scoring Gating Validation
-        $gatingService = app(GatingRuleService::class);
-        $hardBlockMessages = $gatingService->getHardBlockMessages($sesi, $request->details);
-
-        if (!empty($hardBlockMessages)) {
-            return back()->withInput()->with('error', 'Penyimpanan ditolak karena melanggar aturan Cross-Check / Gating Logic: ' . implode(' | ', $hardBlockMessages));
-        }
-
-        $softFlagWarnings = $gatingService->getSoftFlagWarnings($sesi, $request->details);
 
         DB::beginTransaction();
         try {
@@ -396,9 +384,8 @@ class AuditSesiAdminController extends Controller
         $rekap     = $sesi->getRekapPerElemen();
         $hierarki  = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->hitungSkorAkhir();
-        $gatingViolations = app(GatingRuleService::class)->evaluate($sesi);
 
-        return view('admin.audit-sesi.rekap', compact('sesi', 'rekap', 'hierarki', 'skorAkhir', 'gatingViolations'));
+        return view('admin.audit-sesi.rekap', compact('sesi', 'rekap', 'hierarki', 'skorAkhir'));
     }
 
     /**
