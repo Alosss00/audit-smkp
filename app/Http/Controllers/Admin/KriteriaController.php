@@ -246,7 +246,7 @@ class KriteriaController extends Controller
             'sub_elemen_id'       => 'nullable|exists:sub_elemens,id',
             'kode_kriteria'       => 'nullable|string|max:50',
             'deskripsi'           => 'nullable|string',
-            'nilai_maksimal'      => 'nullable|numeric|min:0|max:100',
+            'nilai_maksimal'      => 'nullable|numeric|min:0|max:1000',
             'persyaratan_dokumen' => 'nullable|string',
             'dependency_id'       => 'nullable|exists:kriterias,id',
             'dependency_note'     => 'nullable|string',
@@ -265,15 +265,19 @@ class KriteriaController extends Controller
         $originalData   = $kriteria->toArray();
 
         $data = $request->except(['_token', '_method']);
-        $data['sub_elemen_id']  = $request->input('sub_elemen_id', $kriteria->sub_elemen_id);
-        $data['kode_kriteria']  = $request->input('kode_kriteria', $kriteria->kode_kriteria);
-        $data['deskripsi']      = $request->input('deskripsi', $kriteria->deskripsi);
-        $data['nilai_maksimal'] = $request->input('nilai_maksimal', $kriteria->nilai_maksimal);
-        $data['is_na']          = $request->has('is_na') ? true : ($request->has('from_edit_modal') ? false : $kriteria->is_na);
+        $data['sub_elemen_id']       = $request->input('sub_elemen_id', $kriteria->sub_elemen_id);
+        $data['kode_kriteria']       = $request->input('kode_kriteria', $kriteria->kode_kriteria);
+        $data['deskripsi']           = $request->input('deskripsi', $kriteria->deskripsi);
+        $data['nilai_maksimal']      = $request->input('nilai_maksimal', $kriteria->nilai_maksimal);
+        $data['persyaratan_dokumen'] = $request->input('persyaratan_dokumen', $kriteria->persyaratan_dokumen);
+        $data['is_na']               = $request->has('is_na') ? true : ($request->has('from_edit_modal') ? false : $kriteria->is_na);
 
         // Process rubric guidelines array if sent
         if ($request->has('pedoman_nilai') && is_array($request->pedoman_nilai)) {
             $data['pedoman_nilai_json'] = $request->pedoman_nilai;
+            for ($i = 0; $i <= 4; $i++) {
+                $data["pedoman_nilai_{$i}"] = $request->pedoman_nilai[(string)$i] ?? null;
+            }
         }
 
         $kriteria->update($data);
@@ -292,14 +296,14 @@ class KriteriaController extends Controller
         AuditLog::create([
             'user_id'         => auth()->id(),
             'modul'           => 'Master Kriteria',
-            'tindakan'        => "Mengubah Rubrik Sub-sub Elemen (Kriteria): {$kriteria->kode_kriteria}",
+            'tindakan'        => "Mengubah Sub-sub Elemen (Kriteria): {$kriteria->kode_kriteria} - Nilai Max: {$kriteria->nilai_maksimal}",
             'data_lama'       => $originalData,
             'data_baru'       => $kriteria->toArray(),
             'waktu_perubahan' => now(),
         ]);
 
         return redirect()->back()
-            ->with('success', 'Rubrik Pedoman Penilaian berhasil diperbarui!');
+            ->with('success', 'Data Sub-sub Elemen (Kriteria) dan Pedoman Penilaian berhasil diperbarui!');
     }
 
     /**

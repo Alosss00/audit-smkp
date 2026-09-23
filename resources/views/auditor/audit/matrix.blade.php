@@ -288,7 +288,7 @@
                             <!-- Criterion Question Box -->
                             <div class="p-3 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-3 mb-4">
                                 <span class="badge bg-primary me-2">Kriteria {{ $kriteria->kode_kriteria }}</span>
-                                <span class="badge bg-dark">Maksimal: {{ number_format($kriteria->nilai_maksimal, 2) }}</span>
+                                <span class="badge bg-dark">Maksimal: {{ (int) $kriteria->nilai_maksimal }}</span>
                                 <h6 class="fw-bold text-slate-800 mt-2 mb-0">{{ $kriteria->deskripsi }}</h6>
                             </div>
 

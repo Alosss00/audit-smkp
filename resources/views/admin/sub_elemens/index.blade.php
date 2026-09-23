@@ -32,14 +32,14 @@
                         Bobot Elemen: <span class="fw-semibold text-dark">{{ number_format($elemen->bobot, 2) }}%</span>
                         @if($elemen->total_nilai_sub_elemen > 0)
                             @php
-                                $terpakai = $elemen->total_nilai_sub_terpakai;
-                                $maxSub = $elemen->total_nilai_sub_elemen;
+                                $terpakai = (int) $elemen->total_nilai_sub_terpakai;
+                                $maxSub = (int) $elemen->total_nilai_sub_elemen;
                                 $isOver = $terpakai > $maxSub;
                             @endphp
                             <span class="ms-3 border-start ps-3">
                                 Total Sub-Elemen: 
                                 <span class="badge {{ $isOver ? 'bg-danger' : 'bg-light text-dark border' }} font-monospace ms-1">
-                                    {{ number_format($terpakai, 2) }} / {{ number_format($maxSub, 2) }}
+                                    {{ $terpakai }} / {{ $maxSub }}
                                 </span>
                             </span>
                         @endif
@@ -90,7 +90,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center align-middle font-monospace fw-bold {{ $sub->is_na ? 'text-muted text-decoration-line-through' : 'text-primary' }}">
-                                        {{ number_format($sub->nilai_maksimal ?? 0, 2) }}
+                                        {{ (int) ($sub->nilai_maksimal ?? 0) }}
                                     </td>
                                     <td class="text-center align-middle">
                                         @if($sub->kriterias->count() === 1 && $sub->kriterias->first()->kode_kriteria === $sub->kode_sub)
@@ -144,7 +144,7 @@
                                                 </div>
                                             </td>
                                             <td class="text-center align-middle font-monospace text-muted small {{ $kriteria->is_na || $sub->is_na ? 'text-decoration-line-through' : '' }}">
-                                                {{ number_format($kriteria->nilai_maksimal, 2) }}
+                                                {{ (int) ($kriteria->nilai_maksimal ?? 0) }}
                                             </td>
                                             <td class="text-center text-muted align-middle">-</td>
                                             <td class="text-end align-middle pe-3">
@@ -156,7 +156,7 @@
                                                             {{ $kriteria->is_na ? 'N/A' : 'Set N/A' }}
                                                         </button>
                                                     </form>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-2 py-0 px-2" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#editSubSubModal{{ $kriteria->id }}">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-2 py-0 px-2" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#editSubSubModal{{ $kriteria->id }}" title="Edit Sub-sub Elemen, Nilai Maksimal, dan Rubrik">
                                                         <i class="bi bi-pencil"></i> Edit
                                                     </button>
                                                     <form action="{{ route('admin.kriterias.destroy', $kriteria->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus/nonaktifkan Sub-sub Elemen {{ $kriteria->kode_kriteria }}?')">
@@ -204,9 +204,9 @@
                                 <option value="{{ $s->id }}" 
                                     data-kode="{{ $s->kode_sub }}" 
                                     data-nama="{{ $s->nama_sub }}" 
-                                    data-max="{{ (float) ($s->nilai_maksimal ?? 4.00) }}"
+                                    data-max="{{ (int) ($s->nilai_maksimal ?? 4) }}"
                                     data-count="{{ $s->kriterias->where('kode_kriteria', '!=', $s->kode_sub)->count() }}">
-                                    Sub {{ $s->kode_sub }} - {{ $s->nama_sub }} (Nilai Max: {{ number_format($s->nilai_maksimal ?? 4, 2) }})
+                                    Sub {{ $s->kode_sub }} - {{ $s->nama_sub }} (Nilai Max: {{ (int) ($s->nilai_maksimal ?? 4) }})
                                 </option>
                             @endforeach
                         </select>
@@ -222,7 +222,7 @@
                             </div>
                             <div>
                                 <span class="badge bg-white text-dark border font-monospace px-3 py-2">
-                                    Nilai Max Induk: <span class="fw-bold text-primary" id="infoMaxScore">4.00</span>
+                                    Nilai Max Induk: <span class="fw-bold text-primary" id="infoMaxScore">4</span>
                                 </span>
                             </div>
                         </div>
@@ -275,7 +275,7 @@
 <!-- Modal Per Sub-Elemen: Tambah Sub-sub Elemen di bawah Sub Tersebut (Multi-Baris Dinamis) -->
 @foreach($subElemens as $sub)
     @php
-        $maxInt = ceil($sub->nilai_maksimal ?? 4);
+        $maxInt = (int) ($sub->nilai_maksimal ?? 4);
         $existingCount = $sub->kriterias->where('kode_kriteria', '!=', $sub->kode_sub)->count();
     @endphp
     <div class="modal fade" id="createSubSubForSubModal{{ $sub->id }}" tabindex="-1" aria-hidden="true">
@@ -296,7 +296,7 @@
                                 <strong>Induk Sub-Elemen:</strong> Sub {{ $sub->kode_sub }} - {{ $sub->nama_sub }}
                             </div>
                             <div>
-                                <span class="badge bg-light text-dark border font-monospace">Nilai Max Induk: {{ number_format($sub->nilai_maksimal ?? 4, 2) }}</span>
+                                <span class="badge bg-light text-dark border font-monospace">Nilai Max Induk: {{ (int) ($sub->nilai_maksimal ?? 4) }}</span>
                             </div>
                         </div>
 
@@ -307,18 +307,18 @@
                                 </h6>
                                 <small class="text-muted">Tambahkan satu atau lebih Sub-sub Elemen sekaligus di bawah ini.</small>
                             </div>
-                            <button type="button" class="btn btn-sm btn-success text-white fw-semibold rounded-pill px-3 shadow-sm btn-add-sub-modal-row" data-target="subSubItemsWrapper{{ $sub->id }}" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (float)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
+                            <button type="button" class="btn btn-sm btn-success text-white fw-semibold rounded-pill px-3 shadow-sm btn-add-sub-modal-row" data-target="subSubItemsWrapper{{ $sub->id }}" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (int)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
                                 <i class="bi bi-plus-lg me-1"></i> Tambah Baris Sub-sub
                             </button>
                         </div>
 
                         <!-- Rows Wrapper -->
-                        <div id="subSubItemsWrapper{{ $sub->id }}" class="sub-sub-items-container d-flex flex-column gap-3 mb-3" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (float)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
+                        <div id="subSubItemsWrapper{{ $sub->id }}" class="sub-sub-items-container d-flex flex-column gap-3 mb-3" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (int)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
                             <!-- Injected dynamically by JS on modal open -->
                         </div>
 
                         <div class="text-center p-3 border border-dashed rounded-3 bg-light bg-opacity-50">
-                            <button type="button" class="btn btn-sm btn-outline-success fw-semibold rounded-pill px-4 btn-add-sub-modal-row" data-target="subSubItemsWrapper{{ $sub->id }}" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (float)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
+                            <button type="button" class="btn btn-sm btn-outline-success fw-semibold rounded-pill px-4 btn-add-sub-modal-row" data-target="subSubItemsWrapper{{ $sub->id }}" data-kode-sub="{{ $sub->kode_sub }}" data-max-score="{{ (int)($sub->nilai_maksimal ?? 4) }}" data-existing-count="{{ $existingCount }}">
                                 <i class="bi bi-plus-circle me-1"></i> Tambah Baris Sub-sub Elemen (+ Baris)
                             </button>
                         </div>
@@ -333,73 +333,105 @@
     </div>
 @endforeach
 
-<!-- Modal Edit Rubrik Pedoman Penilaian (Kriteria) -->
+<!-- Modal Edit Sub-sub Elemen / Kriteria -->
 @foreach($subElemens as $sub)
     @foreach($sub->kriterias as $kriteria)
-        <div class="modal fade" id="editSubSubModal{{ $kriteria->id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content card-custom border-0">
-                    <form action="{{ route('admin.kriterias.update', $kriteria->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="from_edit_modal" value="1">
-                        <input type="hidden" name="sub_elemen_id" value="{{ $kriteria->sub_elemen_id }}">
-                        <div class="modal-header border-bottom">
-                            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Edit Rubrik Pedoman Penilaian — <span class="badge bg-dark font-monospace">{{ $kriteria->kode_kriteria }}</span></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <!-- Summary Card Info -->
-                            <div class="p-3 bg-light rounded-3 border mb-3">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <span class="badge bg-secondary font-monospace">Sub {{ $sub->kode_sub }}</span>
-                                    <span class="badge bg-success font-monospace">Nilai Max: {{ (int) $kriteria->nilai_maksimal }}</span>
-                                </div>
-                                <div class="fw-bold text-slate-800 small">{{ $sub->nama_sub }}</div>
-                                <div class="text-muted small mt-1"><i class="bi bi-card-text me-1"></i>{{ $kriteria->deskripsi }}</div>
+        @if($kriteria->kode_kriteria !== $sub->kode_sub)
+            <div class="modal fade" id="editSubSubModal{{ $kriteria->id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content card-custom border-0">
+                        <form action="{{ route('admin.kriterias.update', $kriteria->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="from_edit_modal" value="1">
+                            <input type="hidden" name="sub_elemen_id" value="{{ $kriteria->sub_elemen_id }}">
+                            <div class="modal-header border-bottom">
+                                <h5 class="modal-title fw-bold">
+                                    <i class="bi bi-pencil-square text-primary me-2"></i>Edit Sub-sub Elemen — <span class="badge bg-dark font-monospace">{{ $kriteria->kode_kriteria }}</span>
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-
-                            <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="is_na" id="edit_is_na_kriteria_{{ $kriteria->id }}" value="1" {{ $kriteria->is_na ? 'checked' : '' }}>
-                                    <label class="form-check-label fw-semibold small text-dark" for="edit_is_na_kriteria_{{ $kriteria->id }}">Set N/A (Not Applicable) secara default</label>
-                                </div>
-                            </div>
-
-                            <div class="mb-2">
-                                <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-bookmark-star-fill text-warning me-1"></i>Isi Rubrik Pedoman Penilaian (Jumlah Nilai Max: {{ (int) $kriteria->nilai_maksimal }})</h6>
-                            </div>
-
-                            @php
-                                $maxValEdit = (int) ceil($kriteria->nilai_maksimal);
-                                $pedomanArr = $kriteria->pedoman_array ?? [];
-                            @endphp
-                            <div class="row g-3">
-                                @for($i = 0; $i <= $maxValEdit; $i++)
-                                    @php
-                                        $pctEdit = $maxValEdit > 0 ? round(($i / $maxValEdit) * 100) : 0;
-                                        $colSizeEdit = ($maxValEdit > 4) ? 'col-md-6' : 'col-12';
-                                    @endphp
-                                    <div class="{{ $colSizeEdit }}">
-                                        <label class="form-label fw-semibold small text-dark">Pedoman Nilai {{ $i }} ({{ $pctEdit }}% dari Max {{ $maxValEdit }})</label>
-                                        <textarea name="pedoman_nilai[{{ $i }}]" class="form-control" rows="2" placeholder="Acuan pemberian Nilai {{ $i }}...">{{ $pedomanArr[(string)$i] ?? ($kriteria->{"pedoman_nilai_$i"} ?? '') }}</textarea>
+                            <div class="modal-body">
+                                <!-- Summary Card Info -->
+                                <div class="p-3 bg-light rounded-3 border mb-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <span class="badge bg-secondary font-monospace">Induk: Sub {{ $sub->kode_sub }}</span>
+                                        <span class="badge bg-success font-monospace" id="maxBadge_{{ $kriteria->id }}">Nilai Max: {{ (int) $kriteria->nilai_maksimal }}</span>
                                     </div>
-                                @endfor
+                                    <div class="fw-bold text-slate-800 small">{{ $sub->nama_sub }}</div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small text-dark">Kode Sub-sub <span class="text-danger">*</span></label>
+                                        <input type="text" name="kode_kriteria" class="form-control font-monospace" value="{{ $kriteria->kode_kriteria }}" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small text-dark">Nilai Maksimal <span class="text-danger">*</span></label>
+                                        <input type="number" step="1" min="0" max="1000" name="nilai_maksimal" 
+                                            class="form-control font-monospace edit-kriteria-nilai-max fw-bold text-primary" 
+                                            value="{{ (int) $kriteria->nilai_maksimal }}" 
+                                            data-kriteria-id="{{ $kriteria->id }}" 
+                                            data-target-container="editRubrikContainer_{{ $kriteria->id }}" 
+                                            required>
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">Mengubah nilai ini akan otomatis menyesuaikan rubrik & total nilai Sub-Elemen.</div>
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <div class="form-check form-switch pb-2">
+                                            <input class="form-check-input" type="checkbox" name="is_na" id="edit_is_na_kriteria_{{ $kriteria->id }}" value="1" {{ $kriteria->is_na ? 'checked' : '' }}>
+                                            <label class="form-check-label fw-semibold small text-dark" for="edit_is_na_kriteria_{{ $kriteria->id }}">Set N/A Default</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold small text-dark">Deskripsi / Pertanyaan Sub-sub Elemen <span class="text-danger">*</span></label>
+                                        <textarea name="deskripsi" class="form-control" rows="2" required>{{ $kriteria->deskripsi }}</textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold small text-secondary">
+                                            <i class="bi bi-file-earmark-text text-primary me-1"></i>Dokumen Wajib / Acuan Persyaratan (Opsional)
+                                        </label>
+                                        <input type="text" name="persyaratan_dokumen" class="form-control" value="{{ $kriteria->persyaratan_dokumen }}" placeholder="Contoh: SOP, SK KTT, Buku Catatan...">
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <h6 class="fw-bold text-slate-800 small mb-2"><i class="bi bi-bookmark-star-fill text-warning me-1"></i>Rubrik Pedoman Penilaian</h6>
+                                </div>
+
+                                @php
+                                    $maxValEdit = (int) ceil($kriteria->nilai_maksimal);
+                                    $pedomanArr = $kriteria->pedoman_array ?? [];
+                                @endphp
+                                <div class="row g-3" id="editRubrikContainer_{{ $kriteria->id }}">
+                                    @for($i = 0; $i <= $maxValEdit; $i++)
+                                        @php
+                                            $pctEdit = $maxValEdit > 0 ? round(($i / $maxValEdit) * 100) : 0;
+                                            $colSizeEdit = ($maxValEdit > 4) ? 'col-md-6' : 'col-12';
+                                        @endphp
+                                        <div class="{{ $colSizeEdit }}">
+                                            <label class="form-label fw-semibold small text-dark">Pedoman Nilai {{ $i }} ({{ $pctEdit }}% dari Max {{ (int) $kriteria->nilai_maksimal }})</label>
+                                            <textarea name="pedoman_nilai[{{ $i }}]" class="form-control" rows="2" placeholder="Acuan pemberian Nilai {{ $i }}...">{{ $pedomanArr[(string)$i] ?? ($kriteria->{"pedoman_nilai_$i"} ?? '') }}</textarea>
+                                        </div>
+                                    @endfor
+                                </div>
                             </div>
-                        </div>
-                        <div class="modal-footer border-top">
-                            <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary rounded-3"><i class="bi bi-check-lg me-1"></i>Simpan Perubahan Rubrik</button>
-                        </div>
-                    </form>
+                            <div class="modal-footer border-top">
+                                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Batal</button>
+                                <button type="submit" class="btn btn-primary rounded-3"><i class="bi bi-check-lg me-1"></i>Simpan Perubahan Sub-sub Elemen</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
+        @endif
     @endforeach
 @endforeach
 
 <!-- Edit Sub-Elemen Modals -->
 @foreach($subElemens as $sub)
+    @php
+        $childKriteriasCount = $sub->kriterias->where('kode_kriteria', '!=', $sub->kode_sub)->count();
+    @endphp
     <div class="modal fade" id="editSubModal{{ $sub->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content card-custom border-0">
@@ -429,11 +461,26 @@
                             <label class="form-label fw-semibold small">Nama Sub-Elemen</label>
                             <input type="text" name="nama_sub" class="form-control" value="{{ $sub->nama_sub }}" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold small">Nilai Maksimal <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0" max="1000" name="nilai_maksimal" class="form-control" value="{{ $sub->nilai_maksimal ?? 4.00 }}" required>
-                            <div class="form-text text-muted">Akumulasi total nilai maksimal sub-elemen tidak boleh melebihi Total Nilai Sub-Elemen pada Elemen induk.</div>
-                        </div>
+
+                        @if($childKriteriasCount > 0)
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Nilai Maksimal <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" step="1" min="0" max="1000" name="nilai_maksimal" class="form-control font-monospace bg-light fw-bold text-primary" value="{{ (int) ($sub->nilai_maksimal ?? 0) }}" readonly>
+                                    <span class="input-group-text bg-light text-muted small"><i class="bi bi-lock-fill me-1"></i>Akumulasi Sub-sub</span>
+                                </div>
+                                <div class="form-text text-primary small mt-1">
+                                    <i class="bi bi-info-circle-fill me-1"></i>Sub-Elemen ini memiliki <strong>{{ $childKriteriasCount }} Sub-sub Elemen</strong>. Nilai maksimal dihitung otomatis dari akumulasi seluruh Sub-sub Elemen di bawahnya. Untuk mengubah nilainya, silakan edit Nilai Maksimal pada masing-masing Sub-sub Elemen.
+                                </div>
+                            </div>
+                        @else
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Nilai Maksimal <span class="text-danger">*</span></label>
+                                <input type="number" step="1" min="0" max="1000" name="nilai_maksimal" class="form-control font-monospace fw-bold text-primary" value="{{ (int) ($sub->nilai_maksimal ?? 4) }}" required>
+                                <div class="form-text text-muted">Sub-Elemen ini dinilai langsung (Penilaian Standalone). Nilai maksimal dapat diubah langsung di sini.</div>
+                            </div>
+                        @endif
+
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" name="is_na" id="edit_is_na_sub_{{ $sub->id }}" value="1" {{ $sub->is_na ? 'checked' : '' }}>
                             <label class="form-check-label fw-semibold small text-dark" for="edit_is_na_sub_{{ $sub->id }}">Set N/A (Not Applicable) secara default</label>
@@ -479,7 +526,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Nilai Maksimal <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" min="0" max="1000" name="nilai_maksimal" class="form-control" value="4.00" required>
+                        <input type="number" step="1" min="0" max="1000" name="nilai_maksimal" class="form-control" value="4" required>
                         <div class="form-text text-muted">Akumulasi total nilai maksimal sub-elemen tidak boleh melebihi Total Nilai Sub-Elemen pada Elemen induk.</div>
                     </div>
                 </div>
@@ -518,7 +565,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Nilai Maksimal <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0" max="1000" name="nilai_maksimal" class="form-control" value="4.00" required>
+                            <input type="number" step="1" min="0" max="1000" name="nilai_maksimal" class="form-control" value="4" required>
                             <div class="form-text text-muted">Akumulasi total nilai maksimal sub-elemen tidak boleh melebihi Total Nilai Sub-Elemen pada Elemen induk.</div>
                         </div>
                     </div>
@@ -539,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Helper to generate Rubrik Pedoman Nilai inputs (0..N)
     function generateRubrikInputs(index, maxScore) {
-        const maxScoreInt = Math.max(1, Math.ceil(parseFloat(maxScore) || 4));
+        const maxScoreInt = Math.max(1, parseInt(maxScore, 10) || 4);
         let html = '';
 
         for (let i = 0; i <= maxScoreInt; i++) {
@@ -553,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `
                 <div class="col-md-6">
                     <label class="form-label small fw-semibold ${colorClass} mb-1">
-                        Pedoman Nilai ${i} (${pct}% dari Max ${maxScore})
+                        Pedoman Nilai ${i} (${pct}% dari Max ${maxScoreInt})
                     </label>
                     <textarea name="sub_subs[${index}][pedoman_nilai][${i}]" class="form-control form-control-sm" rows="1" placeholder="Acuan penilaian untuk skor ${i}..."></textarea>
                 </div>
@@ -568,7 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ? `${kodeSub}.${parseInt(existingCount || 0) + index + 1}` 
             : '';
         const uniqueId = 'rubrik_' + Math.random().toString(36).substring(2, 9) + '_' + index;
-        const formattedMax = (parseFloat(maxScore) || 4.00).toFixed(2);
+        const formattedMax = parseInt(maxScore, 10) || 4;
 
         return `
             <div class="card card-custom border p-3 shadow-none bg-white sub-sub-item-card position-relative" data-index="${index}">
@@ -593,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-slate-700 mb-1">Nilai Maksimal <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" min="0" max="1000" name="sub_subs[${index}][nilai_maksimal]" class="form-control font-monospace input-nilai-max" value="${formattedMax}" required>
+                        <input type="number" step="1" min="0" max="1000" name="sub_subs[${index}][nilai_maksimal]" class="form-control font-monospace input-nilai-max" value="${formattedMax}" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold text-secondary mb-1">
@@ -609,13 +656,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed py-2 px-3 small bg-light text-slate-700" type="button" data-bs-toggle="collapse" data-bs-target="#col_${uniqueId}">
                                         <i class="bi bi-bookmark-star text-warning me-2 fs-6"></i>
-                                        <strong>Rubrik Pedoman Penilaian (Opsional - Klik untuk mengisi pedoman nilai 0 s/d ${Math.ceil(parseFloat(maxScore) || 4)})</strong>
+                                        <strong>Rubrik Pedoman Penilaian (Opsional - Klik untuk mengisi pedoman nilai 0 s/d ${formattedMax})</strong>
                                     </button>
                                 </h2>
                                 <div id="col_${uniqueId}" class="accordion-collapse collapse" data-bs-parent="#acc_${uniqueId}">
                                     <div class="accordion-body p-3 bg-white">
                                         <div class="row g-2 rubrik-inputs-box">
-                                            ${generateRubrikInputs(index, maxScore)}
+                                            ${generateRubrikInputs(index, formattedMax)}
                                         </div>
                                     </div>
                                 </div>
@@ -680,8 +727,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const kode = selectedOpt.dataset.kode || '';
         const nama = selectedOpt.dataset.nama || '';
-        const maxScore = parseFloat(selectedOpt.dataset.max) || 4.0;
-        const count = parseInt(selectedOpt.dataset.count) || 0;
+        const maxScore = parseInt(selectedOpt.dataset.max, 10) || 4;
+        const count = parseInt(selectedOpt.dataset.count, 10) || 0;
 
         currentGeneralData = { kode, nama, maxScore, count };
 
@@ -692,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (infoKode) infoKode.textContent = `Sub ${kode}`;
         if (infoNama) infoNama.textContent = nama;
-        if (infoMax) infoMax.textContent = maxScore.toFixed(2);
+        if (infoMax) infoMax.textContent = maxScore;
 
         if (generalInfo) generalInfo.classList.remove('d-none');
         if (generalPlaceholder) generalPlaceholder.classList.add('d-none');
@@ -731,8 +778,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!targetWrapper) return;
 
             const kodeSub = this.dataset.kodeSub || '';
-            const maxScore = parseFloat(this.dataset.maxScore) || 4.0;
-            const existingCount = parseInt(this.dataset.existingCount) || 0;
+            const maxScore = parseInt(this.dataset.maxScore, 10) || 4;
+            const existingCount = parseInt(this.dataset.existingCount, 10) || 0;
 
             appendCardToWrapper(targetWrapper, kodeSub, maxScore, existingCount);
         });
@@ -744,8 +791,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const wrapper = this.querySelector('.sub-sub-items-container');
             if (wrapper && wrapper.querySelectorAll('.sub-sub-item-card').length === 0) {
                 const kodeSub = wrapper.dataset.kodeSub || '';
-                const maxScore = parseFloat(wrapper.dataset.maxScore) || 4.0;
-                const existingCount = parseInt(wrapper.dataset.existingCount) || 0;
+                const maxScore = parseInt(wrapper.dataset.maxScore, 10) || 4;
+                const existingCount = parseInt(wrapper.dataset.existingCount, 10) || 0;
                 appendCardToWrapper(wrapper, kodeSub, maxScore, existingCount);
             }
         });
@@ -770,6 +817,55 @@ document.addEventListener('DOMContentLoaded', function() {
 
         card.remove();
         reindexContainer(container);
+    });
+
+    // 4. Dynamic Rubric Re-renderer on Nilai Maksimal change in Edit Sub-sub Modal
+    document.querySelectorAll('.edit-kriteria-nilai-max').forEach(input => {
+        input.addEventListener('input', function() {
+            const targetContainerId = this.dataset.targetContainer;
+            const container = document.getElementById(targetContainerId);
+            if (!container) return;
+
+            const maxScoreInt = Math.max(0, parseInt(this.value, 10) || 0);
+
+            // Read current values
+            const currentValues = {};
+            container.querySelectorAll('textarea[name^="pedoman_nilai["]').forEach(textarea => {
+                const match = textarea.getAttribute('name').match(/pedoman_nilai\[(\d+)\]/);
+                if (match) {
+                    currentValues[match[1]] = textarea.value;
+                }
+            });
+
+            let html = '';
+            for (let i = 0; i <= maxScoreInt; i++) {
+                const pct = maxScoreInt > 0 ? Math.round((i / maxScoreInt) * 100) : 0;
+                let colorClass = 'text-danger';
+                if (pct >= 100) colorClass = 'text-success';
+                else if (pct >= 75) colorClass = 'text-primary';
+                else if (pct >= 50) colorClass = 'text-info';
+                else if (pct >= 25) colorClass = 'text-warning';
+
+                const colSize = (maxScoreInt > 4) ? 'col-md-6' : 'col-12';
+                const val = currentValues[i] || '';
+
+                html += `
+                    <div class="${colSize}">
+                        <label class="form-label fw-semibold small text-dark ${colorClass}">
+                            Pedoman Nilai ${i} (${pct}% dari Max ${maxScoreInt})
+                        </label>
+                        <textarea name="pedoman_nilai[${i}]" class="form-control" rows="2" placeholder="Acuan pemberian Nilai ${i}...">${val}</textarea>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+            const kriteriaId = this.dataset.kriteriaId;
+            const maxBadge = document.getElementById('maxBadge_' + kriteriaId);
+            if (maxBadge) {
+                maxBadge.textContent = 'Nilai Max: ' + maxScoreInt;
+            }
+        });
     });
 });
 </script>

@@ -94,7 +94,7 @@
                                             $isOver = $terpakai > $maxSub;
                                         @endphp
                                         <span class="badge {{ $isOver ? 'bg-danger' : 'bg-light text-dark' }} border font-monospace fs-6 py-2 px-3">
-                                            {{ number_format($terpakai, 2) }} / {{ number_format($maxSub, 2) }}
+                                            {{ (int) $terpakai }} / {{ (int) $maxSub }}
                                         </span>
                                     @else
                                         <span class="badge bg-light text-muted border font-monospace fs-6 py-2 px-3">
@@ -115,10 +115,10 @@
                                             <i class="bi bi-pencil-square me-1"></i> Edit
                                         </button>
 
-                                        <form action="{{ route('admin.elemens.destroy', $elemen->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Nonaktifkan elemen ini?')">
+                                        <form action="{{ route('admin.elemens.destroy', $elemen->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus elemen ini? Seluruh sub-elemen dan kriteria di dalamnya akan ikut terhapus.')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-2" title="Soft Delete">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-2" title="Hapus">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -127,12 +127,44 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">Belum ada data elemen aktif.</td>
+                                <td colspan="6" class="text-center py-4 text-muted">Belum ada data elemen.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+            @if(isset($treeElemens) && $treeElemens->count() > 0)
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="fw-bold text-slate-800 mb-2"><i class="bi bi-diagram-3-fill text-info me-2"></i>Ringkasan Struktur Elemen & Sub-Elemen SMKP</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Kode</th>
+                                    <th>Nama Elemen / Sub-Elemen</th>
+                                    <th class="text-center" style="width: 120px;">Bobot / Nilai Max</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($treeElemens as $tElemen)
+                                    <tr class="table-primary fw-bold">
+                                        <td>{{ $tElemen->kode_elemen }}</td>
+                                        <td>{{ $tElemen->nama_elemen }}</td>
+                                        <td class="text-center text-muted">{{ number_format($tElemen->bobot, 2) }}%</td>
+                                    </tr>
+                                    @foreach($tElemen->subElemens as $tSub)
+                                        <tr>
+                                            <td class="ps-3 font-monospace text-muted">{{ $tSub->kode_sub }}</td>
+                                            <td class="ps-3">{{ $tSub->nama_sub }}</td>
+                                            <td class="text-center font-monospace">{{ (int) ($tSub->nilai_maksimal ?? 0) }}</td>
+                                        </tr>
+                                    @endforeach
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -210,7 +242,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Total Nilai Sub-Elemen (Batas Maksimal Sub-Elemen)</label>
-                            <input type="number" step="0.01" min="0" name="total_nilai_sub_elemen" class="form-control" value="{{ $elemen->total_nilai_sub_elemen }}" placeholder="Contoh: 100.00">
+                            <input type="number" step="1" min="0" name="total_nilai_sub_elemen" class="form-control" value="{{ $elemen->total_nilai_sub_elemen ? (int) $elemen->total_nilai_sub_elemen : '' }}" placeholder="Contoh: 100">
                             <div class="form-text text-muted">Batas maksimal total jumlah nilai dari seluruh Sub-Elemen turunan. Kosongkan/0 jika tidak dibatasi.</div>
                         </div>
                     </div>
@@ -249,7 +281,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Total Nilai Sub-Elemen (Batas Maksimal Sub-Elemen)</label>
-                        <input type="number" step="0.01" min="0" name="total_nilai_sub_elemen" class="form-control" placeholder="Contoh: 100.00">
+                        <input type="number" step="1" min="0" name="total_nilai_sub_elemen" class="form-control" placeholder="Contoh: 100">
                         <div class="form-text text-muted">Batas maksimal total jumlah nilai dari seluruh Sub-Elemen turunan. Kosongkan/0 jika tidak dibatasi.</div>
                     </div>
                 </div>

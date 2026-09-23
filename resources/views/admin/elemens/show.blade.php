@@ -35,12 +35,20 @@
 @else
     @foreach($elemen->subElemens as $sub)
         <div class="card card-custom p-4 mb-4">
-            <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
+            <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3 flex-wrap gap-2">
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-info text-dark font-monospace fs-6 px-3 py-2">SUB {{ $sub->kode_sub }}</span>
                     <h5 class="fw-bold text-slate-800 mb-0">{{ $sub->nama_sub }}</h5>
                 </div>
-                <span class="badge bg-secondary rounded-pill">{{ $sub->kriterias->count() }} Kriteria</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-primary border font-monospace px-3 py-2">
+                        Nilai Max: {{ (int) ($sub->nilai_maksimal ?? 0) }}
+                    </span>
+                    <span class="badge bg-secondary rounded-pill px-3 py-2">{{ $sub->kriterias->count() }} Kriteria</span>
+                    <a href="{{ route('admin.sub-elemens.index') }}" class="btn btn-sm btn-outline-primary rounded-2 px-3 py-1" title="Kelola / Ubah Nilai Sub-Elemen ini">
+                        <i class="bi bi-pencil-square me-1"></i> Kelola
+                    </a>
+                </div>
             </div>
 
             @if($sub->kriterias->isEmpty())
@@ -57,11 +65,16 @@
                                         <span class="badge bg-secondary px-2 py-1">{{ $kriteria->kode_kriteria }}</span>
                                         <div>
                                             <p class="mb-1 text-slate-800 fw-semibold">{{ $kriteria->deskripsi }}</p>
+                                            @if($kriteria->persyaratan_dokumen)
+                                                <small class="text-muted"><i class="bi bi-file-earmark-text me-1"></i>{{ $kriteria->persyaratan_dokumen }}</small>
+                                            @endif
                                         </div>
                                     </div>
-                                    <span class="badge bg-white text-success border font-monospace px-3 py-2 text-nowrap">
-                                        Max: {{ (int) $kriteria->nilai_maksimal }}
-                                    </span>
+                                    <div class="flex-shrink-0">
+                                        <span class="badge bg-white text-success border font-monospace px-3 py-2 text-nowrap">
+                                            Nilai Max: {{ (int) $kriteria->nilai_maksimal }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
