@@ -103,6 +103,7 @@
                                                 data-nilai-maksimal="{{ (int) $kriteria->nilai_maksimal }}">
                                                 <td class="fw-bold align-top pt-3">
                                                     <span class="badge bg-dark font-monospace fs-6 py-1 px-2">{{ $kriteria->kode_kriteria }}</span>
+                                                    @include('partials._relasi_referensi_icon', ['kriteria' => $kriteria])
                                                 </td>
                                                 <td class="align-top pt-3">
                                                     <div class="fw-semibold text-slate-800 mb-2">{{ $kriteria->deskripsi }}</div>
@@ -226,6 +227,7 @@
                                                     </div>
                                                 </td>
                                             </tr>
+                                            @include('partials._relasi_kunci_banner', ['kriteria' => $kriteria])
                                         @endforeach
                                     @endforeach
                                 </tbody>
@@ -571,6 +573,26 @@
         // Initialize all tooltips
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
+
+        // Auto-scroll ke atas elemen saat dropdown/accordion dibuka
+        const matrixAccordion = document.getElementById('matrixAccordion');
+        if (matrixAccordion) {
+            matrixAccordion.addEventListener('shown.bs.collapse', function (e) {
+                const accordionItem = e.target.closest('.accordion-item');
+                if (accordionItem) {
+                    const headerOffset = 70; // Jarak aman untuk navbar atas
+                    const elementPosition = accordionItem.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        }
     });
 </script>
+
+@include('partials._relasi_js_engine')
 @endpush

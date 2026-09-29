@@ -12,6 +12,7 @@ class Pica extends Model
     protected $fillable = [
         'audit_detail_id',
         'deskripsi_temuan',
+        'deskripsi_ketidaksesuaian',
         'kategori_temuan',
         'kategori_ditetapkan_manual',
         'justifikasi_kategori',

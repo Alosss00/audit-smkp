@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * CATATAN INTEGRASI:
+ * Tambahkan dua method relasi di bawah ini ke dalam file
+ * app/Models/Kriteria.php yang sudah ada.
+ * HAPUS kolom 'dependency_id' dan 'dependency_note' dari $fillable dan $casts.
+ * HAPUS method dependency() dan dependents() yang lama.
+ */
 class Kriteria extends Model
 {
     use HasFactory, SoftDeletes;
@@ -16,6 +23,8 @@ class Kriteria extends Model
         'kode_kriteria',
         'deskripsi',
         'nilai_maksimal',
+        // 'dependency_id'   <-- HAPUS ini
+        // 'dependency_note' <-- HAPUS ini
         'persyaratan_dokumen',
         'pedoman_nilai_0',
         'pedoman_nilai_1',
@@ -28,15 +37,13 @@ class Kriteria extends Model
 
     protected $casts = [
         'nilai_maksimal'     => 'float',
+        // 'dependency_id'  => 'integer',  <-- HAPUS ini
         'is_na'              => 'boolean',
         'pedoman_nilai_json' => 'array',
     ];
 
     protected $appends = ['pedoman_array'];
 
-    /**
-     * Get unified rubric guidelines array (keyed by score 0..N).
-     */
     public function getPedomanArrayAttribute(): array
     {
         if (!empty($this->pedoman_nilai_json) && is_array($this->pedoman_nilai_json)) {
@@ -52,11 +59,15 @@ class Kriteria extends Model
         ];
     }
 
-    // -- Relasi Many-to-Many Advisory (pengganti dependency_id) ---------------
+    // -- HAPUS dua method lama ini ---------------------------------------------
+    // public function dependency() { ... }
+    // public function dependents() { ... }
+
+    // -- TAMBAHKAN dua method baru ini sebagai gantinya ------------------------
 
     /**
      * Semua relasi yang BERASAL dari kriteria ini (outgoing).
-     * Mencakup kedua jenis: 'kunci' dan 'referensi'.
+     * Ini mencakup kedua jenis: 'kunci' dan 'referensi'.
      */
     public function relasiKeluar(): HasMany
     {
@@ -83,35 +94,23 @@ class Kriteria extends Model
             ->where('jenis_relasi', 'referensi');
     }
 
-    // -- Relasi lainnya (tidak berubah) ----------------------------------------
+    // -- Relasi lainnya yang TIDAK berubah -------------------------------------
 
-    /**
-     * Relationship to SubElemen.
-     */
     public function subElemen()
     {
         return $this->belongsTo(SubElemen::class, 'sub_elemen_id');
     }
 
-    /**
-     * Relationship to AuditDetail.
-     */
     public function auditDetails()
     {
         return $this->hasMany(AuditDetail::class, 'kriteria_id');
     }
 
-    /**
-     * Gating rules where this Kriteria acts as upstream/hulu.
-     */
     public function gatingRulesAsHulu()
     {
         return $this->hasMany(KriteriaGatingRule::class, 'kriteria_hulu_id');
     }
 
-    /**
-     * Gating rules where this Kriteria acts as downstream/hilir.
-     */
     public function gatingRulesAsHilir()
     {
         return $this->hasMany(KriteriaGatingRule::class, 'kriteria_hilir_id');

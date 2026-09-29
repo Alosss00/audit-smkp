@@ -48,6 +48,12 @@
             <div class="p-3 bg-light rounded-3 border mb-4">
                 <h6 class="fw-bold text-slate-800 mb-1"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Deskripsi Temuan Audit (Assessor / Lead Auditor):</h6>
                 <p class="text-slate-800 mb-0 small">{{ $pica->deskripsi_temuan }}</p>
+                
+                @if($pica->deskripsi_ketidaksesuaian)
+                    <h6 class="fw-bold text-slate-800 mb-1 mt-3"><i class="bi bi-x-circle-fill text-danger me-2"></i>Deskripsi Ketidaksesuaian:</h6>
+                    <p class="text-slate-800 mb-0 small">{{ $pica->deskripsi_ketidaksesuaian }}</p>
+                @endif
+
                 @if($pica->justifikasi_kategori)
                     <div class="mt-2 text-muted small">
                         <strong>Justifikasi Kategori:</strong> {{ $pica->justifikasi_kategori }}

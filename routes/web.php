@@ -62,6 +62,9 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::delete('/audit-sesi/{id}/force-delete', [AuditSesiAdminController::class, 'forceDelete'])->name('audit-sesi.force-delete');
         Route::resource('audit-sesi', AuditSesiAdminController::class);
 
+        // Hubungan Antar Elemen SMKP — Advisory Relasi API
+        Route::get('/api/kriteria/{kode}/relasi', [\App\Http\Controllers\Api\KriteriaRelasiController::class, 'show'])->name('api.kriteria.relasi');
+
         // Master Data CRUD & Restore Points & User Management (Administrator Only)
         Route::middleware('role:admin')->group(function () {
             Route::post('/elemens/{id}/restore', [ElemenController::class, 'restore'])->name('elemens.restore');

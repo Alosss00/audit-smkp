@@ -162,9 +162,13 @@ class AuditSesiAdminController extends Controller
         }
 
         $elemens = Elemen::with(['subElemens.kriterias' => function ($query) use ($sesi) {
-            $query->with(['auditDetails' => function ($q) use ($sesi) {
-                $q->where('audit_sesi_id', $sesi->id);
-            }]);
+            $query->with([
+                'auditDetails' => function ($q) use ($sesi) {
+                    $q->where('audit_sesi_id', $sesi->id);
+                },
+                'relasiKunci',     // Relasi kunci: trigger banner peringatan konsistensi
+                'relasiReferensi', // Relasi referensi: popover pasif elemen terkait
+            ]);
         }])->orderBy('kode_elemen')->get();
 
         $rekap = $sesi->getRekapPerElemen();

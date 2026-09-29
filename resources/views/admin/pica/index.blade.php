@@ -425,16 +425,17 @@
                                                                                 <small class="text-muted d-block">Persyaratan Dokumen / Deskripsi Kriteria:</small>
                                                                                 <div class="small text-slate-700 fw-semibold">{{ $kriteria ? $kriteria->deskripsi : '-' }}</div>
                                                                             </div>
-                                                                            <div class="col-12 mt-2">
-                                                                                <small class="text-muted d-block">Deskripsi Temuan Audit:</small>
-                                                                                <div class="fw-bold text-danger p-2 bg-white rounded border border-danger border-opacity-25">
-                                                                                    {{ $pica->deskripsi_temuan }}
+                                                                                <div class="col-12 mt-2">
+                                                                                    <small class="text-muted d-block">Deskripsi Temuan Audit:</small>
+                                                                                    <div class="fw-bold text-danger p-2 bg-white rounded border border-danger border-opacity-25">
+                                                                                        {{ $pica->deskripsi_temuan }}
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
 
-                                                                    <div class="row g-3">
+                                                                        <div class="row g-3">
+
                                                                         <!-- Penetapan Kategori Temuan & Justifikasi -->
                                                                         <div class="col-md-6">
                                                                             <label class="form-label fw-semibold small text-secondary">Kategori Temuan Audit <span class="text-danger">*</span></label>
@@ -452,6 +453,12 @@
                                                                             <label class="form-label fw-semibold small text-secondary">Justifikasi Penetapan Kategori <span class="text-danger" id="justifikasiReqLabel{{ $pica->id }}">*</span></label>
                                                                             <textarea name="justifikasi_kategori" rows="2" class="form-control bg-light" 
                                                                                 placeholder="Alasan penetapan kategori manual (wajib diisi untuk Kritikal)...">{{ old('justifikasi_kategori', $pica->justifikasi_kategori) }}</textarea>
+                                                                        </div>
+
+                                                                        <div class="col-12">
+                                                                            <label class="form-label fw-semibold small text-secondary">Deskripsi Ketidaksesuaian <span class="text-danger">*</span></label>
+                                                                            <textarea name="deskripsi_ketidaksesuaian" rows="2" class="form-control bg-light" 
+                                                                                placeholder="Isi deskripsi ketidaksesuaian... (wajib diisi oleh user)">{{ old('deskripsi_ketidaksesuaian', $pica->deskripsi_ketidaksesuaian) }}</textarea>
                                                                         </div>
 
                                                                         <div class="col-12">
@@ -547,6 +554,7 @@
                                                         </div>
 
                                                         <div class="row g-3">
+
                                                             <div class="col-md-6">
                                                                 <label class="form-label fw-semibold small text-secondary">Kategori Temuan Audit <span class="text-danger">*</span></label>
                                                                 <select name="kategori_temuan" class="form-select bg-light fw-bold" id="kategoriSelect{{ $pica->id }}" onchange="toggleJustifikasi({{ $pica->id }})">
@@ -563,6 +571,12 @@
                                                                 <label class="form-label fw-semibold small text-secondary">Justifikasi Penetapan Kategori <span class="text-danger" id="justifikasiReqLabel{{ $pica->id }}">*</span></label>
                                                                 <textarea name="justifikasi_kategori" rows="2" class="form-control bg-light" 
                                                                     placeholder="Alasan penetapan kategori manual (wajib diisi untuk Kritikal)...">{{ old('justifikasi_kategori', $pica->justifikasi_kategori) }}</textarea>
+                                                            </div>
+
+                                                            <div class="col-12">
+                                                                <label class="form-label fw-semibold small text-secondary">Deskripsi Ketidaksesuaian <span class="text-danger">*</span></label>
+                                                                <textarea name="deskripsi_ketidaksesuaian" rows="2" class="form-control bg-light" 
+                                                                    placeholder="Isi deskripsi ketidaksesuaian... (wajib diisi oleh user)">{{ old('deskripsi_ketidaksesuaian', $pica->deskripsi_ketidaksesuaian) }}</textarea>
                                                             </div>
 
                                                             <div class="col-12">

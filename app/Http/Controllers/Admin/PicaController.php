@@ -107,6 +107,7 @@ class PicaController extends Controller
         $originalData = $pica->getOriginal();
 
         $request->validate([
+            'deskripsi_ketidaksesuaian'  => 'nullable|string',
             'kategori_temuan'            => 'nullable|in:kritikal,mayor,minor',
             'justifikasi_kategori'       => 'required_if:kategori_temuan,kritikal|nullable|string',
             'akar_masalah'               => 'nullable|string',
@@ -152,6 +153,7 @@ class PicaController extends Controller
         }
 
         $pica->update([
+            'deskripsi_ketidaksesuaian'  => $request->deskripsi_ketidaksesuaian,
             'kategori_temuan'            => $kategoriTemuan,
             'kategori_ditetapkan_manual' => $isManual,
             'justifikasi_kategori'       => $justifikasi,
