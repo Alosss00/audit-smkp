@@ -144,7 +144,7 @@
                         $subElemenCount = $groupedBySubElemen->count();
                         $totalPica = $detailsWithPica->count();
                         
-                        // Perhitungan Status Temuan per Sub-Elemen (Jika ada 1 kriteria Open, Sub-Elemen tercatat Open)
+                        // Perhitungan Status Temuan per Sub-Elemen (Jika ada 1 kriteria In Progress, Sub-Elemen tercatat In Progress)
                         $subOpenCount = 0;
                         $subProgressCount = 0;
                         $subClosedCount = 0;
@@ -153,10 +153,10 @@
                             $hasOpen = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'open');
                             $hasProgress = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'in_progress');
                             
-                            if ($hasOpen) {
-                                $subOpenCount++;
-                            } elseif ($hasProgress) {
+                            if ($hasProgress) {
                                 $subProgressCount++;
+                            } elseif ($hasOpen) {
+                                $subOpenCount++;
                             } else {
                                 $subClosedCount++;
                             }
@@ -268,7 +268,7 @@
                     <div class="alert alert-primary bg-primary bg-opacity-10 border-0 rounded-3 py-2 px-3 mb-3 d-flex align-items-center gap-2 small">
                         <i class="bi bi-info-circle-fill text-primary fs-5"></i>
                         <div>
-                            Daftar temuan ditampilkan per <strong>Sub-Elemen</strong> (maksimal 51 temuan). Jika salah satu temuan sub-sub kriteria berstatus <em>Open</em>, maka sub-elemen tersebut tercatat <strong>Open</strong> sampai seluruh tindakannya selesai diverifikasi (<em>Closed</em>).
+                            Daftar temuan ditampilkan per <strong>Sub-Elemen</strong> (maksimal 51 temuan). Jika salah satu temuan sub-sub kriteria berstatus <em>In Progress</em>, maka sub-elemen tersebut tercatat <strong>In Progress</strong> meskipun masih ada yang <em>Open</em>. Status akan <strong>Closed</strong> hanya jika seluruh tindakannya telah diverifikasi selesai.
                         </div>
                     </div>
 
@@ -293,10 +293,10 @@
                                 $hasMayor = $subDetails->contains(fn($d) => $d->pica && $d->pica->kategori_temuan === 'mayor');
                                 $subKategori = $hasKritikal ? 'kritikal' : ($hasMayor ? 'mayor' : 'minor');
                                 
-                                // Status Sub-Elemen: Jika ada 1 yang open => Open; Jika tidak ada open tapi ada in_progress => In Progress; Lainnya => Closed
+                                // Status Sub-Elemen: Jika ada 1 yang in_progress => In Progress; Jika tidak ada in_progress tapi ada open => Open; Lainnya => Closed
                                 $hasOpen = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'open');
                                 $hasProgress = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'in_progress');
-                                $subStatus = $hasOpen ? 'open' : ($hasProgress ? 'in_progress' : 'closed');
+                                $subStatus = $hasProgress ? 'in_progress' : ($hasOpen ? 'open' : 'closed');
                                 
                                 $kriClosedCount = $subDetails->filter(fn($d) => $d->pica && $d->pica->status === 'closed')->count();
                                 $kriTotalCount = $subDetails->count();

@@ -134,10 +134,10 @@
                             $hasOpen = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'open');
                             $hasProgress = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'in_progress');
                             
-                            if ($hasOpen) {
-                                $subOpenCount++;
-                            } elseif ($hasProgress) {
+                            if ($hasProgress) {
                                 $subProgressCount++;
+                            } elseif ($hasOpen) {
+                                $subOpenCount++;
                             } else {
                                 $subClosedCount++;
                             }
@@ -262,10 +262,10 @@
                                 $hasMayor = $subDetails->contains(fn($d) => $d->pica && $d->pica->kategori_temuan === 'mayor');
                                 $subKategori = $hasKritikal ? 'kritikal' : ($hasMayor ? 'mayor' : 'minor');
                                 
-                                // Status Sub-Elemen: Jika ada 1 yang open => Open; Jika tidak ada open tapi ada in_progress => In Progress; Lainnya => Closed
+                                // Status Sub-Elemen: Jika ada 1 yang in_progress => In Progress; Jika tidak ada in_progress tapi ada open => Open; Lainnya => Closed
                                 $hasOpen = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'open');
                                 $hasProgress = $subDetails->contains(fn($d) => $d->pica && $d->pica->status === 'in_progress');
-                                $subStatus = $hasOpen ? 'open' : ($hasProgress ? 'in_progress' : 'closed');
+                                $subStatus = $hasProgress ? 'in_progress' : ($hasOpen ? 'open' : 'closed');
                                 
                                 $kriClosedCount = $subDetails->filter(fn($d) => $d->pica && $d->pica->status === 'closed')->count();
                                 $kriTotalCount = $subDetails->count();
