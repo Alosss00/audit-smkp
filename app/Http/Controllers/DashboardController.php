@@ -68,13 +68,15 @@ class DashboardController extends Controller
         $findingCounts = [];
 
         // 1. Average Compliance Percentage per Elemen across all audit sessions
-        $allSessions = AuditSesi::with(['auditDetails.kriteria.subElemen'])->get();
+        $allSessions = AuditSesi::with(['auditDetails.kriteria.subElemen', 'perusahaan'])->get();
         $totalSessionsCount = $allSessions->count();
 
         $elementLabels = [];
         $elementScores = [];
         $elementColors = [];
         $elementFullNames = [];
+        $msmScores = [];
+        $ttnScores = [];
 
         foreach ($elemens as $el) {
             $elementLabels[] = 'Elemen ' . $el->kode_elemen;
@@ -83,36 +85,57 @@ class DashboardController extends Controller
             if ($totalSessionsCount === 0) {
                 $elementScores[] = 0;
                 $elementColors[] = 'rgba(148, 163, 184, 0.75)';
+                $msmScores[] = 0;
+                $ttnScores[] = 0;
                 continue;
             }
 
-            $sessionPercentages = [];
+            $totalAktual = 0;
+            $totalMaks = 0;
+            $msmAktual = 0;
+            $msmMaks = 0;
+            $ttnAktual = 0;
+            $ttnMaks = 0;
+
             foreach ($allSessions as $session) {
+                $companyName = $session->perusahaan ? strtolower($session->perusahaan->nama_perusahaan) : strtolower($session->area_audit);
+                $isMsm = str_contains($companyName, 'meares soputan');
+                $isTtn = str_contains($companyName, 'tambang tondano');
+
                 $details = $session->auditDetails->filter(function ($d) use ($el) {
                     return $d->kriteria
                         && $d->kriteria->subElemen
                         && $d->kriteria->subElemen->elemen_id == $el->id;
                 });
 
-                $elAktual = 0;
-                $elMaks = 0;
+                $sessionAktual = 0;
+                $sessionMaks = 0;
                 foreach ($details as $d) {
                     if (!$d->is_na) {
-                        $elAktual += (float) $d->nilai;
-                        $elMaks += (float) ($d->kriteria->nilai_maksimal ?? 4);
+                        $sessionAktual += (float) $d->nilai;
+                        $sessionMaks += (float) ($d->kriteria->nilai_maksimal ?? 4);
                     }
                 }
 
-                if ($elMaks > 0) {
-                    $sessionPercentages[] = ($elAktual / $elMaks) * 100;
+                if ($sessionMaks > 0) {
+                    $totalAktual += $sessionAktual;
+                    $totalMaks += $sessionMaks;
+                    if ($isMsm) {
+                        $msmAktual += $sessionAktual;
+                        $msmMaks += $sessionMaks;
+                    }
+                    if ($isTtn) {
+                        $ttnAktual += $sessionAktual;
+                        $ttnMaks += $sessionMaks;
+                    }
                 }
             }
 
-            $avgScore = count($sessionPercentages) > 0
-                ? round(array_sum($sessionPercentages) / count($sessionPercentages), 2)
-                : 0;
+            $avgScore = $totalMaks > 0 ? round(($totalAktual / $totalMaks) * 100, 2) : 0;
 
             $elementScores[] = $avgScore;
+            $msmScores[] = $msmMaks > 0 ? round(($msmAktual / $msmMaks) * 100, 2) : 0;
+            $ttnScores[] = $ttnMaks > 0 ? round(($ttnAktual / $ttnMaks) * 100, 2) : 0;
 
             if ($avgScore >= 80) {
                 $elementColors[] = 'rgba(34, 197, 94, 0.75)'; // Green (>= 80%)
@@ -137,16 +160,12 @@ class DashboardController extends Controller
                 $q->where('elemen_id', $el->id);
             })->where('is_na', false)->count();
 
-            // Total criteria with findings in this element
             $count = AuditDetail::whereHas('kriteria.subElemen', function ($q) use ($el) {
                 $q->where('elemen_id', $el->id);
             })
-            ->where(function ($q) {
-                $q->whereNotNull('catatan')->where('catatan', '!=', '')
-                  ->orWhere(function ($q2) {
-                      $q2->where('is_na', false)->whereRaw('nilai < (SELECT nilai_maksimal FROM kriterias WHERE kriterias.id = audit_details.kriteria_id)');
-                  });
-            })->count();
+            ->where('is_na', false)
+            ->whereRaw('nilai < (SELECT nilai_maksimal FROM kriterias WHERE kriterias.id = audit_details.kriteria_id)')
+            ->count();
 
             $pct = $totalAssessedInElement > 0 ? round(($count / $totalAssessedInElement) * 100, 1) : 0;
 
@@ -168,7 +187,7 @@ class DashboardController extends Controller
             return $b['percentage'] <=> $a['percentage'] ?: $b['total_findings'] <=> $a['total_findings'];
         });
 
-        $topFindings = array_slice($findingsPerElemen, 0, 5);
+        $topFindings = array_slice($findingsPerElemen, 0, 7);
 
         return view('admin.dashboard', compact(
             'stats',
@@ -181,7 +200,9 @@ class DashboardController extends Controller
             'findingTotalsPerElemen',
             'findingPercentages',
             'totalAllFindings',
-            'topFindings'
+            'topFindings',
+            'msmScores',
+            'ttnScores'
         ));
     }
 
@@ -295,12 +316,9 @@ class DashboardController extends Controller
             ->whereHas('kriteria.subElemen', function ($q) use ($el) {
                 $q->where('elemen_id', $el->id);
             })
-            ->where(function ($q) {
-                $q->whereNotNull('catatan')->where('catatan', '!=', '')
-                  ->orWhere(function ($q2) {
-                      $q2->where('is_na', false)->whereRaw('nilai < (SELECT nilai_maksimal FROM kriterias WHERE kriterias.id = audit_details.kriteria_id)');
-                  });
-            })->count();
+            ->where('is_na', false)
+            ->whereRaw('nilai < (SELECT nilai_maksimal FROM kriterias WHERE kriterias.id = audit_details.kriteria_id)')
+            ->count();
 
             $pct = $totalAssessedInElement > 0 ? round(($count / $totalAssessedInElement) * 100, 1) : 0;
 
@@ -322,7 +340,7 @@ class DashboardController extends Controller
             return $b['percentage'] <=> $a['percentage'] ?: $b['total_findings'] <=> $a['total_findings'];
         });
 
-        $topFindings = array_slice($findingsPerElemen, 0, 5);
+        $topFindings = array_slice($findingsPerElemen, 0, 7);
 
         return view('auditor.dashboard', compact(
             'stats',

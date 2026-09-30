@@ -89,7 +89,7 @@
         <div class="card card-custom p-4 h-100">
             <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Pencapaian Nilai Audit per Elemen</h5>
             <p class="text-muted small mb-3">Grafik rata-rata persentase pencapaian nilai per elemen SMKP dari seluruh sesi audit yang dijalankan.</p>
-            <div style="height: 260px;">
+            <div style="height: 380px;">
                 <canvas id="elementBarChart"></canvas>
             </div>
         </div>
@@ -100,21 +100,30 @@
         <div class="card card-custom p-4 h-100">
             <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-pie-chart-fill me-2 text-info"></i>Status Sesi Audit</h5>
             <p class="text-muted small mb-3">Distribusi status sesi audit internal yang terdaftar.</p>
-            <div style="height: 230px; position: relative;">
+            <div style="height: 350px; position: relative;">
                 <canvas id="statusDoughnutChart"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Visual Chart Analytics Section 1.5: Radar Chart -->
-<div class="row mb-4">
-    <div class="col-12">
+<!-- Visual Chart Analytics Section 1.5: Radar Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
         <div class="card card-custom p-4 h-100 border-start border-4 border-success">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-success"></i>Peta Radar Kesesuaian SMKP</h5>
+            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-success"></i>PT Meares Soputan Mining (MSM)</h5>
             <p class="text-muted small mb-3">Grafik visualisasi persentase rata-rata pencapaian tiap elemen SMKP.</p>
-            <div style="height: 550px; display: flex; justify-content: center;">
-                <canvas id="elementRadarChart" style="max-width: 800px;"></canvas>
+            <div style="height: 600px; display: flex; justify-content: center;">
+                <canvas id="msmRadarChart" style="max-width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card card-custom p-4 h-100 border-start border-4 border-info">
+            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-info"></i>PT Tambang Tondano Nusajaya (TTN)</h5>
+            <p class="text-muted small mb-3">Grafik visualisasi persentase rata-rata pencapaian tiap elemen SMKP.</p>
+            <div style="height: 600px; display: flex; justify-content: center;">
+                <canvas id="ttnRadarChart" style="max-width: 100%;"></canvas>
             </div>
         </div>
     </div>
@@ -142,10 +151,10 @@
         </div>
     </div>
 
-    <!-- Top 5 Most Frequent Findings List -->
+    <!-- Top 7 Most Frequent Findings List -->
     <div class="col-lg-5">
         <div class="card card-custom p-4 h-100">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-trophy-fill me-2 text-warning"></i>Top 5 Elemen Paling Sering Ditemui Temuan</h5>
+            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-trophy-fill me-2 text-warning"></i>Top 7 Elemen Paling Sering Ditemui Temuan</h5>
             <p class="text-muted small mb-3">Peringkat elemen SMKP yang memerlukan perhatian dan perbaikan khusus.</p>
 
             <div class="list-group list-group-flush border-0">
@@ -260,12 +269,12 @@
     <div class="col-md-6 col-lg-4">
         <div class="card card-custom p-4 h-100">
             <div class="d-flex align-items-center justify-content-between mb-3">
-                <h5 class="fw-bold mb-0">Otoritas & Oversight PICA</h5>
+                <h5 class="fw-bold mb-0">Tindak Lanjut Temuan (PICA)</h5>
                 <span class="badge bg-danger rounded-pill">{{ $stats['open_pica'] + $stats['in_progress_pica'] }} Aktif</span>
             </div>
             <p class="text-muted small">Verifikasi rencana koreksi/pencegahan ketidaksesuaian dan kelola penutupan temuan PICA.</p>
             <a href="{{ route('admin.pica.index') }}" class="btn btn-outline-danger btn-sm rounded-3 mt-auto">
-                <i class="bi bi-tools me-1"></i> Buka Oversight PICA
+                <i class="bi bi-tools me-1"></i> Buka Tindak Lanjut PICA
             </a>
         </div>
     </div>
@@ -279,10 +288,40 @@
         // 1. Bar Chart Average Compliance per Elemen
         const ctxBar = document.getElementById('elementBarChart').getContext('2d');
         const elementFullNames = {!! json_encode($elementFullNames) !!};
+        const barLabels = elementFullNames.map(name => {
+            const parts = name.split(': ');
+            return [parts[0], parts[1] || ''];
+        });
+
+        const barTextPlugin = {
+            id: 'barTextPlugin',
+            afterDatasetsDraw(chart, args, pluginOptions) {
+                const { ctx, data } = chart;
+                chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                    const value = data.datasets[0].data[index];
+                    ctx.save();
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    let yPos = bar.y + 15;
+                    ctx.fillStyle = '#ffffff'; 
+                    
+                    if (bar.height < 25) {
+                        yPos = bar.y - 12;
+                        ctx.fillStyle = '#1e293b';
+                    }
+                    
+                    ctx.fillText(value + '%', bar.x, yPos);
+                    ctx.restore();
+                });
+            }
+        };
+
         new Chart(ctxBar, {
             type: 'bar',
             data: {
-                labels: {!! json_encode($elementLabels) !!},
+                labels: barLabels,
                 datasets: [{
                     label: 'Rata-Rata Pencapaian (%)',
                     data: {!! json_encode($elementScores) !!},
@@ -320,21 +359,84 @@
                         }
                     }
                 }
-            }
+            },
+            plugins: [barTextPlugin]
         });
 
-        // 1.5 Radar Chart
-        const ctxRadar = document.getElementById('elementRadarChart').getContext('2d');
-        const elementNames = {!! json_encode(array_map(function($name) { return explode(': ', $name)[1] ?? $name; }, $elementFullNames)) !!};
-        new Chart(ctxRadar, {
+        // 1.5 Radar Charts
+        function wrapText(str, maxLength) {
+            let res = [];
+            while (str.length > maxLength) {
+                let found = false;
+                for (let i = maxLength - 1; i >= 0; i--) {
+                    if (str.charAt(i) === ' ' || str.charAt(i) === '-') {
+                        res.push(str.slice(0, i));
+                        str = str.slice(i + 1);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    res.push(str.slice(0, maxLength));
+                    str = str.slice(maxLength);
+                }
+            }
+            res.push(str);
+            return res;
+        }
+
+        const rawElementNames = {!! json_encode($elementFullNames) !!};
+        const msmScores = {!! json_encode($msmScores) !!};
+        const ttnScores = {!! json_encode($ttnScores) !!};
+
+        const msmLabels = rawElementNames.map((name, i) => {
+            let lines = wrapText(name, 22);
+            lines.push('(' + msmScores[i] + '%)');
+            return lines;
+        });
+
+        const ttnLabels = rawElementNames.map((name, i) => {
+            let lines = wrapText(name, 22);
+            lines.push('(' + ttnScores[i] + '%)');
+            return lines;
+        });
+        const radarOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    pointLabels: {
+                        font: { size: 13, weight: 'bold' }
+                    },
+                    ticks: {
+                        stepSize: 10,
+                        font: { size: 12 },
+                        callback: function(value) { return value + '%'; }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) { return 'Pencapaian: ' + context.raw + '%'; }
+                    }
+                }
+            }
+        };
+
+        const ctxMsmRadar = document.getElementById('msmRadarChart').getContext('2d');
+        new Chart(ctxMsmRadar, {
             type: 'radar',
             data: {
-                labels: elementNames,
+                labels: msmLabels,
                 datasets: [{
-                    label: 'Rata-Rata Pencapaian (%)',
-                    data: {!! json_encode($elementScores) !!},
-                    backgroundColor: 'rgba(132, 204, 22, 0.2)',
-                    borderColor: 'rgba(132, 204, 22, 1)',
+                    label: 'Pencapaian (%)',
+                    data: msmScores,
+                    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                    borderColor: 'rgba(34, 197, 94, 1)',
                     pointBackgroundColor: 'rgba(239, 68, 68, 1)',
                     pointBorderColor: '#fff',
                     pointHoverBackgroundColor: '#fff',
@@ -342,32 +444,27 @@
                     borderWidth: 2,
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            stepSize: 10,
-                            callback: function(value) { return value + '%'; }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return 'Rata-Rata Pencapaian: ' + context.raw + '%';
-                            }
-                        }
-                    }
-                }
-            }
+            options: radarOptions
+        });
+
+        const ctxTtnRadar = document.getElementById('ttnRadarChart').getContext('2d');
+        new Chart(ctxTtnRadar, {
+            type: 'radar',
+            data: {
+                labels: ttnLabels,
+                datasets: [{
+                    label: 'Pencapaian (%)',
+                    data: ttnScores,
+                    backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                    borderColor: 'rgba(14, 165, 233, 1)',
+                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 2,
+                }]
+            },
+            options: radarOptions
         });
 
         // 2. Doughnut Chart Status
@@ -399,6 +496,39 @@
         const ctxFindings = document.getElementById('findingsBarChart').getContext('2d');
         const rawFindingCounts = {!! json_encode($findingCounts) !!};
         const rawFindingTotals = {!! json_encode($findingTotalsPerElemen ?? []) !!};
+
+        const hBarTextPlugin = {
+            id: 'hBarTextPlugin',
+            afterDatasetsDraw(chart, args, pluginOptions) {
+                const { ctx, data } = chart;
+                chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                    const value = data.datasets[0].data[index];
+                    ctx.save();
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.textBaseline = 'middle';
+                    
+                    if (value > 0) {
+                        let xPos = bar.x - 10;
+                        ctx.fillStyle = '#ffffff'; 
+                        ctx.textAlign = 'right';
+                        
+                        if (bar.width < 30) {
+                            xPos = bar.x + 10;
+                            ctx.fillStyle = '#1e293b'; // slate-800
+                            ctx.textAlign = 'left';
+                        }
+                        
+                        ctx.fillText(value + '%', xPos, bar.y);
+                    } else {
+                        ctx.fillStyle = '#1e293b';
+                        ctx.textAlign = 'left';
+                        ctx.fillText('0%', bar.x + 10, bar.y);
+                    }
+                    ctx.restore();
+                });
+            }
+        };
+
         new Chart(ctxFindings, {
             type: 'bar',
             data: {
@@ -436,7 +566,8 @@
                         }
                     }
                 }
-            }
+            },
+            plugins: [hBarTextPlugin]
         });
     });
 </script>
