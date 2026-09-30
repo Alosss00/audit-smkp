@@ -66,6 +66,7 @@
                         <th>Perusahaan (Area Audit)</th>
                         <th>Status</th>
                         <th>Progres Penilaian</th>
+                        <th>Nilai Audit</th>
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
@@ -91,9 +92,6 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2.5 py-1 rounded-pill small fw-semibold">
-                                        <i class="bi bi-building me-1"></i>Perusahaan
-                                    </span>
                                     <span class="fw-bold text-slate-800">{{ $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit }}</span>
                                 </div>
                             </td>
@@ -119,6 +117,9 @@
                                         {{ number_format($progress, 1) }}%
                                     </span>
                                 </div>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-slate-800">{{ $sesi->skor_akhir !== null ? number_format($sesi->skor_akhir, 2) . '%' : '-' }}</span>
                             </td>
                             <td class="text-end">
                                 <div class="btn-group gap-1">

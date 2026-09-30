@@ -107,6 +107,19 @@
     </div>
 </div>
 
+<!-- Visual Chart Analytics Section 1.5: Radar Chart -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-custom p-4 h-100 border-start border-4 border-success">
+            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-success"></i>Peta Radar Kesesuaian SMKP</h5>
+            <p class="text-muted small mb-3">Grafik visualisasi persentase rata-rata pencapaian tiap elemen SMKP.</p>
+            <div style="height: 550px; display: flex; justify-content: center;">
+                <canvas id="elementRadarChart" style="max-width: 800px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Visual Chart Analytics Section 2: Audit Findings Frequency per Elemen & Top 5 Findings List -->
 <div class="row g-4 mb-5">
     <!-- Horizontal Bar Chart Findings -->
@@ -301,6 +314,53 @@
                                 const index = context[0].dataIndex;
                                 return elementFullNames[index] || context[0].label;
                             },
+                            label: function(context) {
+                                return 'Rata-Rata Pencapaian: ' + context.raw + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 1.5 Radar Chart
+        const ctxRadar = document.getElementById('elementRadarChart').getContext('2d');
+        const elementNames = {!! json_encode(array_map(function($name) { return explode(': ', $name)[1] ?? $name; }, $elementFullNames)) !!};
+        new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: elementNames,
+                datasets: [{
+                    label: 'Rata-Rata Pencapaian (%)',
+                    data: {!! json_encode($elementScores) !!},
+                    backgroundColor: 'rgba(132, 204, 22, 0.2)',
+                    borderColor: 'rgba(132, 204, 22, 1)',
+                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 10,
+                            callback: function(value) { return value + '%'; }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
                             label: function(context) {
                                 return 'Rata-Rata Pencapaian: ' + context.raw + '%';
                             }
