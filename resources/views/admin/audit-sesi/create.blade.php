@@ -123,7 +123,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const tahunSelect = document.getElementById('tahun_periode');
     const rangeText = document.getElementById('periode_range_text');

@@ -15,7 +15,7 @@
             <i class="bi bi-plus-circle me-1"></i> Buat Sesi Audit
         </a>
         <a href="{{ route('admin.pica.index') }}" class="btn btn-outline-danger rounded-3 px-3 py-2 fw-semibold">
-            <i class="bi bi-tools me-1"></i> Otoritas PICA
+            <i class="bi bi-tools me-1"></i> Monitoring PICA
         </a>
     </div>
 </div>

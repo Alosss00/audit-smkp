@@ -376,7 +376,7 @@
                     </a>
                     <a href="{{ route('admin.pica.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.pica.*') ? 'active' : '' }}">
                         <i class="bi bi-tools"></i>
-                        <span>Otoritas & Oversight PICA</span>
+                        <span>Monitoring PICA</span>
                     </a>
                 @else
                     <a href="{{ route('auditor.audit-sesi.index') }}" class="sidebar-nav-link {{ request()->routeIs('auditor.audit-sesi.index') || request()->routeIs('auditor.audit-sesi.rekap') ? 'active' : '' }}">
