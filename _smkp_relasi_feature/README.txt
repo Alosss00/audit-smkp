@@ -74,20 +74,20 @@ TAHAP 5: FRONTEND VIEWS
     resources\views\partials\
 
 11. Salin tiga file Blade partial:
-    SUMBER : _smkp_relasi_feature\views\_relasi_kunci_banner.blade.php
-    TUJUAN : resources\views\partials\_relasi_kunci_banner.blade.php
+    SUMBER : _smkp_relasi_feature\views\_relasi_kunci_banner.php
+    TUJUAN : resources\views\partials\_relasi_kunci_banner.php
 
-    SUMBER : _smkp_relasi_feature\views\_relasi_referensi_icon.blade.php
-    TUJUAN : resources\views\partials\_relasi_referensi_icon.blade.php
+    SUMBER : _smkp_relasi_feature\views\_relasi_referensi_icon.php
+    TUJUAN : resources\views\partials\_relasi_referensi_icon.php
 
-    SUMBER : _smkp_relasi_feature\views\_relasi_js_engine.blade.php
-    TUJUAN : resources\views\partials\_relasi_js_engine.blade.php
+    SUMBER : _smkp_relasi_feature\views\_relasi_js_engine.php
+    TUJUAN : resources\views\partials\_relasi_js_engine.php
 
-12. Update file: resources\views\auditor\audit\matrix.blade.php
+12. Update file: resources\views\auditor\audit\matrix.php
     Lihat instruksi detail di SECTION MODIFIKASI MATRIX BLADE di bawah.
 
 
-MODIFIKASI MATRIX BLADE (resources\views\auditor\audit\matrix.blade.php)
+MODIFIKASI MATRIX BLADE (resources\views\auditor\audit\matrix.php)
 --------------------------------------------------------------------------
 
 PERUBAHAN A: Controller method matrix() — eager-load relasi (di AuditSesiAdminController.php)
@@ -120,7 +120,7 @@ Cari @endforeach dari @foreach($sub->kriterias as $kriteria) dan tambahkan
   @include('partials._relasi_kunci_banner', ['kriteria' => $kriteria])
 
 PERUBAHAN D: JS Engine — tambahkan sebelum </body>
-Di bagian paling bawah matrix.blade.php, sebelum @endsection atau akhir file:
+Di bagian paling bawah matrix.php, sebelum @endsection atau akhir file:
 
   @include('partials._relasi_js_engine')
 
