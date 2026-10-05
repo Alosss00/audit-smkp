@@ -112,10 +112,17 @@ ob_start();
     <!-- Top Left: Radar Chart Akumulasi -->
     <div class="col-lg-6">
         <div class="card card-custom p-4 h-100 border-start border-4 border-primary">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-primary"></i>Pencapaian Nilai Akumulasi per Elemen</h5>
-            <p class="text-muted small mb-3">Persentase rata-rata akumulasi pencapaian nilai per elemen SMKP (Gabungan Semua Perusahaan & Sesi Audit).</p>
-            <div style="height: 440px; display: flex; justify-content: center;">
-                <canvas id="accumulatedRadarChart" style="max-width: 100%;"></canvas>
+            <div class="d-flex align-items-start justify-content-between mb-2">
+                <div>
+                    <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-primary"></i>Pencapaian Nilai Akumulasi per Elemen</h5>
+                    <p class="text-muted small mb-0">Persentase rata-rata akumulasi pencapaian nilai per elemen SMKP (Gabungan Semua Perusahaan & Sesi Audit).</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 text-nowrap ms-2" data-bs-toggle="modal" data-bs-target="#radarChartModal">
+                    <i class="bi bi-arrows-angle-expand me-1"></i>Perbesar
+                </button>
+            </div>
+            <div style="min-height: 520px; height: 60vh; max-height: 750px; display: flex; justify-content: center; align-items: center;" class="mt-3">
+                <canvas id="accumulatedRadarChart" style="max-width: 100%; width: 100%; height: 100%;"></canvas>
             </div>
         </div>
     </div>
@@ -175,7 +182,28 @@ ob_start();
     </div>
 </div>
 
-
+<!-- Modal Fullscreen / Extra Large Radar Chart -->
+<div class="modal fade" id="radarChartModal" tabindex="-1" aria-labelledby="radarChartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg style-radius-16">
+            <div class="modal-header bg-slate-900 text-white border-0 py-3">
+                <h5 class="modal-title fw-bold" id="radarChartModalLabel">
+                    <i class="bi bi-heptagon-fill me-2 text-info"></i>Grafik Pencapaian Nilai Akumulasi per Elemen (Ukuran Penuh)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <p class="text-muted small mb-3">Tampilan grafik radar pencapaian nilai akumulasi per elemen SMKP dengan resolusi besar dan kejelasan maksimal.</p>
+                <div style="height: 720px; display: flex; justify-content: center; align-items: center;">
+                    <canvas id="modalRadarChart" style="max-width: 100%; width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-top-0 py-2">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php if (auth()->user()->hasMasterDataAccess()): ?>
 <!-- Master Data Quick Navigation -->
@@ -338,6 +366,7 @@ ob_start();
                         beginAtZero: true,
                         max: 100,
                         ticks: {
+                            stepSize: 10,
                             callback: function(value) { return value + '%'; }
                         }
                     }
@@ -416,7 +445,7 @@ ob_start();
             const accumulatedScores = accumulatedData.accumulatedScores || [];
             
             const radarLabels = rawElementNames.map((name, i) => {
-                let lines = wrapText(name, 22);
+                let lines = wrapText(name, 26);
                 lines.push('(' + (accumulatedScores[i] || 0) + '%)');
                 return lines;
             });
@@ -430,13 +459,15 @@ ob_start();
                         datasets: [{
                             label: 'Pencapaian Akumulasi (%)',
                             data: accumulatedScores,
-                            backgroundColor: 'rgba(2, 132, 199, 0.25)',
+                            backgroundColor: 'rgba(2, 132, 199, 0.28)',
                             borderColor: '#0284c7',
                             pointBackgroundColor: '#ef4444',
                             pointBorderColor: '#fff',
                             pointHoverBackgroundColor: '#fff',
                             pointHoverBorderColor: '#ef4444',
-                            borderWidth: 2
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            borderWidth: 2.5
                         }]
                     },
                     options: {
@@ -446,10 +477,14 @@ ob_start();
                             r: {
                                 beginAtZero: true,
                                 max: 100,
-                                pointLabels: { font: { size: 12, weight: 'bold' } },
+                                pointLabels: {
+                                    font: { size: 13, weight: 'bold', family: "'Plus Jakarta Sans', sans-serif" },
+                                    color: '#1e293b'
+                                },
                                 ticks: {
-                                    stepSize: 20,
-                                    font: { size: 11 },
+                                    stepSize: 10,
+                                    backdropColor: 'rgba(255, 255, 255, 0.85)',
+                                    font: { size: 10, weight: 'bold' },
                                     callback: function(value) { return value + '%'; }
                                 }
                             }
@@ -462,6 +497,72 @@ ob_start();
                                 }
                             }
                         }
+                    }
+                });
+            }
+
+            // Modal Fullscreen Radar Chart Initialization
+            const radarModalEl = document.getElementById('radarChartModal');
+            if (radarModalEl) {
+                let modalRadarChartInstance = null;
+                const modalLabels = rawElementNames.map((name, i) => {
+                    let lines = wrapText(name, 35);
+                    lines.push('(' + (accumulatedScores[i] || 0) + '%)');
+                    return lines;
+                });
+
+                radarModalEl.addEventListener('shown.bs.modal', function () {
+                    const ctxModal = document.getElementById('modalRadarChart');
+                    if (ctxModal && !modalRadarChartInstance) {
+                        modalRadarChartInstance = new Chart(ctxModal.getContext('2d'), {
+                            type: 'radar',
+                            data: {
+                                labels: modalLabels,
+                                datasets: [{
+                                    label: 'Pencapaian Akumulasi (%)',
+                                    data: accumulatedScores,
+                                    backgroundColor: 'rgba(2, 132, 199, 0.28)',
+                                    borderColor: '#0284c7',
+                                    pointBackgroundColor: '#ef4444',
+                                    pointBorderColor: '#fff',
+                                    pointHoverBackgroundColor: '#fff',
+                                    pointHoverBorderColor: '#ef4444',
+                                    pointRadius: 6,
+                                    pointHoverRadius: 9,
+                                    borderWidth: 3
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    r: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        pointLabels: {
+                                            font: { size: 14, weight: 'bold', family: "'Plus Jakarta Sans', sans-serif" },
+                                            color: '#0f172a'
+                                        },
+                                        ticks: {
+                                            stepSize: 10,
+                                            backdropColor: 'rgba(255, 255, 255, 0.9)',
+                                            font: { size: 11, weight: 'bold' },
+                                            callback: function(value) { return value + '%'; }
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) { return 'Pencapaian Akumulasi: ' + context.raw + '%'; }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    } else if (modalRadarChartInstance) {
+                        modalRadarChartInstance.resize();
                     }
                 });
             }
@@ -524,7 +625,7 @@ ob_start();
                             x: {
                                 beginAtZero: true,
                                 max: 100,
-                                ticks: { callback: function(val) { return val + '%'; } }
+                                ticks: { stepSize: 10, callback: function(val) { return val + '%'; } }
                             }
                         },
                         plugins: {

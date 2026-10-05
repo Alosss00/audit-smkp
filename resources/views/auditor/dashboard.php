@@ -208,6 +208,7 @@ ob_start();
                         beginAtZero: true,
                         max: 100,
                         ticks: {
+                            stepSize: 10,
                             callback: function(value) { return value + '%'; }
                         }
                     }
@@ -246,6 +247,7 @@ ob_start();
                         beginAtZero: true,
                         max: 100,
                         ticks: {
+                            stepSize: 10,
                             callback: function(value) { return value + '%'; }
                         }
                     }
