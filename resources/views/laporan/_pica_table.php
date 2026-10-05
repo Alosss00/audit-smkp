@@ -29,8 +29,24 @@
                 return $kri->sub_elemen_id ?? 0;
             });
 
-            // Count open/progress/closed
+            // Count totals for Elemen summary header
             $totalTemuanElem = $elemenPicas->count();
+            $countSubElemen = $groupedBySub->count();
+            $countSubSubElemen = 0;
+
+            foreach($groupedBySub as $subId => $subPicas) {
+                $firstSubPica = $subPicas->first();
+                $kriSub = $firstSubPica->auditDetail->kriteria ?? null;
+                $subElemen = $kriSub->subElemen ?? null;
+                $subElemenKriteriasCount = $subElemen ? ($subElemen->kriterias ? $subElemen->kriterias->count() : 0) : 0;
+                $isCodeDifferent = $kriSub && $subElemen && ($kriSub->kode_kriteria !== $subElemen->kode_sub);
+                $hasSubSub = ($subElemenKriteriasCount > 1) || $isCodeDifferent;
+
+                if ($hasSubSub) {
+                    $countSubSubElemen += $subPicas->count();
+                }
+            }
+
             $closedCount = $elemenPicas->filter(fn($p) => $p->status === 'closed')->count();
         ?>
 
@@ -52,7 +68,8 @@
                                 <small class="text-muted">Bobot: <strong><?php echo e($elemenBobot); ?>%</strong></small>
                             <?php endif; ?>
                             <span class="badge bg-secondary rounded-pill px-3 py-1.5 small">
-                                <i class="bi bi-list-check me-1"></i><?php echo e($totalTemuanElem); ?> Temuan
+                                <i class="bi bi-list-check me-1"></i><?php echo e($totalTemuanElem); ?> Temuan 
+                                (<?php echo e($countSubElemen); ?> Sub-Elemen<?php if($countSubSubElemen > 0): ?>, <?php echo e($countSubSubElemen); ?> Sub-Sub Elemen<?php endif; ?>)
                                 <?php if($closedCount > 0): ?>
                                     <span class="text-success ms-1">(<?php echo e($closedCount); ?>/<?php echo e($totalTemuanElem); ?> Closed)</span>
                                 <?php endif; ?>
@@ -72,7 +89,7 @@
                             <thead class="table-light text-slate-700 small text-uppercase">
                                 <tr>
                                     <th style="width: 110px;" class="ps-4">Kode</th>
-                                    <th style="min-width: 180px;">Deskripsi Kriteria</th>
+                                    <th style="min-width: 180px;">Deskripsi / Kriteria</th>
                                     <th style="width: 100px;" class="text-center">Skor</th>
                                     <th style="width: 90px;" class="text-center">Capaian</th>
                                     <th style="min-width: 220px;">Uraian Ketidaksesuaian & Akar Masalah</th>
@@ -91,45 +108,24 @@
                                         $subKode = $subElemen->kode_sub ?? ($kriSub->kode_kriteria ?? '-');
                                         $subNama = $subElemen->nama_sub ?? ($kriSub->deskripsi ?? '-');
 
+                                        $subElemenKriteriasCount = $subElemen ? ($subElemen->kriterias ? $subElemen->kriterias->count() : 0) : 0;
+                                        $isCodeDifferent = $kriSub && $subElemen && ($kriSub->kode_kriteria !== $subElemen->kode_sub);
+                                        $hasSubSub = ($subElemenKriteriasCount > 1) || $isCodeDifferent;
+
                                         $subNilaiAktual = $subPicas->sum(fn($p) => $p->auditDetail->nilai ?? 0);
                                         $subNilaiMaks = $subPicas->sum(fn($p) => $p->auditDetail->kriteria->nilai_maksimal ?? 4);
                                         $subPct = $subNilaiMaks > 0 ? ($subNilaiAktual / $subNilaiMaks) * 100 : 0;
                                         $subBadgeClass = $subPct >= 85 ? 'bg-success' : ($subPct >= 70 ? 'bg-warning text-dark' : 'bg-danger');
                                     ?>
 
-                                    <!-- Sub-Elemen Header Row -->
-                                    <tr class="table-secondary fw-semibold bg-slate-100">
-                                        <td class="ps-4 text-primary text-nowrap">
-                                            <i class="bi bi-folder2-open me-1"></i> <?php echo e($subKode); ?>
-                                        </td>
-                                        <td class="text-slate-900 fw-bold">
-                                            <?php echo e($subNama); ?>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="fw-bold"><?php echo e($subNilaiAktual); ?></span> 
-                                            <span class="text-muted">/ <?php echo e($subNilaiMaks); ?></span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge <?php echo e($subBadgeClass); ?> rounded-pill px-2 py-1">
-                                                <?php echo e(number_format($subPct, 1)); ?>%
-                                            </span>
-                                        </td>
-                                        <td colspan="5" class="text-muted small pe-4 text-end">
-                                            Total Sub-Elemen: <strong><?php echo e($subPicas->count()); ?> Temuan</strong>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Criteria Child Rows -->
-                                    <?php foreach($subPicas as $pica): ?>
+                                    <?php if(!$hasSubSub): ?>
+                                        <!-- Sub-Elemen Penilaian Langsung / Tanpa Sub-Sub Elemen (1 Baris) -->
                                         <?php
+                                            $pica = $firstSubPica;
                                             $detail = $pica->auditDetail ?? null;
                                             $kri = $detail->kriteria ?? null;
-                                            $kriKode = $kri->kode_kriteria ?? '-';
-                                            $kriNama = $kri->nama_kriteria ?? ($kri->deskripsi ?? '-');
                                             $kriNilai = $detail->nilai ?? 0;
                                             $kriMaks = $kri->nilai_maksimal ?? 4;
-                                            $kriPct = $kriMaks > 0 ? ($kriNilai / $kriMaks) * 100 : 0;
-                                            $kriPctBadge = $kriPct == 100 ? 'bg-success bg-opacity-10 text-success' : ($kriPct == 0 ? 'bg-danger bg-opacity-10 text-danger' : 'bg-warning bg-opacity-10 text-warning');
 
                                             $status = $pica->status ?? 'open';
                                             $stBadge = $status === 'closed' ? 'bg-success' : ($status === 'in_progress' ? 'bg-warning text-dark' : 'bg-danger');
@@ -137,14 +133,17 @@
                                         ?>
                                         <tr>
                                             <td class="ps-4 text-nowrap">
-                                                <span class="badge bg-light text-dark border px-2 py-1 ms-2 font-monospace">
-                                                    <?php echo e($kriKode); ?>
+                                                <span class="text-primary fw-semibold">
+                                                    <i class="bi bi-folder2 me-1"></i><?php echo e($subKode); ?>
                                                 </span>
                                             </td>
                                             <td>
                                                 <div class="fw-semibold text-slate-800" style="max-width: 210px; line-height: 1.3;">
-                                                    <?php echo e($kriNama); ?>
+                                                    <?php echo e($subNama); ?>
                                                 </div>
+                                                <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5 mt-1" style="font-size: 0.7rem;">
+                                                    Penilaian Langsung
+                                                </span>
                                             </td>
                                             <td class="text-center">
                                                 <span class="fw-bold <?php echo e($kriNilai == $kriMaks ? 'text-success' : ($kriNilai == 0 ? 'text-danger' : 'text-primary')); ?>">
@@ -153,8 +152,8 @@
                                                 <span class="text-muted">/ <?php echo e($kriMaks); ?></span>
                                             </td>
                                             <td class="text-center">
-                                                <span class="badge <?php echo e($kriPctBadge); ?> rounded-pill px-2 py-1">
-                                                    <?php echo e(number_format($kriPct, 0)); ?>%
+                                                <span class="badge <?php echo e($subBadgeClass); ?> rounded-pill px-2 py-1">
+                                                    <?php echo e(number_format($subPct, 1)); ?>%
                                                 </span>
                                             </td>
                                             <td>
@@ -206,7 +205,118 @@
                                                 <?php endif; ?>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <!-- Sub-Elemen Header Row (Memiliki beberapa Sub-Sub Elemen) -->
+                                        <tr class="table-secondary fw-semibold bg-slate-100">
+                                            <td class="ps-4 text-primary text-nowrap">
+                                                <i class="bi bi-folder2-open me-1"></i> <?php echo e($subKode); ?>
+                                            </td>
+                                            <td class="text-slate-900 fw-bold">
+                                                <?php echo e($subNama); ?>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="fw-bold"><?php echo e($subNilaiAktual); ?></span> 
+                                                <span class="text-muted">/ <?php echo e($subNilaiMaks); ?></span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge <?php echo e($subBadgeClass); ?> rounded-pill px-2 py-1">
+                                                    <?php echo e(number_format($subPct, 1)); ?>%
+                                                </span>
+                                            </td>
+                                            <td colspan="5" class="text-muted small pe-4 text-end">
+                                                Total Sub-Elemen: <strong><?php echo e($subPicas->count()); ?> Sub-Sub Elemen</strong>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Criteria Child Rows -->
+                                        <?php foreach($subPicas as $pica): ?>
+                                            <?php
+                                                $detail = $pica->auditDetail ?? null;
+                                                $kri = $detail->kriteria ?? null;
+                                                $kriKode = $kri->kode_kriteria ?? '-';
+                                                $kriNama = $kri->nama_kriteria ?? ($kri->deskripsi ?? '-');
+                                                $kriNilai = $detail->nilai ?? 0;
+                                                $kriMaks = $kri->nilai_maksimal ?? 4;
+                                                $kriPct = $kriMaks > 0 ? ($kriNilai / $kriMaks) * 100 : 0;
+                                                $kriPctBadge = $kriPct == 100 ? 'bg-success bg-opacity-10 text-success' : ($kriPct == 0 ? 'bg-danger bg-opacity-10 text-danger' : 'bg-warning bg-opacity-10 text-warning');
+
+                                                $status = $pica->status ?? 'open';
+                                                $stBadge = $status === 'closed' ? 'bg-success' : ($status === 'in_progress' ? 'bg-warning text-dark' : 'bg-danger');
+                                                $stLabel = $status === 'closed' ? 'Closed' : ($status === 'in_progress' ? 'In Progress' : 'Open');
+                                            ?>
+                                            <tr>
+                                                <td class="ps-4 text-nowrap">
+                                                    <span class="badge bg-light text-dark border px-2 py-1 ms-2 font-monospace">
+                                                        <?php echo e($kriKode); ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-semibold text-slate-800" style="max-width: 210px; line-height: 1.3;">
+                                                        <?php echo e($kriNama); ?>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="fw-bold <?php echo e($kriNilai == $kriMaks ? 'text-success' : ($kriNilai == 0 ? 'text-danger' : 'text-primary')); ?>">
+                                                        <?php echo e($kriNilai); ?>
+                                                    </span>
+                                                    <span class="text-muted">/ <?php echo e($kriMaks); ?></span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge <?php echo e($kriPctBadge); ?> rounded-pill px-2 py-1">
+                                                        <?php echo e(number_format($kriPct, 0)); ?>%
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="small text-slate-800 fw-medium mb-1">
+                                                        <?php echo e($pica->deskripsi_temuan ?? '-'); ?>
+                                                    </div>
+                                                    <?php if(!empty($pica->akar_masalah)): ?>
+                                                        <div class="small text-muted mt-1" style="font-size: 0.78rem;">
+                                                            <strong class="text-secondary"><i class="bi bi-search me-1"></i>Akar Masalah:</strong>
+                                                            <span class="text-slate-700"><?php echo e($pica->akar_masalah); ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <div class="small mb-1">
+                                                        <strong class="text-success d-block" style="font-size: 0.75rem;"><i class="bi bi-shield-check me-1"></i>Koreksi:</strong>
+                                                        <span class="text-slate-700"><?php echo e($pica->tindakan_koreksi ?? '-'); ?></span>
+                                                    </div>
+                                                    <div class="small">
+                                                        <strong class="text-info d-block" style="font-size: 0.75rem;"><i class="bi bi-arrow-repeat me-1"></i>Pencegahan:</strong>
+                                                        <span class="text-slate-700"><?php echo e($pica->tindakan_pencegahan ?? '-'); ?></span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <strong class="small text-slate-800 d-block"><?php echo e($pica->pic_perbaikan ?? ($pica->pj_nama ?? '-')); ?></strong>
+                                                    <small class="text-muted d-block">
+                                                        Target: <?php echo e($pica->tenggat_waktu ? \Carbon\Carbon::parse($pica->tenggat_waktu)->format('d/m/Y') : '-'); ?>
+                                                    </small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge <?php echo e($stBadge); ?> rounded-pill px-3 py-1 small fw-semibold">
+                                                        <?php echo e($stLabel); ?>
+                                                    </span>
+                                                    <?php if(!empty($pica->catatan_verifikasi_auditor)): ?>
+                                                        <small class="d-block text-muted mt-1 fst-italic" title="Catatan Verifikasi: <?php echo e($pica->catatan_verifikasi_auditor); ?>" style="font-size: 0.75rem; cursor: help;">
+                                                            <i class="bi bi-chat-dots me-1 text-primary"></i>Verifikasi
+                                                        </small>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="text-center pe-4">
+                                                    <?php if(auth()->user()->role === 'admin'): ?>
+                                                        <a href="<?php echo e(route('admin.pica.index')); ?>" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 small" style="font-size: 0.75rem;">
+                                                            <i class="bi bi-tools me-1"></i> PICA
+                                                        </a>
+                                                    <?php elseif(auth()->user()->role === 'auditor'): ?>
+                                                        <a href="<?php echo e(route('auditor.pica.edit', $pica->id)); ?>" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 small" style="font-size: 0.75rem;">
+                                                            <i class="bi bi-pencil-square me-1"></i> Tindak
+                                                        </a>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>

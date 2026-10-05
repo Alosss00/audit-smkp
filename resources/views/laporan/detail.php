@@ -634,67 +634,186 @@ ob_start();
                             <p class="text-muted small mb-0">Belum ada sub-elemen yang mencapai kepatuhan 100% pada sesi audit ini.</p>
                         </div>
                     <?php else: ?>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0 matrix-tree-table">
-                                <thead class="table-light text-slate-700 small text-uppercase">
-                                    <tr>
-                                        <th style="width: 50px;" class="ps-3 text-center">No</th>
-                                        <th style="width: 130px;">Kode Sub</th>
-                                        <th style="min-width: 250px;">Sub-Elemen SMKP</th>
-                                        <th style="min-width: 180px;">Elemen Induk</th>
-                                        <th style="width: 130px;" class="text-center">Skor / Nilai</th>
-                                        <th style="width: 120px;" class="text-center">Pencapaian</th>
-                                        <th style="min-width: 280px;" class="pe-3">Catatan Evaluasi / Bukti Praktik Baik</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach($praktekBaik as $idx => $item): ?>
-                                        <tr>
-                                            <td class="ps-3 text-center text-muted small fw-semibold"><?php echo e($idx + 1); ?></td>
-                                            <td class="text-nowrap">
-                                                <span class="badge bg-light text-primary border px-2 py-1 fw-bold">
-                                                    <i class="bi bi-folder2 me-1"></i><?php echo e($item['kode_sub_elemen'] ?? $item['kode_sub']); ?>
+                        <?php
+                            $groupedPraktek = $praktekBaik->groupBy(fn($item) => $item['elemen_kode'] ?? ($item['kode_elemen'] ?? '-'));
+                            $uniquePraktekPrefix = 'praktek_' . uniqid();
+                            $praktekElemIndex = 0;
+                        ?>
+                        <div class="accordion mb-3" id="accordion_<?php echo e($uniquePraktekPrefix); ?>">
+                            <?php foreach($groupedPraktek as $elemKode => $praktekGroup): ?>
+                                <?php
+                                    $praktekElemIndex++;
+                                    $firstItem = $praktekGroup->first();
+                                    $elemNama = $firstItem['nama_elemen'] ?? ($firstItem['elemen_nama'] ?? 'Elemen Non-Terdefinisi');
+                                    
+                                    $totalPraktekElem = $praktekGroup->count();
+                                    $countSubElemen = $praktekGroup->count();
+                                    $countSubSubElemen = 0;
 
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="fw-semibold text-slate-800"><?php echo e($item['nama_sub_elemen'] ?? $item['nama_sub']); ?></div>
-                                            </td>
-                                            <td>
-                                                <div class="d-inline-flex align-items-center px-2.5 py-1 rounded-2 bg-light border small fw-semibold text-dark">
-                                                    <i class="bi bi-layers-fill text-primary me-1.5"></i>
-                                                    <span class="text-dark"><?php echo e($item['nama_elemen'] ?? $item['elemen_nama']); ?></span>
+                                    foreach($praktekGroup as $item) {
+                                        $subObj = \App\Models\SubElemen::with('kriterias')->find($item['sub_elemen_id'] ?? 0);
+                                        $kriterias = $subObj ? $subObj->kriterias : collect();
+                                        if ($kriterias->count() > 1) {
+                                            $countSubSubElemen += $kriterias->count();
+                                        }
+                                    }
+                                ?>
+                                <div class="accordion-item border rounded-3 mb-3 overflow-hidden shadow-sm">
+                                    <h2 class="accordion-header" id="heading_<?php echo e($uniquePraktekPrefix); ?>_<?php echo e($praktekElemIndex); ?>">
+                                        <button class="accordion-button <?php echo e($praktekElemIndex > 1 ? 'collapsed' : ''); ?> bg-light text-slate-800 fw-bold py-3 px-4" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse_<?php echo e($uniquePraktekPrefix); ?>_<?php echo e($praktekElemIndex); ?>" 
+                                                aria-expanded="<?php echo e($praktekElemIndex == 1 ? 'true' : 'false'); ?>" 
+                                                aria-controls="collapse_<?php echo e($uniquePraktekPrefix); ?>_<?php echo e($praktekElemIndex); ?>">
+                                            <div class="d-flex flex-wrap align-items-center justify-content-between w-100 me-3 gap-2">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="badge bg-dark rounded-pill px-3 py-2">Elemen <?php echo e($elemKode); ?></span>
+                                                    <span class="fs-6 text-slate-900"><?php echo e($elemNama); ?></span>
                                                 </div>
-                                            </td>
-                                            <td class="text-center font-monospace">
-                                                <strong class="text-success"><?php echo e($item['nilai_aktual']); ?></strong> 
-                                                <span class="text-muted">/ <?php echo e($item['nilai_maks_efektif'] ?? $item['nilai_maks']); ?></span>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold rounded-pill px-3 py-1">
-                                                    <i class="bi bi-check2-circle me-1"></i> 100%
-                                                </span>
-                                            </td>
-                                            <td class="pe-3">
-                                                <?php if(is_array($item['catatan'])): ?>
-                                                    <ul class="ps-3 mb-0 text-slate-700 small">
-                                                        <?php foreach($item['catatan'] as $ct): ?>
-                                                            <li><?php echo e($ct); ?></li>
-                                                        <?php endforeach; ?>
-                                                    </ul>
-                                                <?php elseif(!empty($item['catatan'])): ?>
-                                                    <div class="small text-slate-700">
-                                                        <?php echo nl2br(e($item['catatan'])); ?>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <span class="badge bg-success rounded-pill px-3 py-1.5 small">
+                                                        <i class="bi bi-award-fill me-1"></i><?php echo e($totalPraktekElem); ?> Praktik Terbaik 
+                                                        (<?php echo e($countSubElemen); ?> Sub-Elemen<?php if($countSubSubElemen > 0): ?>, <?php echo e($countSubSubElemen); ?> Sub-Sub Elemen<?php endif; ?>)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </h2>
 
-                                                    </div>
-                                                <?php else: ?>
-                                                    <span class="text-muted small fst-italic">Kesesuaian penuh memenuhi standar evaluasi SMKP Minerba Kepdirjen 185.</span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                                    <div id="collapse_<?php echo e($uniquePraktekPrefix); ?>_<?php echo e($praktekElemIndex); ?>" 
+                                         class="accordion-collapse collapse <?php echo e($praktekElemIndex == 1 ? 'show' : ''); ?>" 
+                                         aria-labelledby="heading_<?php echo e($uniquePraktekPrefix); ?>_<?php echo e($praktekElemIndex); ?>" 
+                                         data-bs-parent="#accordion_<?php echo e($uniquePraktekPrefix); ?>">
+                                        <div class="accordion-body p-0 border-top">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0 matrix-tree-table">
+                                                    <thead class="table-light text-slate-700 small text-uppercase">
+                                                        <tr>
+                                                            <th style="width: 110px;" class="ps-4">Kode</th>
+                                                            <th style="min-width: 220px;">Deskripsi / Kriteria</th>
+                                                            <th style="width: 110px;" class="text-center">Skor / Nilai</th>
+                                                            <th style="width: 110px;" class="text-center">Capaian</th>
+                                                            <th style="min-width: 280px;" class="pe-4">Catatan Evaluasi / Bukti Praktik Baik</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php foreach($praktekGroup as $item): ?>
+                                                            <?php
+                                                                $subObj = \App\Models\SubElemen::with('kriterias')->find($item['sub_elemen_id'] ?? 0);
+                                                                $kriterias = $subObj ? $subObj->kriterias : collect();
+                                                                $hasSubSub = $kriterias->count() > 1;
+                                                                $subKode = $item['kode_sub_elemen'] ?? ($item['kode_sub'] ?? '-');
+                                                                $subNama = $item['nama_sub_elemen'] ?? ($item['nama_sub'] ?? '-');
+                                                                $nilaiAktual = $item['nilai_aktual'] ?? 0;
+                                                                $nilaiMaks = $item['nilai_maks_efektif'] ?? ($item['nilai_maks'] ?? 4);
+                                                            ?>
+
+                                                            <?php if(!$hasSubSub): ?>
+                                                                <!-- Sub-Elemen Penilaian Langsung / Tanpa Sub-Sub Elemen (1 Baris) -->
+                                                                <tr>
+                                                                    <td class="ps-4 text-nowrap">
+                                                                        <span class="text-primary fw-semibold">
+                                                                            <i class="bi bi-folder2 me-1"></i><?php echo e($subKode); ?>
+                                                                        </span>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="fw-semibold text-slate-800" style="max-width: 250px; line-height: 1.3;">
+                                                                            <?php echo e($subNama); ?>
+                                                                        </div>
+                                                                        <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5 mt-1" style="font-size: 0.7rem;">
+                                                                            Penilaian Langsung
+                                                                        </span>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <strong class="text-success"><?php echo e($nilaiAktual); ?></strong> 
+                                                                        <span class="text-muted">/ <?php echo e($nilaiMaks); ?></span>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold rounded-pill px-3 py-1">
+                                                                            <i class="bi bi-check2-circle me-1"></i> 100%
+                                                                        </span>
+                                                                    </td>
+                                                                    <td class="pe-4">
+                                                                        <?php if(is_array($item['catatan'])): ?>
+                                                                            <ul class="ps-3 mb-0 text-slate-700 small">
+                                                                                <?php foreach($item['catatan'] as $ct): ?>
+                                                                                    <li><i class="bi bi-check-circle-fill text-success me-1"></i><?php echo e($ct); ?></li>
+                                                                                <?php endforeach; ?>
+                                                                            </ul>
+                                                                        <?php elseif(!empty($item['catatan'])): ?>
+                                                                            <div class="small text-slate-700">
+                                                                                <i class="bi bi-check-circle-fill text-success me-1"></i><?php echo nl2br(e($item['catatan'])); ?>
+                                                                            </div>
+                                                                        <?php else: ?>
+                                                                            <span class="text-muted small fst-italic">Kesesuaian penuh memenuhi standar evaluasi SMKP Minerba.</span>
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php else: ?>
+                                                                <!-- Sub-Elemen Header Row (Memiliki beberapa Sub-Sub Elemen) -->
+                                                                <tr class="table-secondary fw-semibold bg-slate-100">
+                                                                    <td class="ps-4 text-primary text-nowrap">
+                                                                        <i class="bi bi-folder2-open me-1"></i> <?php echo e($subKode); ?>
+                                                                    </td>
+                                                                    <td class="text-slate-900 fw-bold">
+                                                                        <?php echo e($subNama); ?>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <span class="fw-bold text-success"><?php echo e($nilaiAktual); ?></span> 
+                                                                        <span class="text-muted">/ <?php echo e($nilaiMaks); ?></span>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold rounded-pill px-2 py-1">
+                                                                            100%
+                                                                        </span>
+                                                                    </td>
+                                                                    <td class="text-muted small pe-4 text-end">
+                                                                        Total Sub-Elemen: <strong><?php echo e($kriterias->count()); ?> Sub-Sub Elemen</strong>
+                                                                    </td>
+                                                                </tr>
+
+                                                                <!-- Criteria Child Rows -->
+                                                                <?php foreach($kriterias as $kri): ?>
+                                                                    <?php
+                                                                        $kriMaks = $kri->nilai_maksimal ?? 4;
+                                                                    ?>
+                                                                    <tr>
+                                                                        <td class="ps-4 text-nowrap">
+                                                                            <span class="badge bg-light text-dark border px-2 py-1 ms-2 font-monospace">
+                                                                                <?php echo e($kri->kode_kriteria); ?>
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="fw-semibold text-slate-800" style="max-width: 250px; line-height: 1.3;">
+                                                                                <?php echo e($kri->nama_kriteria ?? ($kri->deskripsi ?? '-')); ?>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            <strong class="text-success"><?php echo e($kriMaks); ?></strong> 
+                                                                            <span class="text-muted">/ <?php echo e($kriMaks); ?></span>
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">
+                                                                                100%
+                                                                            </span>
+                                                                        </td>
+                                                                        <td class="pe-4">
+                                                                            <div class="small text-slate-700">
+                                                                                <i class="bi bi-check-circle-fill text-success me-1"></i>Kriteria memenuhi 100% standar evaluasi SMKP Minerba.
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            <?php endif; ?>
+                                                        <?php endforeach; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
                 </div>
