@@ -33,7 +33,7 @@
         </tr>
         <tr>
             <td></td>
-            <td style="font-weight: bold;" colspan="2">Jadwal Pelaksanaan Sesi:</td>
+            <td style="font-weight: bold;" colspan="2">Jadwal Pelaksanaan Audit:</td>
             <td colspan="11"><?php echo e($sesi->tanggal_mulai->format('d F Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d F Y')); ?></td>
         </tr>
         <tr>

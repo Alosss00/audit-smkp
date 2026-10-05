@@ -194,7 +194,7 @@ ob_start();
                 <li class="nav-item" role="presentation">
                     <a class="nav-link rounded-3 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" 
                        id="tab-temuan" data-bs-toggle="tab" href="#section-temuan" role="tab" aria-selected="false">
-                        <i class="bi bi-exclamation-diamond"></i> 2.4 Temuan & Tindak Lanjut PICA (<?php echo e($temuanKategori['total_temuan'] ?? count($temuanKategori['kritikal']) + count($temuanKategori['mayor']) + count($temuanKategori['minor'])); ?>)
+                        <i class="bi bi-exclamation-diamond"></i> 2.4 Temuan Ketidaksesuaian (<?php echo e($temuanKategori['total_temuan'] ?? count($temuanKategori['kritikal']) + count($temuanKategori['mayor']) + count($temuanKategori['minor'])); ?>)
                     </a>
                 </li>
             </ul>
@@ -712,7 +712,7 @@ ob_start();
                             <i class="bi bi-tools fs-4"></i>
                         </div>
                         <div>
-                            <h4 class="fw-bold text-slate-800 mb-1">2.4 Daftar Temuan Ketidaksesuaian & Tindak Lanjut PICA</h4>
+                            <h4 class="fw-bold text-slate-800 mb-1">2.4 Daftar Temuan Ketidaksesuaian</h4>
                             <p class="text-muted small mb-0">Rincian ketidaksesuaian hasil audit yang diklasifikasikan berdasarkan tingkat keparahan (Kritikal, Mayor, Minor) serta status rencana tindak lanjut perbaikannya.</p>
                         </div>
                     </div>

@@ -67,8 +67,19 @@ class DashboardController extends Controller
         $findingLabels = [];
         $findingCounts = [];
 
-        // 1. Average Compliance Percentage per Elemen across all audit sessions
-        $allSessions = AuditSesi::with(['auditDetails.kriteria.subElemen', 'perusahaan'])->get();
+        $availableYears = AuditSesi::whereNotNull('tahun_periode')
+            ->distinct()
+            ->orderBy('tahun_periode', 'desc')
+            ->pluck('tahun_periode');
+
+        $selectedElementYear = request('tahun_element', request('tahun_periode', 'semua'));
+
+        // 1. Average Compliance Percentage per Elemen across audit sessions (filtered by selected year)
+        $sessionQuery = AuditSesi::with(['auditDetails.kriteria.subElemen', 'perusahaan']);
+        if ($selectedElementYear !== 'semua' && !empty($selectedElementYear)) {
+            $sessionQuery->where('tahun_periode', (int)$selectedElementYear);
+        }
+        $allSessions = $sessionQuery->get();
         $totalSessionsCount = $allSessions->count();
 
         $elementLabels = [];
@@ -146,7 +157,89 @@ class DashboardController extends Controller
             }
         }
 
-        $accumulatedChartData = AuditSesi::getAccumulatedChartData();
+        $tahunFilterInt = ($selectedElementYear !== 'semua' && !empty($selectedElementYear)) ? (int)$selectedElementYear : null;
+        $accumulatedChartData = AuditSesi::getAccumulatedChartData($tahunFilterInt);
+
+        // Multi-Year Trend Analysis per Element
+        $trendYears = AuditSesi::whereNotNull('tahun_periode')
+            ->distinct()
+            ->orderBy('tahun_periode', 'asc')
+            ->pluck('tahun_periode')
+            ->toArray();
+
+        if (empty($trendYears)) {
+            $trendYears = [(int)date('Y')];
+        }
+
+        $allTrendSessions = AuditSesi::with(['auditDetails.kriteria.subElemen', 'perusahaan'])->get();
+        $elementTrendData = [
+            'years' => $trendYears,
+            'elements' => []
+        ];
+
+        foreach ($elemens as $el) {
+            $scoresPerYear = [];
+            $msmScoresPerYear = [];
+            $ttnScoresPerYear = [];
+
+            foreach ($trendYears as $yr) {
+                $yearSessions = $allTrendSessions->where('tahun_periode', $yr);
+                
+                $totalAktual = 0;
+                $totalMaks = 0;
+                $msmAktual = 0;
+                $msmMaks = 0;
+                $ttnAktual = 0;
+                $ttnMaks = 0;
+
+                foreach ($yearSessions as $session) {
+                    $companyName = $session->perusahaan ? strtolower($session->perusahaan->nama_perusahaan) : strtolower($session->area_audit);
+                    $isMsm = str_contains($companyName, 'meares soputan');
+                    $isTtn = str_contains($companyName, 'tambang tondano');
+
+                    $details = $session->auditDetails->filter(function ($d) use ($el) {
+                        return $d->kriteria
+                            && $d->kriteria->subElemen
+                            && $d->kriteria->subElemen->elemen_id == $el->id;
+                    });
+
+                    $sessionAktual = 0;
+                    $sessionMaks = 0;
+                    foreach ($details as $d) {
+                        if (!$d->is_na) {
+                            $sessionAktual += (float) $d->nilai;
+                            $sessionMaks += (float) ($d->kriteria->nilai_maksimal ?? 4);
+                        }
+                    }
+
+                    if ($sessionMaks > 0) {
+                        $totalAktual += $sessionAktual;
+                        $totalMaks += $sessionMaks;
+                        if ($isMsm) {
+                            $msmAktual += $sessionAktual;
+                            $msmMaks += $sessionMaks;
+                        }
+                        if ($isTtn) {
+                            $ttnAktual += $sessionAktual;
+                            $ttnMaks += $sessionMaks;
+                        }
+                    }
+                }
+
+                $scoresPerYear[] = $totalMaks > 0 ? round(($totalAktual / $totalMaks) * 100, 2) : 0;
+                $msmScoresPerYear[] = $msmMaks > 0 ? round(($msmAktual / $msmMaks) * 100, 2) : 0;
+                $ttnScoresPerYear[] = $ttnMaks > 0 ? round(($ttnAktual / $ttnMaks) * 100, 2) : 0;
+            }
+
+            $elementTrendData['elements'][$el->id] = [
+                'id' => $el->id,
+                'kode' => $el->kode_elemen,
+                'nama' => $el->nama_elemen,
+                'scores' => $scoresPerYear,
+                'msmScores' => $msmScoresPerYear,
+                'ttnScores' => $ttnScoresPerYear,
+            ];
+        }
 
         return view('admin.dashboard', compact(
             'stats',
@@ -154,7 +247,11 @@ class DashboardController extends Controller
             'elementScores',
             'elementColors',
             'elementFullNames',
-            'accumulatedChartData'
+            'accumulatedChartData',
+            'availableYears',
+            'selectedElementYear',
+            'elementTrendData',
+            'elemens'
         ));
     }
 

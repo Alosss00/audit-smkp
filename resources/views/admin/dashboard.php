@@ -87,8 +87,48 @@ ob_start();
     <!-- Bar Chart Percentage per Elemen -->
     <div class="col-lg-8">
         <div class="card card-custom p-4 h-100">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Pencapaian Nilai Audit per Elemen</h5>
-            <p class="text-muted small mb-3">Grafik rata-rata persentase pencapaian nilai per elemen SMKP dari seluruh sesi audit yang dijalankan.</p>
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-slate-800" id="elementChartTitle">
+                        <i class="bi bi-bar-chart-fill me-2 text-primary"></i>Pencapaian Nilai Audit per Elemen
+                    </h5>
+                    <p class="text-muted small mb-0" id="elementChartSubtitle">Grafik rata-rata persentase pencapaian nilai per elemen SMKP (Berdasarkan Tahun Periode Audit).</p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
+                    <!-- View Mode Selector -->
+                    <select id="chartDisplayMode" class="form-select form-select-sm rounded-pill border-primary shadow-sm fw-semibold text-primary" style="min-width: 195px;">
+                        <option value="all_elements">📊 Semua Elemen</option>
+                        <option value="trend_element">📈 Tren Multi-Tahun Elemen</option>
+                    </select>
+
+                    <!-- Element Selector for Trend Mode -->
+                    <select id="trendElementSelector" class="form-select form-select-sm rounded-pill border-info shadow-sm fw-semibold text-info d-none" style="min-width: 220px;">
+                        <?php if(!empty($elemens)): ?>
+                            <?php foreach($elemens as $el): ?>
+                                <option value="<?php echo e($el->id); ?>">
+                                    Elemen <?php echo e($el->kode_elemen); ?>: <?php echo e(\Illuminate\Support\Str::limit($el->nama_elemen, 22)); ?>
+
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+
+                    <!-- Year Filter Form for All Elements Mode -->
+                    <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" id="yearFilterForm" class="d-flex align-items-center">
+                        <select name="tahun_element" class="form-select form-select-sm rounded-pill border-primary shadow-sm fw-semibold text-primary" style="min-width: 180px;" data-auto-submit="true">
+                            <option value="semua" <?php echo ($selectedElementYear === 'semua' || empty($selectedElementYear)) ? 'selected' : ''; ?>>🗓️ Semua Tahun Periode</option>
+                            <?php if(!empty($availableYears)): ?>
+                                <?php foreach($availableYears as $yr): ?>
+                                    <option value="<?php echo e($yr); ?>" <?php echo $selectedElementYear == $yr ? 'selected' : ''; ?>>
+                                        📅 Tahun Periode <?php echo e($yr); ?>
+
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </form>
+                </div>
+            </div>
             <div style="height: 380px;">
                 <canvas id="elementBarChart"></canvas>
             </div>
@@ -312,9 +352,11 @@ ob_start();
 ?>
 <script nonce="<?php echo e($cspNonce ?? ''); ?>">
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Bar Chart Average Compliance per Elemen
+        // 1. Bar Chart Average Compliance per Elemen & Multi-Year Trend Line Chart
         const ctxBar = document.getElementById('elementBarChart').getContext('2d');
         const elementFullNames = <?php echo json_encode($elementFullNames); ?>;
+        const trendData = <?php echo json_encode($elementTrendData ?? []); ?>;
+
         const barLabels = elementFullNames.map(name => {
             const parts = name.split(': ');
             return [parts[0], parts[1] || ''];
@@ -324,6 +366,7 @@ ob_start();
             id: 'barTextPlugin',
             afterDatasetsDraw(chart, args, pluginOptions) {
                 const { ctx, data } = chart;
+                if (!chart.getDatasetMeta(0) || !chart.getDatasetMeta(0).data) return;
                 chart.getDatasetMeta(0).data.forEach((bar, index) => {
                     const value = data.datasets[0].data[index];
                     ctx.save();
@@ -345,51 +388,187 @@ ob_start();
             }
         };
 
-        new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: barLabels,
-                datasets: [{
-                    label: 'Rata-Rata Pencapaian (%)',
-                    data: <?php echo json_encode($elementScores); ?>,
-                    backgroundColor: <?php echo json_encode($elementColors); ?>,
-                    borderColor: 'rgba(15, 23, 42, 0.1)',
-                    borderWidth: 1,
-                    borderRadius: 8,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            stepSize: 10,
-                            callback: function(value) { return value + '%'; }
-                        }
-                    }
+        let mainChartInstance = null;
+
+        function renderAllElementsChart() {
+            if (mainChartInstance) mainChartInstance.destroy();
+
+            const titleEl = document.getElementById('elementChartTitle');
+            const subTitleEl = document.getElementById('elementChartSubtitle');
+            if (titleEl) titleEl.innerHTML = '<i class="bi bi-bar-chart-fill me-2 text-primary"></i>Pencapaian Nilai Audit per Elemen';
+            if (subTitleEl) subTitleEl.innerText = 'Grafik rata-rata persentase pencapaian nilai per elemen SMKP (Berdasarkan Tahun Periode Audit).';
+
+            mainChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: barLabels,
+                    datasets: [{
+                        label: 'Rata-Rata Pencapaian (%)',
+                        data: <?php echo json_encode($elementScores); ?>,
+                        backgroundColor: <?php echo json_encode($elementColors); ?>,
+                        borderColor: 'rgba(15, 23, 42, 0.1)',
+                        borderWidth: 1,
+                        borderRadius: 8,
+                    }]
                 },
-                plugins: {
-                    legend: {
-                        display: false
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 10,
+                                callback: function(value) { return value + '%'; }
+                            }
+                        }
                     },
-                    tooltip: {
-                        callbacks: {
-                            title: function(context) {
-                                const index = context[0].dataIndex;
-                                return elementFullNames[index] || context[0].label;
-                            },
-                            label: function(context) {
-                                return 'Rata-Rata Pencapaian: ' + context.raw + '%';
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const index = context[0].dataIndex;
+                                    return elementFullNames[index] || context[0].label;
+                                },
+                                label: function(context) {
+                                    return 'Rata-Rata Pencapaian: ' + context.raw + '%';
+                                }
                             }
                         }
                     }
+                },
+                plugins: [barTextPlugin]
+            });
+        }
+
+        const groupedBarTextPlugin = {
+            id: 'groupedBarTextPlugin',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    if (!meta || !meta.data) return;
+                    meta.data.forEach((bar, index) => {
+                        const value = dataset.data[index];
+                        if (value !== undefined && value !== null) {
+                            ctx.save();
+                            ctx.font = 'bold 11px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillStyle = '#1e293b';
+                            ctx.fillText(value + '%', bar.x, bar.y - 4);
+                            ctx.restore();
+                        }
+                    });
+                });
+            }
+        };
+
+        function renderTrendChart(elementId) {
+            if (mainChartInstance) mainChartInstance.destroy();
+            
+            const elemObj = (trendData.elements && trendData.elements[elementId]) ? trendData.elements[elementId] : (trendData.elements ? Object.values(trendData.elements)[0] : null);
+            if (!elemObj) return;
+
+            const titleEl = document.getElementById('elementChartTitle');
+            const subTitleEl = document.getElementById('elementChartSubtitle');
+            if (titleEl) titleEl.innerHTML = `<i class="bi bi-bar-chart-line-fill me-2 text-info"></i>Evaluasi Elemen ${elemObj.kode}: ${elemObj.nama}`;
+            if (subTitleEl) subTitleEl.innerText = `Perbandingan & riwayat persentase pencapaian Elemen ${elemObj.kode} dari tahun ke tahun.`;
+
+            const yearLabels = (trendData.years || []).map(y => 'Tahun ' + y);
+            
+            mainChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: yearLabels,
+                    datasets: [
+                        {
+                            label: 'Total Gabungan (%)',
+                            data: elemObj.scores || [],
+                            backgroundColor: 'rgba(2, 132, 199, 0.85)',
+                            borderColor: '#0284c7',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'PT Meares Soputan Mining (%)',
+                            data: elemObj.msmScores || [],
+                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                            borderColor: '#10b981',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'PT Tambang Tondano Nusa Jaya (%)',
+                            data: elemObj.ttnScores || [],
+                            backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 10,
+                                callback: function(value) { return value + '%'; }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [groupedBarTextPlugin]
+            });
+        }
+
+        const chartDisplayMode = document.getElementById('chartDisplayMode');
+        const trendElementSelector = document.getElementById('trendElementSelector');
+        const yearFilterForm = document.getElementById('yearFilterForm');
+
+        if (chartDisplayMode) {
+            chartDisplayMode.addEventListener('change', function() {
+                if (this.value === 'trend_element') {
+                    if (yearFilterForm) yearFilterForm.classList.add('d-none');
+                    if (trendElementSelector) {
+                        trendElementSelector.classList.remove('d-none');
+                        renderTrendChart(trendElementSelector.value);
+                    }
+                } else {
+                    if (yearFilterForm) yearFilterForm.classList.remove('d-none');
+                    if (trendElementSelector) trendElementSelector.classList.add('d-none');
+                    renderAllElementsChart();
                 }
-            },
-            plugins: [barTextPlugin]
-        });
+            });
+        }
+
+        if (trendElementSelector) {
+            trendElementSelector.addEventListener('change', function() {
+                renderTrendChart(this.value);
+            });
+        }
+
+        // Initial View Render
+        renderAllElementsChart();
 
         // 2. Doughnut Chart Status
         const ctxDoughnut = document.getElementById('statusDoughnutChart').getContext('2d');

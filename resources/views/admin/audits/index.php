@@ -7,7 +7,7 @@ ob_start();
         <h2 class="fw-bold text-slate-800 mb-1">
             <i class="bi bi-shield-check text-primary me-2"></i>Monitoring Rekap Audit System
         </h2>
-        <p class="text-muted mb-0">Pantau dan evaluasi seluruh pelaksanaan sesi audit internal dari seluruh auditor.</p>
+        <p class="text-muted mb-0">Pantau dan evaluasi seluruh pelaksanaan audit internal dari seluruh auditor.</p>
     </div>
 </div>
 
@@ -70,7 +70,7 @@ ob_start();
                         <th style="width: 50px;">No</th>
                         <th>Perusahaan (Area Audit)</th>
                         <th>Tahun Periode</th>
-                        <th>Pelaksanaan Sesi</th>
+                        <th>Pelaksanaan Audit</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
                         <th>Progres Penilaian</th>
@@ -91,19 +91,35 @@ ob_start();
                                 </span>
                             </td>
                             <td>
+                                <?php
+                                    $compNameLower = strtolower($sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit);
+                                    $isMsmSession = str_contains($compNameLower, 'soputan') || str_contains($compNameLower, 'msm');
+                                ?>
                                 <div class="d-flex flex-column">
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill small fw-semibold w-fit mb-1">
                                         <i class="bi bi-calendar-check me-1"></i>Tahun <?php echo e($thn); ?>
 
                                     </span>
-                                    <span class="text-muted small" style="font-size: 0.75rem;">1 Jan – 31 Des <?php echo e($thn); ?></span>
+                                    <span class="text-muted small" style="font-size: 0.75rem;">
+                                        <?php echo e($isMsmSession ? '5 Jan 2026 – 7 Jan 2026' : '1 Jan – 31 Des ' . $thn); ?>
+
+                                    </span>
                                 </div>
                             </td>
                             <td>
-                                <span class="small text-slate-800">
-                                    <i class="bi bi-calendar-event me-1 text-muted"></i><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?>
+                                <?php
+                                    $thnPelaksanaan = $sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y') : date('Y');
+                                ?>
+                                <div class="d-flex flex-column">
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 rounded-pill small fw-semibold w-fit mb-1">
+                                        <i class="bi bi-calendar-event me-1"></i>Tahun <?php echo e($thnPelaksanaan); ?>
 
-                                </span>
+                                    </span>
+                                    <span class="small text-slate-800" style="font-size: 0.78rem;">
+                                        <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?>
+
+                                    </span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">

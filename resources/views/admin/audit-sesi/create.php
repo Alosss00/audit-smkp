@@ -80,11 +80,11 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- 3. Jadwal Pelaksanaan Sesi Audit -->
+                <!-- 3. Jadwal Pelaksanaan Audit -->
                 <div class="p-3 bg-light rounded-3 border mb-4">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <i class="bi bi-calendar-event text-danger"></i>
-                        <span class="fw-bold small text-slate-800">Jadwal Pelaksanaan Sesi Audit</span>
+                        <span class="fw-bold small text-slate-800">Jadwal Pelaksanaan Audit</span>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">

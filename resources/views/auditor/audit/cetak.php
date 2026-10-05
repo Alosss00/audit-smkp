@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Audit Internal SMKP — <?php echo e($sesi->area_audit); ?> (<?php echo e($sesi->perusahaan->nama_perusahaan ?? 'SMKP'); ?>)</title>
 
-    <!-- Bootstrap 5.3 CSS & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Bootstrap 5.3 CSS & Icons (Local Offline Assets) -->
+    <link href="<?php echo asset('vendor/bootstrap/bootstrap.min.css'); ?>" rel="stylesheet">
+    <link href="<?php echo asset('vendor/bootstrap-icons/bootstrap-icons.min.css'); ?>" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
