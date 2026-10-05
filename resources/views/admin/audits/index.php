@@ -14,15 +14,21 @@ ob_start();
 <!-- Filter Card -->
 <div class="card card-custom p-3 mb-4">
     <form method="GET" action="<?php echo e(route('admin.rekap-audit.index')); ?>" class="row g-2 align-items-center">
-        <div class="col-md-4">
-            <div class="input-group">
-                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-                <input type="text" name="search" class="form-control" placeholder="Cari area, perusahaan, atau auditor..." value="<?php echo e(request('search')); ?>">
-            </div>
+        <div class="col-md-3">
+            <label class="form-label text-muted small fw-semibold mb-1"><i class="bi bi-calendar-range me-1"></i>Pilih Periode Audit</label>
+            <select name="tahun_periode" class="form-select" data-auto-submit="true">
+                <option value="">-- Semua Periode Tahun --</option>
+                <?php if(!empty($tahunPeriodes)): ?>
+                    <?php foreach($tahunPeriodes as $thn): ?>
+                        <option value="<?php echo e($thn); ?>" <?php echo e(request('tahun_periode') == $thn ? 'selected' : ''); ?>>Tahun <?php echo e($thn); ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <label class="form-label text-muted small fw-semibold mb-1"><i class="bi bi-building me-1"></i>Perusahaan / Area</label>
             <select name="perusahaan_id" class="form-select select-searchable" placeholder="-- Pilih Perusahaan --" data-auto-submit="true">
-                <option value="">-- Pilih Perusahaan Area Audit (Semua) --</option>
+                <option value="">-- Semua Perusahaan --</option>
                 <?php foreach($perusahaans as $comp): ?>
                     <option value="<?php echo e($comp->id); ?>" <?php echo e((request('perusahaan_id') == $comp->id || request('area_selection') == 'p:'.$comp->id) ? 'selected' : ''); ?>>
                         <?php echo e($comp->nama_perusahaan); ?> <?php if($comp->kategori): ?> (<?php echo e($comp->kategori); ?>) <?php endif; ?>
@@ -31,21 +37,24 @@ ob_start();
             </select>
         </div>
         <div class="col-md-3">
+            <label class="form-label text-muted small fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>Status Sesi</label>
             <select name="status" class="form-select" data-auto-submit="true">
-                <option value="">-- Semua Status Sesi --</option>
+                <option value="">-- Semua Status --</option>
                 <option value="draft" <?php echo e(request('status') == 'draft' ? 'selected' : ''); ?>>Draft</option>
                 <option value="berjalan" <?php echo e(request('status') == 'berjalan' ? 'selected' : ''); ?>>Berjalan</option>
                 <option value="selesai" <?php echo e(request('status') == 'selesai' ? 'selected' : ''); ?>>Selesai</option>
             </select>
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100 rounded-3">Filter</button>
-        </div>
-        <?php if(request()->filled('search') || request()->filled('status') || request()->filled('perusahaan_id') || request()->filled('area_selection')): ?>
-            <div class="col-md-2">
-                <a href="<?php echo e(route('admin.rekap-audit.index')); ?>" class="btn btn-outline-secondary w-100 rounded-3">Reset</a>
+        <div class="col-md-3">
+            <label class="form-label text-muted small fw-semibold mb-1"><i class="bi bi-search me-1"></i>Pencarian</label>
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Cari area/auditor..." value="<?php echo e(request('search')); ?>">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-funnel"></i></button>
+                <?php if(request()->filled('search') || request()->filled('status') || request()->filled('tahun_periode') || request()->filled('perusahaan_id') || request()->filled('area_selection')): ?>
+                    <a href="<?php echo e(route('admin.rekap-audit.index')); ?>" class="btn btn-outline-secondary" title="Reset Filter"><i class="bi bi-x-lg"></i></a>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
+        </div>
     </form>
 </div>
 

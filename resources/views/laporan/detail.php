@@ -33,16 +33,38 @@ ob_start();
                     <div>
                         <h2 class="fw-bold text-slate-800 mb-0">Laporan Detail Hasil Audit Internal SMKP</h2>
                         <div class="d-flex flex-wrap align-items-center gap-2 mt-1 text-muted small">
-                            <span><i class="bi bi-geo-alt-fill text-danger me-1"></i> Area: <strong><?php echo e($sesi->area_audit); ?></strong></span>
+                            <span><i class="bi bi-building text-primary me-1"></i> Perusahaan: <strong><?php echo e($sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit); ?></strong></span>
                             <span>&bull;</span>
-                            <span><i class="bi bi-calendar3 text-primary me-1"></i> <?php echo e($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('d M Y') : '-'); ?> s/d <?php echo e($sesi->tanggal_selesai ? $sesi->tanggal_selesai->format('d M Y') : '-'); ?></span>
-                            <span>&bull;</span>
-                            <span><i class="bi bi-person-badge text-info me-1"></i> Auditor: <strong><?php echo e($sesi->user->name ?? 'Auditor'); ?></strong></span>
+                            <span><i class="bi bi-calendar-check text-success me-1"></i> Periode Evaluasi: 
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 fw-bold ms-1">
+                                    <?php echo e(($selectedYear ?? 'semua') === 'semua' ? 'Semua Periode Tahun (Akumulasi Total Perusahaan)' : 'Tahun Periode ' . $selectedYear); ?>
+
+                                </span>
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
+                <form method="GET" action="" class="d-flex align-items-center gap-2 me-lg-2">
+                    <label for="selectFilterTahun" class="text-muted small fw-semibold text-nowrap mb-0 d-none d-sm-inline">
+                        <i class="bi bi-filter-circle text-primary me-1"></i>Filter Periode Tahun:
+                    </label>
+                    <select name="tahun_periode" id="selectFilterTahun" class="form-select form-select-sm rounded-3 border-primary-subtle shadow-sm" style="min-width: 240px;" data-auto-submit="true">
+                        <option value="semua" <?php echo e(($selectedYear ?? 'semua') === 'semua' ? 'selected' : ''); ?>>
+                            Semua Periode Tahun (Akumulasi Total)
+                        </option>
+                        <?php if(!empty($availableYears)): ?>
+                            <?php foreach($availableYears as $yr): ?>
+                                <option value="<?php echo e($yr); ?>" <?php echo e(($selectedYear ?? '') == $yr ? 'selected' : ''); ?>>
+                                    Tahun Periode <?php echo e($yr); ?>
+
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </form>
+
                 <?php if(auth()->user()->role === 'admin'): ?>
                     <a href="<?php echo e(route('admin.rekap-audit.show', $sesi->id)); ?>" class="btn btn-outline-secondary rounded-3 px-3">
                         <i class="bi bi-arrow-left me-1"></i> Kembali ke Monitoring
@@ -159,14 +181,20 @@ ob_start();
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link rounded-3 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" 
+                       id="tab-grafik" data-bs-toggle="tab" href="#section-grafik" role="tab" aria-selected="false">
+                        <i class="bi bi-bar-chart-line-fill text-primary"></i> 2.2 Grafik Akumulasi Audit
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link rounded-3 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" 
                        id="tab-praktek" data-bs-toggle="tab" href="#section-praktek" role="tab" aria-selected="false">
-                        <i class="bi bi-award"></i> 2.2 Praktik Terbaik (<?php echo e(count($praktekBaik)); ?>)
+                        <i class="bi bi-award"></i> 2.3 Praktik Terbaik (<?php echo e(count($praktekBaik)); ?>)
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link rounded-3 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" 
                        id="tab-temuan" data-bs-toggle="tab" href="#section-temuan" role="tab" aria-selected="false">
-                        <i class="bi bi-exclamation-diamond"></i> 2.3 Temuan & Tindak Lanjut PICA (<?php echo e($temuanKategori['total_temuan'] ?? count($temuanKategori['kritikal']) + count($temuanKategori['mayor']) + count($temuanKategori['minor'])); ?>)
+                        <i class="bi bi-exclamation-diamond"></i> 2.4 Temuan & Tindak Lanjut PICA (<?php echo e($temuanKategori['total_temuan'] ?? count($temuanKategori['kritikal']) + count($temuanKategori['mayor']) + count($temuanKategori['minor'])); ?>)
                     </a>
                 </li>
             </ul>
@@ -460,7 +488,97 @@ ob_start();
         </div>
 
         <!-- ==========================================
-             SECTION 2.2: DAFTAR SUB-ELEMEN PRAKTIK TERBAIK
+             SECTION 2.2: GRAFIK AKUMULASI AUDIT
+             ========================================== -->
+        <div class="tab-pane fade" id="section-grafik" role="tabpanel" aria-labelledby="tab-grafik">
+            <div class="card card-custom border-0 bg-white mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                    <div>
+                        <h4 class="fw-bold text-slate-800 mb-1">2.2 Grafik Analisis Performance & Temuan Audit Akumulasi</h4>
+                        <p class="text-muted small mb-0">Visualisasi data akumulasi dari seluruh perusahaan (MSM & TTN) untuk Periode Audit Tahun <?php echo e($sesi->tahun_periode ?? date('Y')); ?>.</p>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                            <i class="bi bi-pie-chart-fill me-1"></i> Akumulasi Lintas Perusahaan
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Row 1: Radar Chart Akumulasi & Top Elemen Temuan Akumulasi -->
+                    <div class="row g-4 mb-4">
+                        <!-- Radar Chart Akumulasi -->
+                        <div class="col-lg-6">
+                            <div class="card card-custom p-4 h-100 border-start border-4 border-primary">
+                                <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-primary"></i>Pencapaian Nilai Akumulasi per Elemen</h5>
+                                <p class="text-muted small mb-3">Persentase rata-rata akumulasi pencapaian nilai per elemen SMKP (Gabungan MSM & TTN).</p>
+                                <div style="height: 440px; display: flex; justify-content: center;">
+                                    <canvas id="accumulatedRadarChart" style="max-width: 100%;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Elemen Temuan Akumulasi (Swapped to Top Right) -->
+                        <div class="col-lg-6">
+                            <div class="card card-custom p-4 h-100 border-start border-4 border-warning">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div>
+                                        <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-trophy-fill me-2 text-warning"></i>Top Elemen Paling Sering Ditemui Temuan (Akumulasi Gabungan)</h5>
+                                        <p class="text-muted small mb-0">Peringkat elemen SMKP yang paling banyak memiliki catatan ketidaksesuaian kriteria dari seluruh perusahaan.</p>
+                                    </div>
+                                </div>
+
+                                <div class="list-group list-group-flush border-0 mt-3">
+                                    <?php if(!empty($chartData['topAccumulatedFindings'])): ?>
+                                        <?php foreach($chartData['topAccumulatedFindings'] as $index => $top): ?>
+                                            <div class="list-group-item d-flex align-items-center justify-content-between px-0 py-2 border-bottom">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="badge <?php echo $index == 0 ? 'bg-danger' : ($index == 1 ? 'bg-warning text-dark' : 'bg-secondary'); ?> rounded-circle p-2" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+                                                        <?php echo $index + 1; ?>
+                                                    </span>
+                                                    <div>
+                                                        <strong class="text-slate-800 d-block small">Elemen <?php echo e($top['kode_elemen']); ?>: <?php echo e($top['nama_elemen']); ?></strong>
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1 font-monospace fw-bold">
+                                                    <?php echo e($top['percentage']); ?>% <small class="text-muted">(<?php echo e($top['total_findings']); ?>/<?php echo e($top['total_assessed']); ?>)</small>
+                                                </span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <div class="text-center py-4 text-muted">Belum ada data temuan audit akumulasi.</div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Horizontal Bar Chart Findings Akumulasi (Swapped to Bottom Full Width) -->
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <div class="card card-custom p-4 border-start border-4 border-danger">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div>
+                                        <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-exclamation-octagon-fill me-2 text-danger"></i>Frekuensi Temuan Audit Akumulasi</h5>
+                                        <p class="text-muted small mb-0">Persentase temuan ketidaksesuaian/catatan audit per elemen SMKP (Gabungan MSM & TTN).</p>
+                                    </div>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                                        Total: <?php echo e(number_format($chartData['totalAccumulatedFindings'] ?? 0)); ?> Temuan
+                                    </span>
+                                </div>
+                                <div style="height: 320px;">
+                                    <canvas id="accumulatedFindingsBarChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             SECTION 2.3: DAFTAR SUB-ELEMEN PRAKTIK TERBAIK
              ========================================== -->
         <div class="tab-pane fade" id="section-praktek" role="tabpanel" aria-labelledby="tab-praktek">
             <div class="card card-custom border-0 bg-white mb-4">
@@ -470,7 +588,7 @@ ob_start();
                             <i class="bi bi-award-fill fs-4"></i>
                         </div>
                         <div>
-                            <h4 class="fw-bold text-slate-800 mb-1">2.2 Daftar Sub-Elemen Praktik Terbaik (Best Practices)</h4>
+                            <h4 class="fw-bold text-slate-800 mb-1">2.3 Daftar Sub-Elemen Praktik Terbaik (Best Practices)</h4>
                             <p class="text-muted small mb-0">Daftar Sub-Elemen yang telah mencapai tingkat kepatuhan sempurna (100% dari total nilai maksimal efektif).</p>
                         </div>
                     </div>
@@ -554,7 +672,7 @@ ob_start();
         </div>
 
         <!-- ==========================================
-             SECTION 2.3: DAFTAR TEMUAN KETIDAKSESUAIAN & PICA
+             SECTION 2.4: DAFTAR TEMUAN KETIDAKSESUAIAN & PICA
              ========================================== -->
         <div class="tab-pane fade" id="section-temuan" role="tabpanel" aria-labelledby="tab-temuan">
             <div class="card card-custom border-0 bg-white mb-4">
@@ -564,7 +682,7 @@ ob_start();
                             <i class="bi bi-tools fs-4"></i>
                         </div>
                         <div>
-                            <h4 class="fw-bold text-slate-800 mb-1">2.3 Daftar Temuan Ketidaksesuaian & Tindak Lanjut PICA</h4>
+                            <h4 class="fw-bold text-slate-800 mb-1">2.4 Daftar Temuan Ketidaksesuaian & Tindak Lanjut PICA</h4>
                             <p class="text-muted small mb-0">Rincian ketidaksesuaian hasil audit yang diklasifikasikan berdasarkan tingkat keparahan (Kritikal, Mayor, Minor) serta status rencana tindak lanjut perbaikannya.</p>
                         </div>
                     </div>
@@ -679,6 +797,185 @@ ob_start();
             btnCollapse.addEventListener('click', function() {
                 toggleAllAccordions(false);
             });
+        }
+
+        // Audit Period Switcher listener
+        const selectPeriodeSesi = document.getElementById('selectPeriodeSesi');
+        if (selectPeriodeSesi) {
+            selectPeriodeSesi.addEventListener('change', function() {
+                if (this.value) {
+                    window.location.href = this.value;
+                }
+            });
+        }
+
+        // Consolidated Charts Initialization
+        const chartData = <?php echo json_encode($chartData ?? []); ?>;
+        
+        if (chartData && chartData.elementFullNames) {
+            function wrapText(str, maxLength) {
+                let res = [];
+                while (str.length > maxLength) {
+                    let found = false;
+                    for (let i = maxLength - 1; i >= 0; i--) {
+                        if (str.charAt(i) === ' ' || str.charAt(i) === '-') {
+                            res.push(str.slice(0, i));
+                            str = str.slice(i + 1);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        res.push(str.slice(0, maxLength));
+                        str = str.slice(maxLength);
+                    }
+                }
+                res.push(str);
+                return res;
+            }
+
+            const rawElementNames = chartData.elementFullNames || [];
+            const accumulatedScores = chartData.accumulatedScores || [];
+            
+            const radarLabels = rawElementNames.map((name, i) => {
+                let lines = wrapText(name, 22);
+                lines.push('(' + (accumulatedScores[i] || 0) + '%)');
+                return lines;
+            });
+
+            // 1. Radar Chart Akumulasi
+            const ctxRadar = document.getElementById('accumulatedRadarChart');
+            let accumulatedRadarChart = null;
+            if (ctxRadar) {
+                accumulatedRadarChart = new Chart(ctxRadar.getContext('2d'), {
+                    type: 'radar',
+                    data: {
+                        labels: radarLabels,
+                        datasets: [{
+                            label: 'Pencapaian Akumulasi (%)',
+                            data: accumulatedScores,
+                            backgroundColor: 'rgba(2, 132, 199, 0.25)',
+                            borderColor: '#0284c7',
+                            pointBackgroundColor: '#ef4444',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#ef4444',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                pointLabels: { font: { size: 12, weight: 'bold' } },
+                                ticks: {
+                                    stepSize: 20,
+                                    font: { size: 11 },
+                                    callback: function(value) { return value + '%'; }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) { return 'Pencapaian Akumulasi: ' + context.raw + '%'; }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Horizontal Bar Chart Accumulated Findings
+            const hBarTextPlugin = {
+                id: 'hBarTextPlugin',
+                afterDatasetsDraw(chart, args, pluginOptions) {
+                    const { ctx, data } = chart;
+                    chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                        const value = data.datasets[0].data[index];
+                        ctx.save();
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.textBaseline = 'middle';
+                        
+                        if (value > 0) {
+                            let xPos = bar.x - 10;
+                            ctx.fillStyle = '#ffffff'; 
+                            ctx.textAlign = 'right';
+                            
+                            if (bar.width < 35) {
+                                xPos = bar.x + 10;
+                                ctx.fillStyle = '#1e293b';
+                                ctx.textAlign = 'left';
+                            }
+                            ctx.fillText(value + '%', xPos, bar.y);
+                        } else {
+                            ctx.fillStyle = '#1e293b';
+                            ctx.textAlign = 'left';
+                            ctx.fillText('0%', bar.x + 10, bar.y);
+                        }
+                        ctx.restore();
+                    });
+                }
+            };
+
+            const ctxFindings = document.getElementById('accumulatedFindingsBarChart');
+            let accumulatedFindingsChart = null;
+            if (ctxFindings) {
+                const rawFindingCounts = chartData.accumulatedFindingCounts || [];
+                const rawFindingTotals = chartData.accumulatedFindingTotalsPerElemen || [];
+
+                accumulatedFindingsChart = new Chart(ctxFindings.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.findingLabels || [],
+                        datasets: [{
+                            label: 'Persentase Temuan Akumulasi (%)',
+                            data: chartData.accumulatedFindingPercentages || [],
+                            backgroundColor: 'rgba(239, 68, 68, 0.75)',
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { callback: function(val) { return val + '%'; } }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const count = rawFindingCounts[context.dataIndex] || 0;
+                                        const total = rawFindingTotals[context.dataIndex] || 0;
+                                        return `Temuan Akumulasi: ${context.parsed.x}% (${count}/${total} Kriteria)`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [hBarTextPlugin]
+                });
+            }
+
+            // Resize charts on tab activation
+            const tabGrafikEl = document.getElementById('tab-grafik');
+            if (tabGrafikEl) {
+                tabGrafikEl.addEventListener('shown.bs.tab', function() {
+                    if (accumulatedRadarChart) accumulatedRadarChart.resize();
+                    if (accumulatedFindingsChart) accumulatedFindingsChart.resize();
+                });
+            }
         }
     });
 </script>

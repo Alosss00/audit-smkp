@@ -29,14 +29,19 @@ class AuditSesiController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('tahun_periode')) {
+            $query->where('tahun_periode', $request->tahun_periode);
+        }
+
         if ($request->filled('perusahaan_id')) {
             $query->where('perusahaan_id', $request->perusahaan_id);
         }
 
         $auditSesis = $query->paginate(10);
         $perusahaans = Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
+        $tahunPeriodes = AuditSesi::select('tahun_periode')->whereNotNull('tahun_periode')->distinct()->pluck('tahun_periode')->sortDesc();
 
-        return view('auditor.audit.index', compact('auditSesis', 'userArea', 'perusahaans'));
+        return view('auditor.audit.index', compact('auditSesis', 'userArea', 'perusahaans', 'tahunPeriodes'));
     }
 
     /**
@@ -83,14 +88,30 @@ class AuditSesiController extends Controller
     public function laporanDetail($id)
     {
         $sesi           = $this->findAuditorSession($id);
-        $rekapElemen    = $sesi->getRekapPerElemen();
-        $hierarki       = $sesi->buildMatrixTree();
-        $praktekBaik    = $sesi->getSubElemenPraktekTerbaik();
-        $temuanKategori = $sesi->getTemuanPerKategori();
-        $skorAkhir      = $sesi->hitungSkorAkhir();
+        $tahunFilter    = request('tahun_periode');
+
+        $companyReport  = AuditSesi::getCompanyAggregatedReport($sesi, $tahunFilter);
+        $rekapElemen    = $companyReport['rekapElemen'];
+        $hierarki       = $companyReport['hierarki'];
+        $praktekBaik    = $companyReport['praktekBaik'];
+        $temuanKategori = $companyReport['temuanKategori'];
+        $skorAkhir      = $companyReport['skorAkhir'];
+        $availableYears = $companyReport['availableYears'];
+        $selectedYear   = $companyReport['selectedYear'];
         $isReadOnly     = true;
 
-        return view('laporan.detail', compact('sesi', 'rekapElemen', 'hierarki', 'praktekBaik', 'temuanKategori', 'skorAkhir', 'isReadOnly'));
+        $chartData      = AuditSesi::getAccumulatedChartData();
+        $userArea       = auth()->user()->area;
+        $semuaSesi      = AuditSesi::with('perusahaan')
+            ->where('area_audit', 'like', '%' . $userArea . '%')
+            ->orderBy('tahun_periode', 'desc')
+            ->latest()
+            ->get();
+
+        return view('laporan.detail', compact(
+            'sesi', 'rekapElemen', 'hierarki', 'praktekBaik', 'temuanKategori', 
+            'skorAkhir', 'isReadOnly', 'chartData', 'semuaSesi', 'availableYears', 'selectedYear'
+        ));
     }
 
     /**

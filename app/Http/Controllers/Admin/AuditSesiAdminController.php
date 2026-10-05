@@ -423,14 +423,25 @@ class AuditSesiAdminController extends Controller
     public function laporanDetail($id)
     {
         $sesi           = AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
-        $rekapElemen    = $sesi->getRekapPerElemen();
-        $hierarki       = $sesi->buildMatrixTree();
-        $praktekBaik    = $sesi->getSubElemenPraktekTerbaik();
-        $temuanKategori = $sesi->getTemuanPerKategori();
-        $skorAkhir      = $sesi->hitungSkorAkhir();
+        $tahunFilter    = request('tahun_periode');
+        
+        $companyReport  = AuditSesi::getCompanyAggregatedReport($sesi, $tahunFilter);
+        $rekapElemen    = $companyReport['rekapElemen'];
+        $hierarki       = $companyReport['hierarki'];
+        $praktekBaik    = $companyReport['praktekBaik'];
+        $temuanKategori = $companyReport['temuanKategori'];
+        $skorAkhir      = $companyReport['skorAkhir'];
+        $availableYears = $companyReport['availableYears'];
+        $selectedYear   = $companyReport['selectedYear'];
         $isReadOnly     = false;
 
-        return view('laporan.detail', compact('sesi', 'rekapElemen', 'hierarki', 'praktekBaik', 'temuanKategori', 'skorAkhir', 'isReadOnly'));
+        $chartData      = AuditSesi::getAccumulatedChartData();
+        $semuaSesi      = AuditSesi::with('perusahaan')->orderBy('tahun_periode', 'desc')->latest()->get();
+
+        return view('laporan.detail', compact(
+            'sesi', 'rekapElemen', 'hierarki', 'praktekBaik', 'temuanKategori', 
+            'skorAkhir', 'isReadOnly', 'chartData', 'semuaSesi', 'availableYears', 'selectedYear'
+        ));
     }
 
     /**

@@ -146,109 +146,7 @@ class DashboardController extends Controller
             }
         }
 
-        // 2. Audit Findings Frequency per Elemen for MSM & TTN (100% scale per elemen)
-        $msmFindingCounts = [];
-        $msmFindingTotalsPerElemen = [];
-        $msmFindingPercentages = [];
-        $msmFindingsPerElemen = [];
-        $totalMsmFindings = 0;
-
-        $ttnFindingCounts = [];
-        $ttnFindingTotalsPerElemen = [];
-        $ttnFindingPercentages = [];
-        $ttnFindingsPerElemen = [];
-        $totalTtnFindings = 0;
-
-        $findingLabels = [];
-
-        foreach ($elemens as $el) {
-            $findingLabels[] = 'Elemen ' . $el->kode_elemen;
-
-            $msmAssessed = 0;
-            $msmFindings = 0;
-            $ttnAssessed = 0;
-            $ttnFindings = 0;
-
-            foreach ($allSessions as $session) {
-                $comp = strtolower($session->perusahaan ? $session->perusahaan->nama_perusahaan : '');
-                $area = strtolower($session->area_audit ?? '');
-
-                $isMsm = str_contains($comp, 'meares soputan') || str_contains($comp, 'msm') || str_contains($area, 'meares soputan') || str_contains($area, 'msm');
-                $isTtn = str_contains($comp, 'tambang tondano') || str_contains($comp, 'ttn') || str_contains($area, 'tambang tondano') || str_contains($area, 'ttn');
-
-                if (!$isMsm && !$isTtn) {
-                    continue;
-                }
-
-                $details = $session->auditDetails->filter(function ($d) use ($el) {
-                    return $d->kriteria
-                        && $d->kriteria->subElemen
-                        && $d->kriteria->subElemen->elemen_id == $el->id;
-                });
-
-                foreach ($details as $d) {
-                    if (!$d->is_na) {
-                        $maxVal = (float) ($d->kriteria->nilai_maksimal ?? 4);
-                        $val = (float) $d->nilai;
-                        $isFinding = $val < $maxVal;
-
-                        if ($isMsm) {
-                            $msmAssessed++;
-                            if ($isFinding) {
-                                $msmFindings++;
-                            }
-                        }
-
-                        if ($isTtn) {
-                            $ttnAssessed++;
-                            if ($isFinding) {
-                                $ttnFindings++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // MSM findings calculation
-            $msmPct = $msmAssessed > 0 ? round(($msmFindings / $msmAssessed) * 100, 1) : 0;
-            $msmFindingCounts[] = $msmFindings;
-            $msmFindingTotalsPerElemen[] = $msmAssessed;
-            $msmFindingPercentages[] = $msmPct;
-            $totalMsmFindings += $msmFindings;
-
-            $msmFindingsPerElemen[] = [
-                'kode_elemen'    => $el->kode_elemen,
-                'nama_elemen'    => $el->nama_elemen,
-                'total_findings' => $msmFindings,
-                'total_assessed' => $msmAssessed,
-                'percentage'     => $msmPct,
-            ];
-
-            // TTN findings calculation
-            $ttnPct = $ttnAssessed > 0 ? round(($ttnFindings / $ttnAssessed) * 100, 1) : 0;
-            $ttnFindingCounts[] = $ttnFindings;
-            $ttnFindingTotalsPerElemen[] = $ttnAssessed;
-            $ttnFindingPercentages[] = $ttnPct;
-            $totalTtnFindings += $ttnFindings;
-
-            $ttnFindingsPerElemen[] = [
-                'kode_elemen'    => $el->kode_elemen,
-                'nama_elemen'    => $el->nama_elemen,
-                'total_findings' => $ttnFindings,
-                'total_assessed' => $ttnAssessed,
-                'percentage'     => $ttnPct,
-            ];
-        }
-
-        usort($msmFindingsPerElemen, function ($a, $b) {
-            return $b['percentage'] <=> $a['percentage'] ?: $b['total_findings'] <=> $a['total_findings'];
-        });
-        $topMsmFindings = array_slice($msmFindingsPerElemen, 0, 7);
-
-        usort($ttnFindingsPerElemen, function ($a, $b) {
-            return $b['percentage'] <=> $a['percentage'] ?: $b['total_findings'] <=> $a['total_findings'];
-        });
-        $topTtnFindings = array_slice($ttnFindingsPerElemen, 0, 7);
+        $accumulatedChartData = AuditSesi::getAccumulatedChartData();
 
         return view('admin.dashboard', compact(
             'stats',
@@ -256,19 +154,7 @@ class DashboardController extends Controller
             'elementScores',
             'elementColors',
             'elementFullNames',
-            'findingLabels',
-            'msmFindingCounts',
-            'msmFindingTotalsPerElemen',
-            'msmFindingPercentages',
-            'totalMsmFindings',
-            'topMsmFindings',
-            'ttnFindingCounts',
-            'ttnFindingTotalsPerElemen',
-            'ttnFindingPercentages',
-            'totalTtnFindings',
-            'topTtnFindings',
-            'msmScores',
-            'ttnScores'
+            'accumulatedChartData'
         ));
     }
 

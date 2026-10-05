@@ -19,6 +19,10 @@ class AuditOversightController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('tahun_periode')) {
+            $query->where('tahun_periode', $request->tahun_periode);
+        }
+
         if ($request->filled('perusahaan_id')) {
             $query->where('perusahaan_id', $request->perusahaan_id);
         } elseif ($request->filled('area_selection')) {
@@ -42,8 +46,9 @@ class AuditOversightController extends Controller
 
         $auditSesis = $query->paginate(10);
         $perusahaans = \App\Models\Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
+        $tahunPeriodes = AuditSesi::select('tahun_periode')->whereNotNull('tahun_periode')->distinct()->pluck('tahun_periode')->sortDesc();
 
-        return view('admin.audits.index', compact('auditSesis', 'perusahaans'));
+        return view('admin.audits.index', compact('auditSesis', 'perusahaans', 'tahunPeriodes'));
     }
 
     /**

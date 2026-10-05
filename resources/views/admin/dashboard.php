@@ -107,90 +107,32 @@ ob_start();
     </div>
 </div>
 
-<!-- Visual Chart Analytics Section 1.5: Radar Charts -->
+<!-- Visual Chart Analytics Section 2: Accumulated Analytics Across All Audit Sessions -->
 <div class="row g-4 mb-4">
+    <!-- Top Left: Radar Chart Akumulasi -->
     <div class="col-lg-6">
-        <div class="card card-custom p-4 h-100 border-start border-4 border-success">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-success"></i>PT Meares Soputan Mining (MSM)</h5>
-            <p class="text-muted small mb-3">Grafik visualisasi persentase rata-rata pencapaian tiap elemen SMKP.</p>
-            <div style="height: 600px; display: flex; justify-content: center;">
-                <canvas id="msmRadarChart" style="max-width: 100%;"></canvas>
+        <div class="card card-custom p-4 h-100 border-start border-4 border-primary">
+            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-primary"></i>Pencapaian Nilai Akumulasi per Elemen</h5>
+            <p class="text-muted small mb-3">Persentase rata-rata akumulasi pencapaian nilai per elemen SMKP (Gabungan Semua Perusahaan & Sesi Audit).</p>
+            <div style="height: 440px; display: flex; justify-content: center;">
+                <canvas id="accumulatedRadarChart" style="max-width: 100%;"></canvas>
             </div>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="card card-custom p-4 h-100 border-start border-4 border-info">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-heptagon-fill me-2 text-info"></i>PT Tambang Tondano Nusajaya (TTN)</h5>
-            <p class="text-muted small mb-3">Grafik visualisasi persentase rata-rata pencapaian tiap elemen SMKP.</p>
-            <div style="height: 600px; display: flex; justify-content: center;">
-                <canvas id="ttnRadarChart" style="max-width: 100%;"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Visual Chart Analytics Section 2: Audit Findings Frequency per Elemen (MSM & TTN) -->
-<div class="row g-4 mb-4">
-    <!-- Horizontal Bar Chart Findings MSM -->
+    <!-- Top Right: Top Elemen Paling Sering Ditemui Temuan (Akumulasi Gabungan) -->
     <div class="col-lg-6">
-        <div class="card card-custom p-4 h-100 border-start border-4 border-success">
+        <div class="card card-custom p-4 h-100 border-start border-4 border-warning">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <div>
-                    <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-exclamation-octagon-fill me-2 text-success"></i>Frekuensi Temuan Audit per Elemen — MSM</h5>
-                    <p class="text-muted small mb-0">Grafik persentase temuan ketidaksesuaian/catatan audit per elemen SMKP (MSM).</p>
+                    <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-trophy-fill me-2 text-warning"></i>Top Elemen Paling Sering Ditemui Temuan (Akumulasi Gabungan)</h5>
+                    <p class="text-muted small mb-0">Peringkat elemen SMKP yang paling banyak memiliki catatan ketidaksesuaian kriteria dari seluruh sesi audit.</p>
                 </div>
-                <?php if (isset($totalMsmFindings) && $totalMsmFindings > 0): ?>
-                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-bold">
-                        Total: <?php echo number_format($totalMsmFindings); ?> Temuan
-                    </span>
-                <?php else: ?>
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
-                        Total: 0 Temuan
-                    </span>
-                <?php endif; ?>
             </div>
-            <div style="height: 300px;">
-                <canvas id="msmFindingsBarChart"></canvas>
-            </div>
-        </div>
-    </div>
 
-    <!-- Horizontal Bar Chart Findings TTN -->
-    <div class="col-lg-6">
-        <div class="card card-custom p-4 h-100 border-start border-4 border-info">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <div>
-                    <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-exclamation-octagon-fill me-2 text-info"></i>Frekuensi Temuan Audit per Elemen — TTN</h5>
-                    <p class="text-muted small mb-0">Grafik persentase temuan ketidaksesuaian/catatan audit per elemen SMKP (TTN).</p>
-                </div>
-                <?php if (isset($totalTtnFindings) && $totalTtnFindings > 0): ?>
-                    <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2 rounded-pill fw-bold">
-                        Total: <?php echo number_format($totalTtnFindings); ?> Temuan
-                    </span>
-                <?php else: ?>
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
-                        Total: 0 Temuan
-                    </span>
-                <?php endif; ?>
-            </div>
-            <div style="height: 300px;">
-                <canvas id="ttnFindingsBarChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Top Elemen Paling Sering Ditemui Temuan (MSM & TTN) -->
-<div class="row g-4 mb-5">
-    <!-- Top Findings List MSM -->
-    <div class="col-lg-6">
-        <div class="card card-custom p-4 h-100 border-top border-4 border-success">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-trophy-fill me-2 text-success"></i>Top Elemen Paling Sering Temuan — MSM</h5>
-            <p class="text-muted small mb-3">Peringkat elemen SMKP yang paling sering ditemukan ketidaksesuaian pada PT Meares Soputan Mining.</p>
-
-            <div class="list-group list-group-flush border-0">
-                <?php if (!empty($topMsmFindings)): ?>
-                    <?php foreach ($topMsmFindings as $index => $top): ?>
+            <div class="list-group list-group-flush border-0 mt-3">
+                <?php if(!empty($accumulatedChartData['topAccumulatedFindings'])): ?>
+                    <?php foreach($accumulatedChartData['topAccumulatedFindings'] as $index => $top): ?>
                         <div class="list-group-item d-flex align-items-center justify-content-between px-0 py-2 border-bottom">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge <?php echo $index == 0 ? 'bg-danger' : ($index == 1 ? 'bg-warning text-dark' : 'bg-secondary'); ?> rounded-circle p-2" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
@@ -200,48 +142,40 @@ ob_start();
                                     <strong class="text-slate-800 d-block small">Elemen <?php echo e($top['kode_elemen']); ?>: <?php echo e($top['nama_elemen']); ?></strong>
                                 </div>
                             </div>
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1 font-monospace">
-                                <?php echo e($top['percentage']); ?>% <small class="text-muted">(<?php echo e($top['total_findings']); ?>/<?php echo e($top['total_assessed'] ?? 0); ?>)</small>
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1 font-monospace fw-bold">
+                                <?php echo e($top['percentage']); ?>% <small class="text-muted">(<?php echo e($top['total_findings']); ?>/<?php echo e($top['total_assessed']); ?>)</small>
                             </span>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="text-center py-4 text-muted">Belum ada data temuan audit MSM.</div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- Top Findings List TTN -->
-    <div class="col-lg-6">
-        <div class="card card-custom p-4 h-100 border-top border-4 border-info">
-            <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-trophy-fill me-2 text-info"></i>Top Elemen Paling Sering Temuan — TTN</h5>
-            <p class="text-muted small mb-3">Peringkat elemen SMKP yang paling sering ditemukan ketidaksesuaian pada PT Tambang Tondano Nusajaya.</p>
-
-            <div class="list-group list-group-flush border-0">
-                <?php if (!empty($topTtnFindings)): ?>
-                    <?php foreach ($topTtnFindings as $index => $top): ?>
-                        <div class="list-group-item d-flex align-items-center justify-content-between px-0 py-2 border-bottom">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge <?php echo $index == 0 ? 'bg-danger' : ($index == 1 ? 'bg-warning text-dark' : 'bg-secondary'); ?> rounded-circle p-2" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
-                                    <?php echo $index + 1; ?>
-                                </span>
-                                <div>
-                                    <strong class="text-slate-800 d-block small">Elemen <?php echo e($top['kode_elemen']); ?>: <?php echo e($top['nama_elemen']); ?></strong>
-                                </div>
-                            </div>
-                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-1 font-monospace">
-                                <?php echo e($top['percentage']); ?>% <small class="text-muted">(<?php echo e($top['total_findings']); ?>/<?php echo e($top['total_assessed'] ?? 0); ?>)</small>
-                            </span>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="text-center py-4 text-muted">Belum ada data temuan audit TTN.</div>
+                    <div class="text-center py-4 text-muted">Belum ada data temuan audit akumulasi.</div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Bottom Full Width: Horizontal Bar Chart Findings Akumulasi -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card card-custom p-4 border-start border-4 border-danger">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div>
+                    <h5 class="fw-bold mb-1 text-slate-800"><i class="bi bi-exclamation-octagon-fill me-2 text-danger"></i>Frekuensi Temuan Audit Akumulasi</h5>
+                    <p class="text-muted small mb-0">Persentase temuan ketidaksesuaian/catatan audit per elemen SMKP (Gabungan Seluruh Sesi Audit).</p>
+                </div>
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                    Total: <?php echo e(number_format($accumulatedChartData['totalAccumulatedFindings'] ?? 0)); ?> Temuan
+                </span>
+            </div>
+            <div style="height: 320px;">
+                <canvas id="accumulatedFindingsBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <?php if (auth()->user()->hasMasterDataAccess()): ?>
 <!-- Master Data Quick Navigation -->
@@ -428,110 +362,6 @@ ob_start();
             plugins: [barTextPlugin]
         });
 
-        // 1.5 Radar Charts
-        function wrapText(str, maxLength) {
-            let res = [];
-            while (str.length > maxLength) {
-                let found = false;
-                for (let i = maxLength - 1; i >= 0; i--) {
-                    if (str.charAt(i) === ' ' || str.charAt(i) === '-') {
-                        res.push(str.slice(0, i));
-                        str = str.slice(i + 1);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    res.push(str.slice(0, maxLength));
-                    str = str.slice(maxLength);
-                }
-            }
-            res.push(str);
-            return res;
-        }
-
-        const rawElementNames = <?php echo json_encode($elementFullNames); ?>;
-        const msmScores = <?php echo json_encode($msmScores); ?>;
-        const ttnScores = <?php echo json_encode($ttnScores); ?>;
-
-        const msmLabels = rawElementNames.map((name, i) => {
-            let lines = wrapText(name, 22);
-            lines.push('(' + msmScores[i] + '%)');
-            return lines;
-        });
-
-        const ttnLabels = rawElementNames.map((name, i) => {
-            let lines = wrapText(name, 22);
-            lines.push('(' + ttnScores[i] + '%)');
-            return lines;
-        });
-        const radarOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                r: {
-                    beginAtZero: true,
-                    max: 100,
-                    pointLabels: {
-                        font: { size: 13, weight: 'bold' }
-                    },
-                    ticks: {
-                        stepSize: 10,
-                        font: { size: 12 },
-                        callback: function(value) { return value + '%'; }
-                    }
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) { return 'Pencapaian: ' + context.raw + '%'; }
-                    }
-                }
-            }
-        };
-
-        const ctxMsmRadar = document.getElementById('msmRadarChart').getContext('2d');
-        new Chart(ctxMsmRadar, {
-            type: 'radar',
-            data: {
-                labels: msmLabels,
-                datasets: [{
-                    label: 'Pencapaian (%)',
-                    data: msmScores,
-                    backgroundColor: 'rgba(34, 197, 94, 0.2)',
-                    borderColor: 'rgba(34, 197, 94, 1)',
-                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgba(239, 68, 68, 1)',
-                    borderWidth: 2,
-                }]
-            },
-            options: radarOptions
-        });
-
-        const ctxTtnRadar = document.getElementById('ttnRadarChart').getContext('2d');
-        new Chart(ctxTtnRadar, {
-            type: 'radar',
-            data: {
-                labels: ttnLabels,
-                datasets: [{
-                    label: 'Pencapaian (%)',
-                    data: ttnScores,
-                    backgroundColor: 'rgba(14, 165, 233, 0.2)',
-                    borderColor: 'rgba(14, 165, 233, 1)',
-                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgba(239, 68, 68, 1)',
-                    borderWidth: 2,
-                }]
-            },
-            options: radarOptions
-        });
-
         // 2. Doughnut Chart Status
         const ctxDoughnut = document.getElementById('statusDoughnutChart').getContext('2d');
         new Chart(ctxDoughnut, {
@@ -558,130 +388,161 @@ ob_start();
             }
         });
 
-        // Shared Plugin for Bar Chart Labels
-        const hBarTextPlugin = {
-            id: 'hBarTextPlugin',
-            afterDatasetsDraw(chart, args, pluginOptions) {
-                const { ctx, data } = chart;
-                chart.getDatasetMeta(0).data.forEach((bar, index) => {
-                    const value = data.datasets[0].data[index];
-                    ctx.save();
-                    ctx.font = 'bold 12px sans-serif';
-                    ctx.textBaseline = 'middle';
-                    
-                    if (value > 0) {
-                        let xPos = bar.x - 10;
-                        ctx.fillStyle = '#ffffff'; 
-                        ctx.textAlign = 'right';
-                        
-                        if (bar.width < 30) {
-                            xPos = bar.x + 10;
-                            ctx.fillStyle = '#1e293b'; // slate-800
-                            ctx.textAlign = 'left';
+        // 3. Accumulated Radar Chart
+        const accumulatedData = <?php echo json_encode($accumulatedChartData ?? []); ?>;
+        if (accumulatedData && accumulatedData.elementFullNames) {
+            function wrapText(str, maxLength) {
+                let res = [];
+                while (str.length > maxLength) {
+                    let found = false;
+                    for (let i = maxLength - 1; i >= 0; i--) {
+                        if (str.charAt(i) === ' ' || str.charAt(i) === '-') {
+                            res.push(str.slice(0, i));
+                            str = str.slice(i + 1);
+                            found = true;
+                            break;
                         }
-                        
-                        ctx.fillText(value + '%', xPos, bar.y);
-                    } else {
-                        ctx.fillStyle = '#1e293b';
-                        ctx.textAlign = 'left';
-                        ctx.fillText('0%', bar.x + 10, bar.y);
                     }
-                    ctx.restore();
+                    if (!found) {
+                        res.push(str.slice(0, maxLength));
+                        str = str.slice(maxLength);
+                    }
+                }
+                res.push(str);
+                return res;
+            }
+
+            const rawElementNames = accumulatedData.elementFullNames || [];
+            const accumulatedScores = accumulatedData.accumulatedScores || [];
+            
+            const radarLabels = rawElementNames.map((name, i) => {
+                let lines = wrapText(name, 22);
+                lines.push('(' + (accumulatedScores[i] || 0) + '%)');
+                return lines;
+            });
+
+            const ctxRadar = document.getElementById('accumulatedRadarChart');
+            if (ctxRadar) {
+                new Chart(ctxRadar.getContext('2d'), {
+                    type: 'radar',
+                    data: {
+                        labels: radarLabels,
+                        datasets: [{
+                            label: 'Pencapaian Akumulasi (%)',
+                            data: accumulatedScores,
+                            backgroundColor: 'rgba(2, 132, 199, 0.25)',
+                            borderColor: '#0284c7',
+                            pointBackgroundColor: '#ef4444',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#ef4444',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                pointLabels: { font: { size: 12, weight: 'bold' } },
+                                ticks: {
+                                    stepSize: 20,
+                                    font: { size: 11 },
+                                    callback: function(value) { return value + '%'; }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) { return 'Pencapaian Akumulasi: ' + context.raw + '%'; }
+                                }
+                            }
+                        }
+                    }
                 });
             }
-        };
 
-        // 3. Horizontal Bar Chart Audit Findings Frequency - MSM
-        const ctxMsmFindings = document.getElementById('msmFindingsBarChart').getContext('2d');
-        const rawMsmFindingCounts = <?php echo json_encode($msmFindingCounts); ?>;
-        const rawMsmFindingTotals = <?php echo json_encode($msmFindingTotalsPerElemen ?? []); ?>;
-
-        new Chart(ctxMsmFindings, {
-            type: 'bar',
-            data: {
-                labels: <?php echo json_encode($findingLabels); ?>,
-                datasets: [{
-                    label: 'Persentase Temuan MSM per Elemen (%)',
-                    data: <?php echo json_encode($msmFindingPercentages); ?>,
-                    backgroundColor: 'rgba(34, 197, 94, 0.75)',
-                    borderColor: '#22c55e',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function(value) { return value + '%'; }
+            // 4. Horizontal Bar Chart Accumulated Findings
+            const hBarTextPlugin = {
+                id: 'hBarTextPlugin',
+                afterDatasetsDraw(chart, args, pluginOptions) {
+                    const { ctx, data } = chart;
+                    chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                        const value = data.datasets[0].data[index];
+                        ctx.save();
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.textBaseline = 'middle';
+                        
+                        if (value > 0) {
+                            let xPos = bar.x - 10;
+                            ctx.fillStyle = '#ffffff'; 
+                            ctx.textAlign = 'right';
+                            
+                            if (bar.width < 35) {
+                                xPos = bar.x + 10;
+                                ctx.fillStyle = '#1e293b';
+                                ctx.textAlign = 'left';
+                            }
+                            ctx.fillText(value + '%', xPos, bar.y);
+                        } else {
+                            ctx.fillStyle = '#1e293b';
+                            ctx.textAlign = 'left';
+                            ctx.fillText('0%', bar.x + 10, bar.y);
                         }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const count = rawMsmFindingCounts[context.dataIndex] || 0;
-                                const total = rawMsmFindingTotals[context.dataIndex] || 0;
-                                return `Temuan MSM: ${context.parsed.x}% (${count}/${total} Kriteria)`;
+                        ctx.restore();
+                    });
+                }
+            };
+
+            const ctxFindings = document.getElementById('accumulatedFindingsBarChart');
+            if (ctxFindings) {
+                const rawFindingCounts = accumulatedData.accumulatedFindingCounts || [];
+                const rawFindingTotals = accumulatedData.accumulatedFindingTotalsPerElemen || [];
+
+                new Chart(ctxFindings.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: accumulatedData.findingLabels || [],
+                        datasets: [{
+                            label: 'Persentase Temuan Akumulasi (%)',
+                            data: accumulatedData.accumulatedFindingPercentages || [],
+                            backgroundColor: 'rgba(239, 68, 68, 0.75)',
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { callback: function(val) { return val + '%'; } }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const count = rawFindingCounts[context.dataIndex] || 0;
+                                        const total = rawFindingTotals[context.dataIndex] || 0;
+                                        return `Temuan Akumulasi: ${context.parsed.x}% (${count}/${total} Kriteria)`;
+                                    }
+                                }
                             }
                         }
-                    }
-                }
-            },
-            plugins: [hBarTextPlugin]
-        });
-
-        // 4. Horizontal Bar Chart Audit Findings Frequency - TTN
-        const ctxTtnFindings = document.getElementById('ttnFindingsBarChart').getContext('2d');
-        const rawTtnFindingCounts = <?php echo json_encode($ttnFindingCounts); ?>;
-        const rawTtnFindingTotals = <?php echo json_encode($ttnFindingTotalsPerElemen ?? []); ?>;
-
-        new Chart(ctxTtnFindings, {
-            type: 'bar',
-            data: {
-                labels: <?php echo json_encode($findingLabels); ?>,
-                datasets: [{
-                    label: 'Persentase Temuan TTN per Elemen (%)',
-                    data: <?php echo json_encode($ttnFindingPercentages); ?>,
-                    backgroundColor: 'rgba(14, 165, 233, 0.75)',
-                    borderColor: '#0ea5e9',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function(value) { return value + '%'; }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const count = rawTtnFindingCounts[context.dataIndex] || 0;
-                                const total = rawTtnFindingTotals[context.dataIndex] || 0;
-                                return `Temuan TTN: ${context.parsed.x}% (${count}/${total} Kriteria)`;
-                            }
-                        }
-                    }
-                }
-            },
-            plugins: [hBarTextPlugin]
-        });
+                    },
+                    plugins: [hBarTextPlugin]
+                });
+            }
+        }
     });
 </script>
 <?php
