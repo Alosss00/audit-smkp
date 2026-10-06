@@ -442,11 +442,14 @@ class AuditSesi extends Model
      * @param int|null $tahunPeriode
      * @return array
      */
-    public static function getAccumulatedChartData(?int $tahunPeriode = null): array
+    public static function getAccumulatedChartData(?int $tahunPeriode = null, ?int $perusahaanId = null): array
     {
         $query = static::with(['auditDetails.kriteria.subElemen.elemen', 'perusahaan']);
         if ($tahunPeriode) {
             $query->where('tahun_periode', $tahunPeriode);
+        }
+        if ($perusahaanId) {
+            $query->where('perusahaan_id', $perusahaanId);
         }
         $sessions = $query->get();
 
@@ -563,6 +566,10 @@ class AuditSesi extends Model
             $yearsQuery->where('area_audit', $sesi->area_audit);
         }
         $availableYears = $yearsQuery->whereNotNull('tahun_periode')->distinct()->pluck('tahun_periode')->sortDesc()->values()->toArray();
+
+        if ($tahunFilter === null || $tahunFilter === '') {
+            $tahunFilter = $sesi->tahun_periode;
+        }
 
         $query = static::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen', 'auditDetails.pica']);
         if ($perusahaanId) {

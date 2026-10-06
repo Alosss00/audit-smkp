@@ -20,6 +20,57 @@ ob_start();
     </div>
 </div>
 
+<!-- Global Filter Bar: Perusahaan & Periode Audit -->
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm bg-white">
+    <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" id="globalDashboardFilterForm" class="row g-3 align-items-center">
+        <div class="col-md-5">
+            <label for="filterPerusahaan" class="form-label small fw-semibold text-slate-600 mb-1">
+                <i class="bi bi-building me-1 text-primary"></i>Perusahaan / Area Audit:
+            </label>
+            <select name="perusahaan_id" id="filterPerusahaan" class="form-select form-select-sm rounded-3 border-slate-300 shadow-none fw-semibold" onchange="this.form.submit()">
+                <option value="semua" <?php echo ($selectedPerusahaan === 'semua' || empty($selectedPerusahaan)) ? 'selected' : ''; ?>>🏢 Semua Perusahaan (Gabungan)</option>
+                <?php if(!empty($availablePerusahaans)): ?>
+                    <?php foreach($availablePerusahaans as $p): ?>
+                        <option value="<?php echo e($p->id); ?>" <?php echo ((string)$selectedPerusahaan === (string)$p->id) ? 'selected' : ''; ?>>
+                            🏢 <?php echo e($p->nama_perusahaan); ?>
+
+                        </option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </select>
+        </div>
+
+        <div class="col-md-5">
+            <label for="filterTahunPeriode" class="form-label small fw-semibold text-slate-600 mb-1">
+                <i class="bi bi-calendar-range me-1 text-primary"></i>Periode Audit (Tahun):
+            </label>
+            <select name="tahun_periode" id="filterTahunPeriode" class="form-select form-select-sm rounded-3 border-slate-300 shadow-none fw-semibold" onchange="this.form.submit()">
+                <option value="semua" <?php echo ($selectedTahun === 'semua' || empty($selectedTahun)) ? 'selected' : ''; ?>>🗓️ Semua Tahun Periode</option>
+                <?php if(!empty($availableYears)): ?>
+                    <?php foreach($availableYears as $yr): ?>
+                        <option value="<?php echo e($yr); ?>" <?php echo ((string)$selectedTahun === (string)$yr) ? 'selected' : ''; ?>>
+                            📅 Tahun Periode <?php echo e($yr); ?>
+
+                        </option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end pt-3 pt-md-0">
+            <?php if(($selectedPerusahaan && $selectedPerusahaan !== 'semua') || ($selectedTahun && $selectedTahun !== 'semua')): ?>
+                <a href="<?php echo e(route('admin.dashboard')); ?>" class="btn btn-sm btn-outline-secondary w-100 rounded-3 py-1.5" title="Reset Filter">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                </a>
+            <?php else: ?>
+                <button type="submit" class="btn btn-sm btn-primary w-100 rounded-3 py-1.5 fw-semibold">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+            <?php endif; ?>
+        </div>
+    </form>
+</div>
+
 <!-- Stat Cards: Lead Auditor & Oversight KPIs -->
 <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -92,41 +143,7 @@ ob_start();
                     <h5 class="fw-bold mb-1 text-slate-800" id="elementChartTitle">
                         <i class="bi bi-bar-chart-fill me-2 text-primary"></i>Pencapaian Nilai Audit per Elemen
                     </h5>
-                    <p class="text-muted small mb-0" id="elementChartSubtitle">Grafik rata-rata persentase pencapaian nilai per elemen SMKP (Berdasarkan Tahun Periode Audit).</p>
-                </div>
-                <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
-                    <!-- View Mode Selector -->
-                    <select id="chartDisplayMode" class="form-select form-select-sm rounded-pill border-primary shadow-sm fw-semibold text-primary" style="min-width: 195px;">
-                        <option value="all_elements">📊 Semua Elemen</option>
-                        <option value="trend_element">📈 Tren Multi-Tahun Elemen</option>
-                    </select>
-
-                    <!-- Element Selector for Trend Mode -->
-                    <select id="trendElementSelector" class="form-select form-select-sm rounded-pill border-info shadow-sm fw-semibold text-info d-none" style="min-width: 220px;">
-                        <?php if(!empty($elemens)): ?>
-                            <?php foreach($elemens as $el): ?>
-                                <option value="<?php echo e($el->id); ?>">
-                                    Elemen <?php echo e($el->kode_elemen); ?>: <?php echo e(\Illuminate\Support\Str::limit($el->nama_elemen, 22)); ?>
-
-                                </option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
-
-                    <!-- Year Filter Form for All Elements Mode -->
-                    <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" id="yearFilterForm" class="d-flex align-items-center">
-                        <select name="tahun_element" class="form-select form-select-sm rounded-pill border-primary shadow-sm fw-semibold text-primary" style="min-width: 180px;" data-auto-submit="true">
-                            <option value="semua" <?php echo ($selectedElementYear === 'semua' || empty($selectedElementYear)) ? 'selected' : ''; ?>>🗓️ Semua Tahun Periode</option>
-                            <?php if(!empty($availableYears)): ?>
-                                <?php foreach($availableYears as $yr): ?>
-                                    <option value="<?php echo e($yr); ?>" <?php echo $selectedElementYear == $yr ? 'selected' : ''; ?>>
-                                        📅 Tahun Periode <?php echo e($yr); ?>
-
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </form>
+                    <p class="text-muted small mb-0" id="elementChartSubtitle">Grafik rata-rata persentase pencapaian nilai per elemen SMKP.</p>
                 </div>
             </div>
             <div style="height: 380px;">
@@ -142,6 +159,25 @@ ob_start();
             <p class="text-muted small mb-3">Distribusi status sesi audit internal yang terdaftar.</p>
             <div style="height: 350px; position: relative;">
                 <canvas id="statusDoughnutChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visual Chart Analytics Section: Multi-Year Grouped Bar Chart per Elemen (Batch Grafik per Tahun Periode) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card card-custom p-4 border-start border-4 border-info">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-slate-800">
+                        <i class="bi bi-bar-chart-steps me-2 text-info"></i>Perbandingan Pencapaian Nilai Audit per Elemen Antar Tahun Periode
+                    </h5>
+                    <p class="text-muted small mb-0">Grafik komparasi batch (grouped bar) nilai audit per Elemen SMKP (I - VII) dari tahun ke tahun.</p>
+                </div>
+            </div>
+            <div style="height: 420px; position: relative;">
+                <canvas id="multiYearGroupedBarChart"></canvas>
             </div>
         </div>
     </div>
@@ -226,8 +262,8 @@ ob_start();
 <div class="modal fade" id="radarChartModal" tabindex="-1" aria-labelledby="radarChartModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg style-radius-16">
-            <div class="modal-header bg-slate-900 text-white border-0 py-3">
-                <h5 class="modal-title fw-bold" id="radarChartModalLabel">
+            <div class="modal-header text-white border-0 py-3" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);">
+                <h5 class="modal-title fw-bold text-white" id="radarChartModalLabel">
                     <i class="bi bi-heptagon-fill me-2 text-info"></i>Grafik Pencapaian Nilai Akumulasi per Elemen (Ukuran Penuh)
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -390,199 +426,112 @@ ob_start();
 
         let mainChartInstance = null;
 
-        function renderAllElementsChart() {
-            if (mainChartInstance) mainChartInstance.destroy();
-
-            const titleEl = document.getElementById('elementChartTitle');
-            const subTitleEl = document.getElementById('elementChartSubtitle');
-            if (titleEl) titleEl.innerHTML = '<i class="bi bi-bar-chart-fill me-2 text-primary"></i>Pencapaian Nilai Audit per Elemen';
-            if (subTitleEl) subTitleEl.innerText = 'Grafik rata-rata persentase pencapaian nilai per elemen SMKP (Berdasarkan Tahun Periode Audit).';
-
-            mainChartInstance = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: barLabels,
-                    datasets: [{
-                        label: 'Rata-Rata Pencapaian (%)',
-                        data: <?php echo json_encode($elementScores); ?>,
-                        backgroundColor: <?php echo json_encode($elementColors); ?>,
-                        borderColor: 'rgba(15, 23, 42, 0.1)',
-                        borderWidth: 1,
-                        borderRadius: 8,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                stepSize: 10,
-                                callback: function(value) { return value + '%'; }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                title: function(context) {
-                                    const index = context[0].dataIndex;
-                                    return elementFullNames[index] || context[0].label;
-                                },
-                                label: function(context) {
-                                    return 'Rata-Rata Pencapaian: ' + context.raw + '%';
-                                }
-                            }
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    label: 'Rata-Rata Pencapaian (%)',
+                    data: <?php echo json_encode($elementScores); ?>,
+                    backgroundColor: <?php echo json_encode($elementColors); ?>,
+                    borderColor: 'rgba(15, 23, 42, 0.1)',
+                    borderWidth: 1,
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 10,
+                            callback: function(value) { return value + '%'; }
                         }
                     }
                 },
-                plugins: [barTextPlugin]
-            });
-        }
-
-        const groupedBarTextPlugin = {
-            id: 'groupedBarTextPlugin',
-            afterDatasetsDraw(chart) {
-                const { ctx } = chart;
-                chart.data.datasets.forEach((dataset, datasetIndex) => {
-                    const meta = chart.getDatasetMeta(datasetIndex);
-                    if (!meta || !meta.data) return;
-                    meta.data.forEach((bar, index) => {
-                        const value = dataset.data[index];
-                        if (value !== undefined && value !== null) {
-                            ctx.save();
-                            ctx.font = 'bold 11px sans-serif';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'bottom';
-                            ctx.fillStyle = '#1e293b';
-                            ctx.fillText(value + '%', bar.x, bar.y - 4);
-                            ctx.restore();
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return elementFullNames[index] || context[0].label;
+                            },
+                            label: function(context) {
+                                return 'Rata-Rata Pencapaian: ' + context.raw + '%';
+                            }
                         }
-                    });
+                    }
+                }
+            },
+            plugins: [barTextPlugin]
+        });
+
+        // 2. Doughnut Chart Status
+        <?php
+            $cntBerjalan = (int)($stats['audits_berjalan'] ?? 0);
+            $cntSelesai = (int)($stats['audits_selesai'] ?? 0);
+            $cntTotal = (int)($stats['total_audits'] ?? 0);
+            $cntDraft = max(0, $cntTotal - $cntBerjalan - $cntSelesai);
+        ?>
+        const ctxDoughnut = document.getElementById('statusDoughnutChart').getContext('2d');
+        const countBerjalan = <?php echo $cntBerjalan; ?>;
+        const countSelesai = <?php echo $cntSelesai; ?>;
+        const countDraft = <?php echo $cntDraft; ?>;
+
+        const doughnutTextPlugin = {
+            id: 'doughnutTextPlugin',
+            afterDatasetsDraw(chart) {
+                const { ctx, data } = chart;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data) return;
+
+                const total = data.datasets[0].data.reduce((a, b) => a + Number(b), 0);
+
+                meta.data.forEach((element, index) => {
+                    const value = data.datasets[0].data[index];
+                    if (value > 0) {
+                        const { x, y } = element.getCenterPoint();
+                        ctx.save();
+                        ctx.font = 'bold 14px "Plus Jakarta Sans", sans-serif';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(value, x, y);
+                        ctx.restore();
+                    }
                 });
+
+                if (chart.chartArea) {
+                    const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                    const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillText(total, centerX, centerY - 8);
+                    ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+                    ctx.fillStyle = '#64748b';
+                    ctx.fillText('Total Sesi', centerX, centerY + 12);
+                    ctx.restore();
+                }
             }
         };
 
-        function renderTrendChart(elementId) {
-            if (mainChartInstance) mainChartInstance.destroy();
-            
-            const elemObj = (trendData.elements && trendData.elements[elementId]) ? trendData.elements[elementId] : (trendData.elements ? Object.values(trendData.elements)[0] : null);
-            if (!elemObj) return;
-
-            const titleEl = document.getElementById('elementChartTitle');
-            const subTitleEl = document.getElementById('elementChartSubtitle');
-            if (titleEl) titleEl.innerHTML = `<i class="bi bi-bar-chart-line-fill me-2 text-info"></i>Evaluasi Elemen ${elemObj.kode}: ${elemObj.nama}`;
-            if (subTitleEl) subTitleEl.innerText = `Perbandingan & riwayat persentase pencapaian Elemen ${elemObj.kode} dari tahun ke tahun.`;
-
-            const yearLabels = (trendData.years || []).map(y => 'Tahun ' + y);
-            
-            mainChartInstance = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: yearLabels,
-                    datasets: [
-                        {
-                            label: 'Total Gabungan (%)',
-                            data: elemObj.scores || [],
-                            backgroundColor: 'rgba(2, 132, 199, 0.85)',
-                            borderColor: '#0284c7',
-                            borderWidth: 1.5,
-                            borderRadius: 6
-                        },
-                        {
-                            label: 'PT Meares Soputan Mining (%)',
-                            data: elemObj.msmScores || [],
-                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
-                            borderColor: '#10b981',
-                            borderWidth: 1.5,
-                            borderRadius: 6
-                        },
-                        {
-                            label: 'PT Tambang Tondano Nusa Jaya (%)',
-                            data: elemObj.ttnScores || [],
-                            backgroundColor: 'rgba(245, 158, 11, 0.85)',
-                            borderColor: '#f59e0b',
-                            borderWidth: 1.5,
-                            borderRadius: 6
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                stepSize: 10,
-                                callback: function(value) { return value + '%'; }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw}%`;
-                                }
-                            }
-                        }
-                    }
-                },
-                plugins: [groupedBarTextPlugin]
-            });
-        }
-
-        const chartDisplayMode = document.getElementById('chartDisplayMode');
-        const trendElementSelector = document.getElementById('trendElementSelector');
-        const yearFilterForm = document.getElementById('yearFilterForm');
-
-        if (chartDisplayMode) {
-            chartDisplayMode.addEventListener('change', function() {
-                if (this.value === 'trend_element') {
-                    if (yearFilterForm) yearFilterForm.classList.add('d-none');
-                    if (trendElementSelector) {
-                        trendElementSelector.classList.remove('d-none');
-                        renderTrendChart(trendElementSelector.value);
-                    }
-                } else {
-                    if (yearFilterForm) yearFilterForm.classList.remove('d-none');
-                    if (trendElementSelector) trendElementSelector.classList.add('d-none');
-                    renderAllElementsChart();
-                }
-            });
-        }
-
-        if (trendElementSelector) {
-            trendElementSelector.addEventListener('change', function() {
-                renderTrendChart(this.value);
-            });
-        }
-
-        // Initial View Render
-        renderAllElementsChart();
-
-        // 2. Doughnut Chart Status
-        const ctxDoughnut = document.getElementById('statusDoughnutChart').getContext('2d');
         new Chart(ctxDoughnut, {
             type: 'doughnut',
             data: {
-                labels: ['Berjalan', 'Selesai', 'Draft'],
+                labels: [
+                    'Berjalan (' + countBerjalan + ')',
+                    'Selesai (' + countSelesai + ')',
+                    'Draft (' + countDraft + ')'
+                ],
                 datasets: [{
-                    data: [
-                        <?php echo e($stats['audits_berjalan']); ?>,
-                        <?php echo e($stats['audits_selesai']); ?>,
-                        <?php echo e($stats['total_audits'] - $stats['audits_berjalan'] - $stats['audits_selesai']); ?>
-
-                    ],
+                    data: [countBerjalan, countSelesai, countDraft],
                     backgroundColor: ['#f59e0b', '#10b981', '#64748b'],
                     borderWidth: 2
                 }]
@@ -590,10 +539,34 @@ ob_start();
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '65%',
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            font: {
+                                size: 12,
+                                weight: '600',
+                                family: "'Plus Jakarta Sans', sans-serif"
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const val = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                const rawLabel = context.label ? context.label.split(' (')[0] : '';
+                                return ` ${rawLabel}: ${val} Sesi (${pct}%)`;
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            plugins: [doughnutTextPlugin]
         });
 
         // 3. Accumulated Radar Chart
@@ -820,6 +793,160 @@ ob_start();
                         }
                     },
                     plugins: [hBarTextPlugin]
+                });
+            }
+        }
+
+        // 5. Multi-Year Grouped Bar Chart per Elemen (Batch Grafik per Tahun Periode)
+        const ctxMultiYear = document.getElementById('multiYearGroupedBarChart');
+        if (ctxMultiYear) {
+            const trendYears = <?php echo json_encode($elementTrendData['years'] ?? []); ?>;
+            const trendElements = <?php echo json_encode($elementTrendData['elements'] ?? []); ?>;
+
+            const elementPalette = [
+                '#4f46e5', // Elemen I - Indigo/Blue
+                '#ef4444', // Elemen II - Red/Orange
+                '#10b981', // Elemen III - Emerald Green
+                '#8b5cf6', // Elemen IV - Purple
+                '#f59e0b', // Elemen V - Amber
+                '#06b6d4', // Elemen VI - Cyan
+                '#ec4899'  // Elemen VII - Pink
+            ];
+
+            const yearLabels = trendYears.map(y => 'Tahun ' + y);
+
+            function buildGroupedDatasets(companyType = 'all') {
+                const datasets = [];
+                let idx = 0;
+
+                Object.values(trendElements).forEach(el => {
+                    let scoreArr = el.scores || [];
+                    if (companyType === 'msm') {
+                        scoreArr = el.msmScores || [];
+                    } else if (companyType === 'ttn') {
+                        scoreArr = el.ttnScores || [];
+                    }
+
+                    const color = elementPalette[idx % elementPalette.length];
+                    datasets.push({
+                        label: 'Elemen ' + el.kode + ': ' + el.nama,
+                        shortLabel: 'Elemen ' + el.kode,
+                        data: scoreArr,
+                        backgroundColor: color,
+                        borderColor: color,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.85,
+                        categoryPercentage: 0.75
+                    });
+                    idx++;
+                });
+
+                return datasets;
+            }
+
+            const groupedMultiYearBarTextPlugin = {
+                id: 'groupedMultiYearBarTextPlugin',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        const meta = chart.getDatasetMeta(datasetIndex);
+                        if (!meta || meta.hidden) return;
+
+                        meta.data.forEach((bar, index) => {
+                            const value = dataset.data[index];
+                            if (value !== undefined && value !== null && value > 0) {
+                                ctx.save();
+                                const isWide = bar.width >= 24;
+                                
+                                if (isWide) {
+                                    ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'bottom';
+                                    ctx.fillStyle = '#0f172a';
+                                    ctx.fillText(value + '%', bar.x, bar.y - 2);
+                                } else {
+                                    ctx.translate(bar.x, bar.y - 4);
+                                    ctx.rotate(-Math.PI / 2);
+                                    ctx.textAlign = 'left';
+                                    ctx.textBaseline = 'middle';
+                                    ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+                                    ctx.fillStyle = '#0f172a';
+                                    ctx.fillText(value + '%', 0, 0);
+                                }
+                                ctx.restore();
+                            }
+                        });
+                    });
+                }
+            };
+
+            const multiYearChartInstance = new Chart(ctxMultiYear.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: yearLabels,
+                    datasets: buildGroupedDatasets('all')
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 13, weight: 'bold', family: "'Plus Jakarta Sans', sans-serif" },
+                                color: '#1e293b'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 110,
+                            ticks: {
+                                stepSize: 10,
+                                callback: function(val) { return val <= 100 ? val + '%' : ''; },
+                                font: { size: 11, weight: '600' }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Nilai Audit (%)',
+                                font: { size: 12, weight: 'bold' },
+                                color: '#64748b'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'start',
+                            labels: {
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                padding: 14,
+                                usePointStyle: true,
+                                font: { size: 11, weight: '600', family: "'Plus Jakarta Sans', sans-serif" }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(items) {
+                                    return items[0].label;
+                                },
+                                label: function(context) {
+                                    const dataset = context.dataset;
+                                    return ` ${dataset.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [groupedMultiYearBarTextPlugin]
+            });
+
+            const companyFilter = document.getElementById('multiYearCompanyFilter');
+            if (companyFilter) {
+                companyFilter.addEventListener('change', function() {
+                    multiYearChartInstance.data.datasets = buildGroupedDatasets(this.value);
+                    multiYearChartInstance.update();
                 });
             }
         }

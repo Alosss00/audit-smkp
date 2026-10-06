@@ -423,7 +423,7 @@ class AuditSesiAdminController extends Controller
     public function laporanDetail($id)
     {
         $sesi           = AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
-        $tahunFilter    = request('tahun_periode');
+        $tahunFilter    = request('tahun_periode', $sesi->tahun_periode);
         
         $companyReport  = AuditSesi::getCompanyAggregatedReport($sesi, $tahunFilter);
         $rekapElemen    = $companyReport['rekapElemen'];

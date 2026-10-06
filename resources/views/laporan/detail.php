@@ -588,8 +588,8 @@ ob_start();
         <div class="modal fade" id="detailRadarChartModal" tabindex="-1" aria-labelledby="detailRadarChartModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg style-radius-16">
-                    <div class="modal-header bg-slate-900 text-white border-0 py-3">
-                        <h5 class="modal-title fw-bold" id="detailRadarChartModalLabel">
+                    <div class="modal-header text-white border-0 py-3" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);">
+                        <h5 class="modal-title fw-bold text-white" id="detailRadarChartModalLabel">
                             <i class="bi bi-heptagon-fill me-2 text-info"></i>Grafik Pencapaian Nilai Akumulasi per Elemen (Ukuran Penuh)
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>

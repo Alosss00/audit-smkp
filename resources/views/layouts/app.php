@@ -38,6 +38,11 @@
             --smkp-accent: #0284c7;
         }
 
+        .bg-slate-900 {
+            background: var(--smkp-dark-gradient) !important;
+            color: #ffffff !important;
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--smkp-bg);

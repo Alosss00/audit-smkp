@@ -64,7 +64,7 @@ ob_start();
                         <th>Pelaksanaan Audit</th>
                         <th>Perusahaan (Area Audit)</th>
                         <th>Status</th>
-                        <th>Progres Penilaian</th>
+                        <th class="text-center">Nilai Audit Sesi</th>
                         <th>Nilai Audit</th>
                         <th class="text-end">Aksi</th>
                     </tr>
@@ -77,18 +77,12 @@ ob_start();
                         <tr>
                             <td><?php echo e($auditSesis->firstItem() + $index); ?></td>
                             <td>
-                                <?php
-                                    $compNameLower = strtolower($sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit);
-                                    $isMsmSession = str_contains($compNameLower, 'soputan') || str_contains($compNameLower, 'msm');
-                                ?>
                                 <div class="d-flex flex-column">
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-semibold w-fit mb-1">
                                         <i class="bi bi-calendar-check me-1"></i>Tahun <?php echo e($thn); ?>
-
                                     </span>
                                     <span class="text-muted small" style="font-size: 0.78rem;">
-                                        <?php echo e($isMsmSession ? '5 Jan 2026 – 7 Jan 2026' : '1 Jan – 31 Des ' . $thn); ?>
-
+                                        1 Jan – 31 Des <?php echo e($thn); ?>
                                     </span>
                                 </div>
                             </td>
@@ -121,22 +115,21 @@ ob_start();
                                     <span class="badge bg-success badge-role">Selesai</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td class="text-center">
                                 <?php
-                                    $progress = $sesi->hitungProgressPenilaian();
+                                    $skorAkhir = $sesi->hitungSkorAkhir();
+                                    $textClass = $skorAkhir >= 85 ? 'text-success' : ($skorAkhir >= 70 ? 'text-warning-emphasis' : 'text-danger');
+                                    $barClass = $skorAkhir >= 85 ? 'bg-success' : ($skorAkhir >= 70 ? 'bg-warning' : 'bg-danger');
                                 ?>
-                                <div class="d-flex align-items-center gap-2" style="min-width: 110px;">
-                                    <div class="progress flex-grow-1" style="height: 6px;">
-                                        <div class="progress-bar <?php echo e($progress == 100 ? 'bg-success' : ($progress >= 50 ? 'bg-warning' : 'bg-danger')); ?>" 
-                                             role="progressbar" style="width: <?php echo e($progress); ?>%"></div>
-                                    </div>
-                                    <span class="fs-6 fw-bold <?php echo e($progress == 100 ? 'text-success' : ($progress >= 50 ? 'text-warning' : 'text-danger')); ?>">
-                                        <?php echo e(number_format($progress, 1)); ?>%
+                                <div class="d-flex flex-column align-items-center justify-content-center">
+                                    <span class="fw-bold fs-6 <?php echo e($textClass); ?>">
+                                        <?php echo e(number_format($skorAkhir, 2)); ?>%
                                     </span>
+                                    <div class="progress w-100 mt-1" style="height: 5px; max-width: 90px;">
+                                        <div class="progress-bar <?php echo e($barClass); ?>" 
+                                             role="progressbar" style="width: <?php echo e(min($skorAkhir, 100)); ?>%"></div>
+                                    </div>
                                 </div>
-                            </td>
-                            <td>
-                                <span class="fw-bold text-slate-800"><?php echo e($sesi->skor_akhir !== null ? number_format($sesi->skor_akhir, 2) . '%' : '-'); ?></span>
                             </td>
                             <td class="text-end">
                                 <div class="btn-group gap-1">

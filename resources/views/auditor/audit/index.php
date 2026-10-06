@@ -48,7 +48,7 @@ ob_start();
                         <th>Perusahaan (Area Audit)</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
-                        <th>Progres Penilaian</th>
+                        <th class="text-center">Nilai Audit Sesi</th>
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
@@ -91,17 +91,14 @@ ob_start();
                                     <span class="badge bg-success badge-role">Selesai</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td class="text-center">
                                 <?php
-                                    $progress = $sesi->hitungProgressPenilaian();
+                                    $skorData = $sesi->hitungSkorAkhir();
+                                    $skorVal = $skorData['persentase'] ?? 0;
                                 ?>
-                                <div class="d-flex align-items-center gap-2" style="min-width: 110px;">
-                                    <div class="progress flex-grow-1" style="height: 6px;">
-                                        <div class="progress-bar <?php echo e($progress == 100 ? 'bg-success' : ($progress >= 50 ? 'bg-warning' : 'bg-danger')); ?>" 
-                                             role="progressbar" style="width: <?php echo e($progress); ?>%"></div>
-                                    </div>
-                                    <span class="fs-6 fw-bold <?php echo e($progress == 100 ? 'text-success' : ($progress >= 50 ? 'text-warning' : 'text-danger')); ?>">
-                                        <?php echo e(number_format($progress, 1)); ?>%
+                                <div class="d-inline-flex align-items-center gap-2 px-2.5 py-1 rounded-pill bg-light border">
+                                    <span class="fs-6 fw-bold text-slate-800">
+                                        <?php echo e(number_format($skorVal, 2)); ?>%
                                     </span>
                                 </div>
                             </td>

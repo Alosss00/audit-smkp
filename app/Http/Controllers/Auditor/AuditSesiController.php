@@ -88,7 +88,7 @@ class AuditSesiController extends Controller
     public function laporanDetail($id)
     {
         $sesi           = $this->findAuditorSession($id);
-        $tahunFilter    = request('tahun_periode');
+        $tahunFilter    = request('tahun_periode', $sesi->tahun_periode);
 
         $companyReport  = AuditSesi::getCompanyAggregatedReport($sesi, $tahunFilter);
         $rekapElemen    = $companyReport['rekapElemen'];

@@ -13,7 +13,7 @@ ob_start();
                     <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Sesi
                 </a>
                 <h3 class="fw-bold text-slate-800 mb-1 mt-1">Matriks Penilaian Audit Internal SMKP</h3>
-                <p class="text-muted small mb-0">Area: <strong><?php echo e($sesi->area_audit); ?></strong> | Periode: <strong><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></strong> | Status: <span class="badge bg-warning text-dark text-uppercase"><?php echo e($sesi->status); ?></span></p>
+                <p class="text-muted small mb-0">Area: <strong><?php echo e($sesi->area_audit); ?></strong> | Tanggal Pelaksanaan: <strong><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></strong> | Status: <span class="badge bg-warning text-dark text-uppercase"><?php echo e($sesi->status); ?></span></p>
             </div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary rounded-3 px-3">

@@ -8,7 +8,7 @@ ob_start();
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Audit Saya
         </a>
         <h2 class="fw-bold text-slate-800 mb-0 mt-1">Rekap Hasil Audit Internal SMKP</h2>
-        <p class="text-muted small mb-0">Area: <strong><?php echo e($sesi->area_audit); ?></strong> | Periode: <strong><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></strong></p>
+        <p class="text-muted small mb-0">Area: <strong><?php echo e($sesi->area_audit); ?></strong> | Tanggal Pelaksanaan: <strong><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></strong></p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a href="<?php echo e(route('auditor.audit-sesi.laporan-detail', $sesi->id)); ?>" class="btn btn-outline-info text-dark fw-semibold rounded-3 px-3">

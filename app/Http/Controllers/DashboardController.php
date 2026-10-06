@@ -18,8 +18,53 @@ class DashboardController extends Controller
      */
     public function admin()
     {
+        $availablePerusahaans = \App\Models\Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
+        $availableYears = AuditSesi::whereNotNull('tahun_periode')
+            ->distinct()
+            ->orderBy('tahun_periode', 'desc')
+            ->pluck('tahun_periode');
+
+        $rawPerusahaan = request('perusahaan_id', request('perusahaan', 'semua'));
+        $rawTahun = request('tahun_periode', request('tahun', 'semua'));
+
+        $selectedPerusahaan = 'semua';
+        $perusahaanFilterInt = null;
+        if (!empty($rawPerusahaan) && $rawPerusahaan !== 'semua') {
+            if (is_numeric($rawPerusahaan)) {
+                $perusahaanFilterInt = (int)$rawPerusahaan;
+                $selectedPerusahaan = $perusahaanFilterInt;
+            } else {
+                $str = strtolower($rawPerusahaan);
+                if (str_contains($str, 'msm') || str_contains($str, 'meares')) {
+                    $pModel = $availablePerusahaans->first(function($p) { return str_contains(strtolower($p->nama_perusahaan), 'meares'); });
+                    $perusahaanFilterInt = $pModel ? $pModel->id : 1;
+                    $selectedPerusahaan = $perusahaanFilterInt;
+                } elseif (str_contains($str, 'ttn') || str_contains($str, 'tondano')) {
+                    $pModel = $availablePerusahaans->first(function($p) { return str_contains(strtolower($p->nama_perusahaan), 'tondano'); });
+                    $perusahaanFilterInt = $pModel ? $pModel->id : 2;
+                    $selectedPerusahaan = $perusahaanFilterInt;
+                }
+            }
+        }
+
+        $selectedTahun = 'semua';
+        $tahunFilterInt = null;
+        if (!empty($rawTahun) && $rawTahun !== 'semua') {
+            if (is_numeric($rawTahun)) {
+                $tahunFilterInt = (int)$rawTahun;
+                $selectedTahun = $tahunFilterInt;
+            }
+        }
+
         // Global PICA Stats Summary (Agregasi berbasis Sub-Elemen per Sesi Audit)
-        $allPicas = \App\Models\Pica::with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
+        $allPicas = \App\Models\Pica::whereHas('auditDetail.auditSesi', function($q) use ($perusahaanFilterInt, $tahunFilterInt) {
+            if ($perusahaanFilterInt) {
+                $q->where('perusahaan_id', $perusahaanFilterInt);
+            }
+            if ($tahunFilterInt) {
+                $q->where('tahun_periode', $tahunFilterInt);
+            }
+        })->with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
         
         $groupedSubTemuan = $allPicas->groupBy(function($p) {
             $sesiId = $p->auditDetail->audit_sesi_id ?? 0;
@@ -42,14 +87,23 @@ class DashboardController extends Controller
             }
         }
 
+        // Base AuditSesi query filtered by global controls
+        $baseAuditQuery = AuditSesi::query();
+        if ($perusahaanFilterInt) {
+            $baseAuditQuery->where('perusahaan_id', $perusahaanFilterInt);
+        }
+        if ($tahunFilterInt) {
+            $baseAuditQuery->where('tahun_periode', $tahunFilterInt);
+        }
+
         $stats = [
             'total_elemens'      => Elemen::count(),
             'total_sub_elemens'  => SubElemen::count(),
             'total_kriterias'    => Kriteria::count(),
             'total_users'        => User::count(),
-            'total_audits'       => AuditSesi::count(),
-            'audits_selesai'     => AuditSesi::where('status', 'selesai')->count(),
-            'audits_berjalan'    => AuditSesi::where('status', 'berjalan')->count(),
+            'total_audits'       => (clone $baseAuditQuery)->count(),
+            'audits_selesai'     => (clone $baseAuditQuery)->where('status', 'selesai')->count(),
+            'audits_berjalan'    => (clone $baseAuditQuery)->where('status', 'berjalan')->count(),
             'total_pica'         => $subTotal,
             'open_pica'          => $subOpen,
             'in_progress_pica'   => $subInProgress,
@@ -64,30 +118,15 @@ class DashboardController extends Controller
         ];
 
         $elemens = Elemen::orderBy('kode_elemen')->get();
-        $findingLabels = [];
-        $findingCounts = [];
 
-        $availableYears = AuditSesi::whereNotNull('tahun_periode')
-            ->distinct()
-            ->orderBy('tahun_periode', 'desc')
-            ->pluck('tahun_periode');
-
-        $selectedElementYear = request('tahun_element', request('tahun_periode', 'semua'));
-
-        // 1. Average Compliance Percentage per Elemen across audit sessions (filtered by selected year)
-        $sessionQuery = AuditSesi::with(['auditDetails.kriteria.subElemen', 'perusahaan']);
-        if ($selectedElementYear !== 'semua' && !empty($selectedElementYear)) {
-            $sessionQuery->where('tahun_periode', (int)$selectedElementYear);
-        }
-        $allSessions = $sessionQuery->get();
+        // 1. Average Compliance Percentage per Elemen across audit sessions (filtered by selected company & year)
+        $allSessions = (clone $baseAuditQuery)->with(['auditDetails.kriteria.subElemen', 'perusahaan'])->get();
         $totalSessionsCount = $allSessions->count();
 
         $elementLabels = [];
         $elementScores = [];
         $elementColors = [];
         $elementFullNames = [];
-        $msmScores = [];
-        $ttnScores = [];
 
         foreach ($elemens as $el) {
             $elementLabels[] = 'Elemen ' . $el->kode_elemen;
@@ -96,23 +135,13 @@ class DashboardController extends Controller
             if ($totalSessionsCount === 0) {
                 $elementScores[] = 0;
                 $elementColors[] = 'rgba(148, 163, 184, 0.75)';
-                $msmScores[] = 0;
-                $ttnScores[] = 0;
                 continue;
             }
 
             $totalAktual = 0;
             $totalMaks = 0;
-            $msmAktual = 0;
-            $msmMaks = 0;
-            $ttnAktual = 0;
-            $ttnMaks = 0;
 
             foreach ($allSessions as $session) {
-                $companyName = $session->perusahaan ? strtolower($session->perusahaan->nama_perusahaan) : strtolower($session->area_audit);
-                $isMsm = str_contains($companyName, 'meares soputan');
-                $isTtn = str_contains($companyName, 'tambang tondano');
-
                 $details = $session->auditDetails->filter(function ($d) use ($el) {
                     return $d->kriteria
                         && $d->kriteria->subElemen
@@ -131,22 +160,11 @@ class DashboardController extends Controller
                 if ($sessionMaks > 0) {
                     $totalAktual += $sessionAktual;
                     $totalMaks += $sessionMaks;
-                    if ($isMsm) {
-                        $msmAktual += $sessionAktual;
-                        $msmMaks += $sessionMaks;
-                    }
-                    if ($isTtn) {
-                        $ttnAktual += $sessionAktual;
-                        $ttnMaks += $sessionMaks;
-                    }
                 }
             }
 
             $avgScore = $totalMaks > 0 ? round(($totalAktual / $totalMaks) * 100, 2) : 0;
-
             $elementScores[] = $avgScore;
-            $msmScores[] = $msmMaks > 0 ? round(($msmAktual / $msmMaks) * 100, 2) : 0;
-            $ttnScores[] = $ttnMaks > 0 ? round(($ttnAktual / $ttnMaks) * 100, 2) : 0;
 
             if ($avgScore >= 80) {
                 $elementColors[] = 'rgba(34, 197, 94, 0.75)'; // Green (>= 80%)
@@ -157,8 +175,7 @@ class DashboardController extends Controller
             }
         }
 
-        $tahunFilterInt = ($selectedElementYear !== 'semua' && !empty($selectedElementYear)) ? (int)$selectedElementYear : null;
-        $accumulatedChartData = AuditSesi::getAccumulatedChartData($tahunFilterInt);
+        $accumulatedChartData = AuditSesi::getAccumulatedChartData($tahunFilterInt, $perusahaanFilterInt);
 
         // Multi-Year Trend Analysis per Element
         $trendYears = AuditSesi::whereNotNull('tahun_periode')
@@ -171,7 +188,12 @@ class DashboardController extends Controller
             $trendYears = [(int)date('Y')];
         }
 
-        $allTrendSessions = AuditSesi::with(['auditDetails.kriteria.subElemen', 'perusahaan'])->get();
+        $trendQuery = AuditSesi::with(['auditDetails.kriteria.subElemen', 'perusahaan']);
+        if ($perusahaanFilterInt) {
+            $trendQuery->where('perusahaan_id', $perusahaanFilterInt);
+        }
+        $allTrendSessions = $trendQuery->get();
+
         $elementTrendData = [
             'years' => $trendYears,
             'elements' => []
@@ -249,7 +271,9 @@ class DashboardController extends Controller
             'elementFullNames',
             'accumulatedChartData',
             'availableYears',
-            'selectedElementYear',
+            'availablePerusahaans',
+            'selectedPerusahaan',
+            'selectedTahun',
             'elementTrendData',
             'elemens'
         ));
