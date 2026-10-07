@@ -57,15 +57,14 @@ ob_start();
             </select>
         </div>
 
-        <div class="col-md-2 d-flex align-items-end pt-3 pt-md-0">
+        <div class="col-md-2 d-flex align-items-end gap-2 pt-3 pt-md-0">
+            <button type="submit" class="btn btn-sm btn-primary flex-fill rounded-3 py-1.5 fw-semibold" title="Terapkan Filter">
+                <i class="bi bi-funnel me-1"></i>Filter
+            </button>
             <?php if(($selectedPerusahaan && $selectedPerusahaan !== 'semua') || ($selectedTahun && $selectedTahun !== 'semua')): ?>
-                <a href="<?php echo e(route('admin.dashboard')); ?>" class="btn btn-sm btn-outline-secondary w-100 rounded-3 py-1.5" title="Reset Filter">
+                <a href="<?php echo e(route('admin.dashboard')); ?>" class="btn btn-sm btn-outline-secondary rounded-3 py-1.5 px-2.5" title="Reset Filter ke Semua Data">
                     <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
                 </a>
-            <?php else: ?>
-                <button type="submit" class="btn btn-sm btn-primary w-100 rounded-3 py-1.5 fw-semibold">
-                    <i class="bi bi-funnel me-1"></i>Filter
-                </button>
             <?php endif; ?>
         </div>
     </form>
@@ -173,7 +172,23 @@ ob_start();
                     <h5 class="fw-bold mb-1 text-slate-800">
                         <i class="bi bi-bar-chart-steps me-2 text-info"></i>Perbandingan Pencapaian Nilai Audit per Elemen Antar Tahun Periode
                     </h5>
-                    <p class="text-muted small mb-0">Grafik komparasi batch (grouped bar) nilai audit per Elemen SMKP (I - VII) dari tahun ke tahun.</p>
+                    <p class="text-muted small mb-0">Grafik komparasi batch (grouped bar & garis kurva tren) nilai audit per Elemen SMKP (I - VII) dari tahun ke tahun.</p>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <label for="multiYearElementFilter" class="small fw-semibold text-muted mb-0 d-flex align-items-center">
+                        <i class="bi bi-funnel text-info me-1"></i>Filter Elemen:
+                    </label>
+                    <select id="multiYearElementFilter" class="form-select form-select-sm rounded-3 border-slate-300 fw-semibold shadow-none" style="min-width: 250px;">
+                        <option value="all">🏢 Semua Elemen (I - VII)</option>
+                        <?php if(!empty($elemens)): ?>
+                            <?php foreach($elemens as $el): ?>
+                                <option value="<?php echo e($el->id); ?>">
+                                    📌 Elemen <?php echo e($el->kode_elemen); ?>: <?php echo e($el->nama_elemen); ?>
+
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
                 </div>
             </div>
             <div style="height: 420px; position: relative;">
@@ -815,11 +830,41 @@ ob_start();
 
             const yearLabels = trendYears.map(y => 'Tahun ' + y);
 
-            function buildGroupedDatasets(companyType = 'all') {
+            function getOverallAveragePerYear(companyType = 'all') {
+                const yearsCount = trendYears.length;
+                const totals = new Array(yearsCount).fill(0);
+                const counts = new Array(yearsCount).fill(0);
+
+                Object.values(trendElements).forEach(el => {
+                    let scoreArr = el.scores || [];
+                    if (companyType === 'msm') scoreArr = el.msmScores || [];
+                    else if (companyType === 'ttn') scoreArr = el.ttnScores || [];
+
+                    scoreArr.forEach((sc, i) => {
+                        if (sc !== null && sc !== undefined) {
+                            totals[i] += Number(sc);
+                            counts[i] += 1;
+                        }
+                    });
+                });
+
+                return totals.map((tot, i) => counts[i] > 0 ? Math.round((tot / counts[i]) * 100) / 100 : 0);
+            }
+
+            function buildGroupedDatasets(companyType = 'all', elementFilter = 'all') {
                 const datasets = [];
                 let idx = 0;
 
                 Object.values(trendElements).forEach(el => {
+                    const matchesFilter = elementFilter === 'all' 
+                        || String(el.id) === String(elementFilter) 
+                        || String(el.kode) === String(elementFilter);
+
+                    if (!matchesFilter) {
+                        idx++;
+                        return;
+                    }
+
                     let scoreArr = el.scores || [];
                     if (companyType === 'msm') {
                         scoreArr = el.msmScores || [];
@@ -828,17 +873,42 @@ ob_start();
                     }
 
                     const color = elementPalette[idx % elementPalette.length];
+
+                    // 1. Bar Dataset
                     datasets.push({
+                        type: 'bar',
                         label: 'Elemen ' + el.kode + ': ' + el.nama,
                         shortLabel: 'Elemen ' + el.kode,
                         data: scoreArr,
                         backgroundColor: color,
                         borderColor: color,
                         borderWidth: 1,
-                        borderRadius: 4,
-                        barPercentage: 0.85,
-                        categoryPercentage: 0.75
+                        borderRadius: 6,
+                        barPercentage: elementFilter === 'all' ? 0.85 : 0.45,
+                        categoryPercentage: 0.75,
+                        order: 2
                     });
+
+                    // 2. Element-Specific Line Curve (when filtered to a specific element)
+                    if (elementFilter !== 'all') {
+                        datasets.push({
+                            type: 'line',
+                            label: 'Tren Naik-Turun Elemen ' + el.kode,
+                            data: scoreArr,
+                            borderColor: color,
+                            backgroundColor: color,
+                            borderWidth: 3.5,
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: 7,
+                            pointHoverRadius: 10,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: color,
+                            pointBorderWidth: 3,
+                            order: 1
+                        });
+                    }
+
                     idx++;
                 });
 
@@ -850,6 +920,9 @@ ob_start();
                 afterDatasetsDraw(chart) {
                     const { ctx } = chart;
                     chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        // Skip line curve datasets so numbers are only drawn once per bar
+                        if (dataset.type === 'line') return;
+
                         const meta = chart.getDatasetMeta(datasetIndex);
                         if (!meta || meta.hidden) return;
 
@@ -885,7 +958,7 @@ ob_start();
                 type: 'bar',
                 data: {
                     labels: yearLabels,
-                    datasets: buildGroupedDatasets('all')
+                    datasets: buildGroupedDatasets('all', 'all')
                 },
                 options: {
                     responsive: true,
@@ -923,7 +996,10 @@ ob_start();
                                 boxHeight: 12,
                                 padding: 14,
                                 usePointStyle: true,
-                                font: { size: 11, weight: '600', family: "'Plus Jakarta Sans', sans-serif" }
+                                font: { size: 11, weight: '600', family: "'Plus Jakarta Sans', sans-serif" },
+                                filter: function(legendItem) {
+                                    return !legendItem.text.startsWith('Tren Naik-Turun');
+                                }
                             }
                         },
                         tooltip: {
@@ -942,12 +1018,21 @@ ob_start();
                 plugins: [groupedMultiYearBarTextPlugin]
             });
 
-            const companyFilter = document.getElementById('multiYearCompanyFilter');
-            if (companyFilter) {
-                companyFilter.addEventListener('change', function() {
-                    multiYearChartInstance.data.datasets = buildGroupedDatasets(this.value);
-                    multiYearChartInstance.update();
-                });
+            const elementFilterEl = document.getElementById('multiYearElementFilter');
+            const companyFilterEl = document.getElementById('multiYearCompanyFilter');
+
+            function updateMultiYearChart() {
+                const compVal = companyFilterEl ? companyFilterEl.value : 'all';
+                const elemVal = elementFilterEl ? elementFilterEl.value : 'all';
+                multiYearChartInstance.data.datasets = buildGroupedDatasets(compVal, elemVal);
+                multiYearChartInstance.update();
+            }
+
+            if (elementFilterEl) {
+                elementFilterEl.addEventListener('change', updateMultiYearChart);
+            }
+            if (companyFilterEl) {
+                companyFilterEl.addEventListener('change', updateMultiYearChart);
             }
         }
     });

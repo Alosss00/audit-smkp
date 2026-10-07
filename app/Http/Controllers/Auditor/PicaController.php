@@ -30,7 +30,8 @@ class PicaController extends Controller
                     $q->whereHas('pica');
                 },
                 'auditDetails.pica',
-                'auditDetails.kriteria.subElemen.elemen'
+                'auditDetails.kriteria.subElemen.elemen',
+                'auditDetails.kriteria.subElemen.kriterias'
             ]);
 
         if ($request->filled('status')) {

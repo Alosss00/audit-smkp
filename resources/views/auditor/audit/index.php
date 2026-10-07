@@ -48,7 +48,8 @@ ob_start();
                         <th>Perusahaan (Area Audit)</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
-                        <th class="text-center">Nilai Audit Sesi</th>
+                        <th class="text-center">Progres Audit</th>
+                        <th class="text-center">Nilai Audit</th>
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
@@ -93,14 +94,27 @@ ob_start();
                             </td>
                             <td class="text-center">
                                 <?php
-                                    $skorData = $sesi->hitungSkorAkhir();
-                                    $skorVal = $skorData['persentase'] ?? 0;
+                                    $progress = $sesi->hitungProgressPenilaian();
+                                    $progBarClass = $progress == 100 ? 'bg-success' : ($progress >= 50 ? 'bg-warning' : 'bg-danger');
+                                    $progTextClass = $progress == 100 ? 'text-success' : ($progress >= 50 ? 'text-warning' : 'text-danger');
                                 ?>
-                                <div class="d-inline-flex align-items-center gap-2 px-2.5 py-1 rounded-pill bg-light border">
-                                    <span class="fs-6 fw-bold text-slate-800">
-                                        <?php echo e(number_format($skorVal, 2)); ?>%
+                                <div class="d-flex align-items-center justify-content-center gap-2 mx-auto" style="max-width: 130px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar <?php echo e($progBarClass); ?>" role="progressbar" style="width: <?php echo e($progress); ?>%"></div>
+                                    </div>
+                                    <span class="small fw-bold <?php echo e($progTextClass); ?>">
+                                        <?php echo e(number_format($progress, 1)); ?>%
                                     </span>
                                 </div>
+                            </td>
+                            <td class="text-center">
+                                <?php
+                                    $skorAkhir = $sesi->hitungSkorAkhir();
+                                    $skorClass = $skorAkhir >= 80 ? 'bg-success-subtle text-success border-success-subtle' : ($skorAkhir >= 70 ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle' : 'bg-danger-subtle text-danger border-danger-subtle');
+                                ?>
+                                <span class="badge <?php echo e($skorClass); ?> border px-2.5 py-1.5 rounded-pill fw-bold fs-6">
+                                    <?php echo e(number_format($skorAkhir, 2)); ?>%
+                                </span>
                             </td>
                             <td class="text-end">
                                 <a href="<?php echo e(route('auditor.audit-sesi.rekap', $sesi->id)); ?>" class="btn btn-sm btn-outline-info text-dark rounded-2" title="Lihat Rekapitulasi Nilai">

@@ -16,19 +16,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5.3 CSS & Icons (Hybrid Local & CDN Fallback) -->
-    <link href="<?php echo asset('vendor/bootstrap/bootstrap.min.css'); ?>" rel="stylesheet" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';">
-    <link href="<?php echo asset('vendor/bootstrap-icons/bootstrap-icons.min.css'); ?>" rel="stylesheet" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css';">
+    <link href="<?php echo asset('vendor/bootstrap/bootstrap.min.css'); ?>" rel="stylesheet">
+    <link href="<?php echo asset('vendor/bootstrap-icons/bootstrap-icons.min.css'); ?>" rel="stylesheet">
+
+    <!-- Helper script for dynamic fallback loading with CSP nonce -->
+    <script nonce="<?php echo e($cspNonce ?? ''); ?>">
+        function loadFallbackScript(src) {
+            const s = document.createElement('script');
+            s.src = src;
+            const nonce = "<?php echo e($cspNonce ?? ''); ?>";
+            if (nonce) s.setAttribute('nonce', nonce);
+            document.head.appendChild(s);
+        }
+    </script>
 
     <!-- Chart.js 4.4 (Hybrid Local & CDN Fallback) -->
-    <script src="<?php echo asset('vendor/chartjs/chart.umd.min.js'); ?>" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';"></script>
+    <script src="<?php echo asset('vendor/chartjs/chart.umd.min.js'); ?>" nonce="<?php echo e($cspNonce ?? ''); ?>"></script>
     <script nonce="<?php echo e($cspNonce ?? ''); ?>">
         if (typeof Chart === 'undefined') {
-            document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>');
+            loadFallbackScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js');
         }
     </script>
 
     <!-- Tom Select CSS (Searchable Dropdowns) -->
-    <link href="<?php echo asset('vendor/tom-select/tom-select.bootstrap5.min.css'); ?>" rel="stylesheet" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css';">
+    <link href="<?php echo asset('vendor/tom-select/tom-select.bootstrap5.min.css'); ?>" rel="stylesheet">
 
     <style>
         :root {
@@ -579,18 +590,18 @@
     </div>
 
     <!-- Bootstrap 5 JS (Hybrid Local & CDN Fallback) -->
-    <script src="<?php echo asset('vendor/bootstrap/bootstrap.bundle.min.js'); ?>" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js';"></script>
+    <script src="<?php echo asset('vendor/bootstrap/bootstrap.bundle.min.js'); ?>" nonce="<?php echo e($cspNonce ?? ''); ?>"></script>
     <script nonce="<?php echo e($cspNonce ?? ''); ?>">
         if (typeof bootstrap === 'undefined') {
-            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"><\/script>');
+            loadFallbackScript('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js');
         }
     </script>
 
     <!-- Tom Select JS for Searchable Dropdowns (Hybrid Local & CDN Fallback) -->
-    <script src="<?php echo asset('vendor/tom-select/tom-select.complete.min.js'); ?>" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js';"></script>
+    <script src="<?php echo asset('vendor/tom-select/tom-select.complete.min.js'); ?>" nonce="<?php echo e($cspNonce ?? ''); ?>"></script>
     <script nonce="<?php echo e($cspNonce ?? ''); ?>">
         if (typeof TomSelect === 'undefined') {
-            document.write('<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"><\/script>');
+            loadFallbackScript('https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js');
         }
     </script>
 

@@ -57,14 +57,18 @@ class DashboardController extends Controller
         }
 
         // Global PICA Stats Summary (Agregasi berbasis Sub-Elemen per Sesi Audit)
-        $allPicas = \App\Models\Pica::whereHas('auditDetail.auditSesi', function($q) use ($perusahaanFilterInt, $tahunFilterInt) {
-            if ($perusahaanFilterInt) {
-                $q->where('perusahaan_id', $perusahaanFilterInt);
-            }
-            if ($tahunFilterInt) {
-                $q->where('tahun_periode', $tahunFilterInt);
-            }
-        })->with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
+        $allPicas = \App\Models\Pica::select(['id', 'audit_detail_id', 'status', 'tenggat_waktu', 'kategori_temuan'])
+            ->whereHas('auditDetail.auditSesi', function($q) use ($perusahaanFilterInt, $tahunFilterInt) {
+                if ($perusahaanFilterInt) {
+                    $q->where('perusahaan_id', $perusahaanFilterInt);
+                }
+                if ($tahunFilterInt) {
+                    $q->where('tahun_periode', $tahunFilterInt);
+                }
+            })->with([
+                'auditDetail:id,audit_sesi_id,kriteria_id',
+                'auditDetail.kriteria:id,sub_elemen_id'
+            ])->get();
         
         $groupedSubTemuan = $allPicas->groupBy(function($p) {
             $sesiId = $p->auditDetail->audit_sesi_id ?? 0;
@@ -295,15 +299,19 @@ class DashboardController extends Controller
             $auditQuery->where('area_audit', $userArea);
         }
 
-        $recentAudits = (clone $auditQuery)->latest()->take(5)->get();
-        $allAuditorSessions = (clone $auditQuery)->latest()->get();
+        $recentAudits = (clone $auditQuery)->with(['perusahaan', 'user'])->latest()->take(5)->get();
+        $allAuditorSessions = (clone $auditQuery)->with(['perusahaan', 'user'])->latest()->get();
 
         // PICA Stats Summary for Auditor (Agregasi berbasis Sub-Elemen per Sesi Audit)
-        $basePicas = \App\Models\Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-            if (!empty($userArea)) {
-                $q->where('area_audit', $userArea);
-            }
-        })->with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
+        $basePicas = \App\Models\Pica::select(['id', 'audit_detail_id', 'status', 'tenggat_waktu', 'kategori_temuan'])
+            ->whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
+                if (!empty($userArea)) {
+                    $q->where('area_audit', $userArea);
+                }
+            })->with([
+                'auditDetail:id,audit_sesi_id,kriteria_id',
+                'auditDetail.kriteria:id,sub_elemen_id'
+            ])->get();
 
         $groupedSubTemuan = $basePicas->groupBy(function($p) {
             $sesiId = $p->auditDetail->audit_sesi_id ?? 0;

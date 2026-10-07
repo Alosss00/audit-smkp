@@ -23,7 +23,8 @@ class PicaController extends Controller
                     $q->whereHas('pica');
                 },
                 'auditDetails.pica',
-                'auditDetails.kriteria.subElemen.elemen'
+                'auditDetails.kriteria.subElemen.elemen',
+                'auditDetails.kriteria.subElemen.kriterias'
             ]);
 
         // Filter by Status (sessions having at least one PICA with matching status)

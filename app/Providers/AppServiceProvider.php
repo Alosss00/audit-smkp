@@ -25,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        \Illuminate\Database\Eloquent\Model::preventLazyLoading(! $this->app->isProduction());
+
         RateLimiter::for('login', function (Request $request) {
             $username = (string) $request->input('username');
             return Limit::perMinute(15)->by($username . '|' . $request->ip());

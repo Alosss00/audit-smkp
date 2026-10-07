@@ -98,7 +98,7 @@ class AuditSesiAdminController extends Controller
                 'skor_akhir'      => 0,
             ]);
 
-            $subElemens = \App\Models\SubElemen::all();
+            $subElemens = \App\Models\SubElemen::with('kriterias')->get();
             foreach ($subElemens as $sub) {
                 $sub->syncDefaultKriteria();
             }
@@ -140,9 +140,9 @@ class AuditSesiAdminController extends Controller
      */
     public function matrix($id)
     {
-        $sesi = AuditSesi::with('user')->findOrFail($id);
+        $sesi = AuditSesi::with(['user', 'perusahaan'])->findOrFail($id);
 
-        $subElemens = \App\Models\SubElemen::all();
+        $subElemens = \App\Models\SubElemen::with('kriterias')->get();
         foreach ($subElemens as $sub) {
             $sub->syncDefaultKriteria();
         }
@@ -331,6 +331,7 @@ class AuditSesiAdminController extends Controller
                 })
                 ->whereIn('status', ['open', 'in_progress'])
                 ->where('kategori_ditetapkan_manual', false)
+                ->with('auditDetail.kriteria')
                 ->get()
                 ->pluck('auditDetail.kriteria.sub_elemen_id')
                 ->filter()

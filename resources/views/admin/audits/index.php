@@ -125,7 +125,8 @@ ob_start();
                         <th>Pelaksanaan Audit</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
-                        <th class="text-center">Nilai Audit Sesi</th>
+                        <th class="text-center">Progres Audit</th>
+                        <th class="text-center">Nilai Audit</th>
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
@@ -181,19 +182,27 @@ ob_start();
                             </td>
                             <td class="text-center">
                                 <?php
-                                    $skorAkhir = $sesi->hitungSkorAkhir();
-                                    $textClass = $skorAkhir >= 85 ? 'text-success' : ($skorAkhir >= 70 ? 'text-warning-emphasis' : 'text-danger');
-                                    $barClass = $skorAkhir >= 85 ? 'bg-success' : ($skorAkhir >= 70 ? 'bg-warning' : 'bg-danger');
+                                    $progress = $sesi->hitungProgressPenilaian();
+                                    $progBarClass = $progress == 100 ? 'bg-success' : ($progress >= 50 ? 'bg-warning' : 'bg-danger');
+                                    $progTextClass = $progress == 100 ? 'text-success' : ($progress >= 50 ? 'text-warning' : 'text-danger');
                                 ?>
-                                <div class="d-flex flex-column align-items-center justify-content-center">
-                                    <span class="fw-bold fs-6 <?php echo e($textClass); ?>">
-                                        <?php echo e(number_format($skorAkhir, 2)); ?>%
-                                    </span>
-                                    <div class="progress w-100 mt-1" style="height: 5px; max-width: 90px;">
-                                        <div class="progress-bar <?php echo e($barClass); ?>" 
-                                             role="progressbar" style="width: <?php echo e(min($skorAkhir, 100)); ?>%"></div>
+                                <div class="d-flex align-items-center justify-content-center gap-2 mx-auto" style="max-width: 130px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar <?php echo e($progBarClass); ?>" role="progressbar" style="width: <?php echo e($progress); ?>%"></div>
                                     </div>
+                                    <span class="small fw-bold <?php echo e($progTextClass); ?>">
+                                        <?php echo e(number_format($progress, 1)); ?>%
+                                    </span>
                                 </div>
+                            </td>
+                            <td class="text-center">
+                                <?php
+                                    $skorAkhir = $sesi->hitungSkorAkhir();
+                                    $skorClass = $skorAkhir >= 80 ? 'bg-success-subtle text-success border-success-subtle' : ($skorAkhir >= 70 ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle' : 'bg-danger-subtle text-danger border-danger-subtle');
+                                ?>
+                                <span class="badge <?php echo e($skorClass); ?> border px-2.5 py-1.5 rounded-pill fw-bold fs-6">
+                                    <?php echo e(number_format($skorAkhir, 2)); ?>%
+                                </span>
                             </td>
                             <td class="text-end">
                                 <div class="btn-group gap-1">

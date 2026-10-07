@@ -254,7 +254,7 @@ ob_start();
                                 $subNama = $subElemen->nama_sub ?? '-';
                                 
                                 $hasSubSub = $subDetails->count() > 1 
-                                    || ($subElemen && $subElemen->kriterias && $subElemen->kriterias->count() > 1) 
+                                    || ($subElemen && ($subElemen->relationLoaded('kriterias') ? $subElemen->kriterias->count() : $subElemen->kriterias()->count()) > 1) 
                                     || ($firstDetail->kriteria && $firstDetail->kriteria->kode_kriteria !== $subKode);
                                 
                                 $hasKritikal = $subDetails->contains(fn($d) => $d->pica && $d->pica->kategori_temuan === 'kritikal');

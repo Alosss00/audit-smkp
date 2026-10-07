@@ -38,7 +38,7 @@
                 $firstSubPica = $subPicas->first();
                 $kriSub = $firstSubPica->auditDetail->kriteria ?? null;
                 $subElemen = $kriSub->subElemen ?? null;
-                $subElemenKriteriasCount = $subElemen ? ($subElemen->kriterias ? $subElemen->kriterias->count() : 0) : 0;
+                $subElemenKriteriasCount = $subElemen ? ($subElemen->relationLoaded('kriterias') ? $subElemen->kriterias->count() : $subElemen->kriterias()->count()) : 0;
                 $isCodeDifferent = $kriSub && $subElemen && ($kriSub->kode_kriteria !== $subElemen->kode_sub);
                 $hasSubSub = ($subElemenKriteriasCount > 1) || $isCodeDifferent;
 
@@ -108,7 +108,7 @@
                                         $subKode = $subElemen->kode_sub ?? ($kriSub->kode_kriteria ?? '-');
                                         $subNama = $subElemen->nama_sub ?? ($kriSub->deskripsi ?? '-');
 
-                                        $subElemenKriteriasCount = $subElemen ? ($subElemen->kriterias ? $subElemen->kriterias->count() : 0) : 0;
+                                        $subElemenKriteriasCount = $subElemen ? ($subElemen->relationLoaded('kriterias') ? $subElemen->kriterias->count() : $subElemen->kriterias()->count()) : 0;
                                         $isCodeDifferent = $kriSub && $subElemen && ($kriSub->kode_kriteria !== $subElemen->kode_sub);
                                         $hasSubSub = ($subElemenKriteriasCount > 1) || $isCodeDifferent;
 
