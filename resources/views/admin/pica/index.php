@@ -78,19 +78,59 @@ ob_start();
     </div>
 </div>
 
+<!-- Quick Company Selector Navigation (Semua Perusahaan, MSM, TTN, dsb) -->
+<div class="d-flex align-items-center gap-2 mb-3 overflow-auto pb-1">
+    <span class="text-muted small fw-semibold me-1"><i class="bi bi-building me-1 text-danger"></i>Perusahaan:</span>
+    <a href="<?php echo e(route('admin.pica.index', array_merge(request()->except(['perusahaan_id', 'page']), []))); ?>" 
+       class="btn btn-sm rounded-pill px-3 fw-semibold <?php echo e(!request('perusahaan_id') ? 'btn-danger shadow-sm text-white' : 'btn-outline-secondary bg-white text-slate-700'); ?>">
+        Semua Perusahaan
+    </a>
+    <?php foreach($perusahaans as $comp): ?>
+        <?php
+            $isSelected = request('perusahaan_id') == $comp->id;
+        ?>
+        <a href="<?php echo e(route('admin.pica.index', array_merge(request()->except(['page']), ['perusahaan_id' => $comp->id]))); ?>" 
+           class="btn btn-sm rounded-pill px-3 fw-semibold <?php echo e($isSelected ? 'btn-danger shadow-sm text-white' : 'btn-outline-secondary bg-white text-slate-700'); ?>">
+            🏢 <?php echo e($comp->nama_perusahaan); ?>
+
+        </a>
+    <?php endforeach; ?>
+</div>
+
 <!-- Filter Card -->
 <div class="card card-custom p-3 mb-4">
     <form action="<?php echo e(route('admin.pica.index')); ?>" method="GET" class="row g-2 align-items-center">
-        <div class="col-md-4">
+        <div class="col-lg-3 col-md-6">
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
                 <input type="text" name="search" class="form-control bg-light border-start-0" 
-                    placeholder="Cari area audit, temuan, PIC, atau auditor..." value="<?php echo e(request('search')); ?>">
+                    placeholder="Cari area, temuan, PIC..." value="<?php echo e(request('search')); ?>">
             </div>
         </div>
-        <div class="col-md-3">
-            <select name="user_id" class="form-select bg-light">
-                <option value="">-- Semua Auditor --</option>
+        <div class="col-lg-2 col-md-6">
+            <select name="perusahaan_id" class="form-select bg-light select-searchable" data-auto-submit="true">
+                <option value="">🏢 Semua Perusahaan</option>
+                <?php foreach($perusahaans as $comp): ?>
+                    <option value="<?php echo e($comp->id); ?>" <?php echo e(request('perusahaan_id') == $comp->id ? 'selected' : ''); ?>>
+                        🏢 <?php echo e($comp->nama_perusahaan); ?> <?php if($comp->kategori): ?> (<?php echo e($comp->kategori); ?>) <?php endif; ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <select name="tahun_periode" class="form-select bg-light" data-auto-submit="true">
+                <option value="">🗓️ Semua Periode Tahun</option>
+                <?php foreach($tahunPeriodes as $yr): ?>
+                    <option value="<?php echo e($yr); ?>" <?php echo e(request('tahun_periode') == $yr ? 'selected' : ''); ?>>
+                        Tahun <?php echo e($yr); ?>
+
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <select name="user_id" class="form-select bg-light" data-auto-submit="true">
+                <option value="">👤 Semua Auditor</option>
                 <?php foreach($auditors as $auditor): ?>
                     <option value="<?php echo e($auditor->id); ?>" <?php echo e(request('user_id') == $auditor->id ? 'selected' : ''); ?>>
                         <?php echo e($auditor->name); ?>
@@ -99,20 +139,20 @@ ob_start();
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select bg-light">
-                <option value="">-- Semua Status PICA --</option>
+        <div class="col-lg-2 col-md-4">
+            <select name="status" class="form-select bg-light" data-auto-submit="true">
+                <option value="">⚡ Semua Status PICA</option>
                 <option value="open" <?php echo e(request('status') == 'open' ? 'selected' : ''); ?>>Ada Temuan Open</option>
                 <option value="in_progress" <?php echo e(request('status') == 'in_progress' ? 'selected' : ''); ?>>Ada Temuan In Progress</option>
                 <option value="closed" <?php echo e(request('status') == 'closed' ? 'selected' : ''); ?>>Seluruh Temuan Closed</option>
             </select>
         </div>
-        <div class="col-md-2 d-flex gap-2">
-            <button type="submit" class="btn btn-danger w-100 fw-semibold">
-                <i class="bi bi-filter me-1"></i> Filter
+        <div class="col-lg-1 col-md-12 d-flex gap-1">
+            <button type="submit" class="btn btn-danger w-100 fw-semibold px-2" title="Terapkan Filter">
+                <i class="bi bi-filter"></i>
             </button>
-            <?php if(request()->hasAny(['search', 'status', 'user_id'])): ?>
-                <a href="<?php echo e(route('admin.pica.index')); ?>" class="btn btn-outline-secondary" title="Reset Filter">
+            <?php if(request()->hasAny(['search', 'status', 'user_id', 'perusahaan_id', 'tahun_periode'])): ?>
+                <a href="<?php echo e(route('admin.pica.index')); ?>" class="btn btn-outline-secondary px-2" title="Reset Filter">
                     <i class="bi bi-arrow-counterclockwise"></i>
                 </a>
             <?php endif; ?>
@@ -128,7 +168,7 @@ ob_start();
                 <tr>
                     <th class="ps-4">No</th>
                     <th>Auditor</th>
-                    <th>Area & Tanggal Audit</th>
+                    <th>Perusahaan, Area & Periode Tahun</th>
                     <th>Total Temuan</th>
                     <th>Breakdown Status</th>
                     <th>Progress Penyelesaian</th>
@@ -188,8 +228,16 @@ ob_start();
                                 </div>
                             </td>
                             <td>
+                                <div class="mb-1">
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-0.5 small fw-bold d-inline-flex align-items-center">
+                                        <i class="bi bi-calendar-check me-1"></i>Periode Tahun <?php echo e($sesi->tahun_periode ?? $sesi->tanggal_mulai->format('Y')); ?>
+
+                                    </span>
+                                </div>
                                 <strong class="d-block text-slate-800 fs-6"><?php echo e($sesi->area_audit); ?></strong>
-                                <small class="text-muted"><i class="bi bi-calendar me-1"></i> <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></small>
+                                <div class="text-muted small mt-0.5" style="font-size: 0.78rem;">
+                                    <i class="bi bi-calendar-event me-1 text-secondary"></i>Waktu Pelaksanaan: <span class="fw-medium text-slate-700"><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></span>
+                                </div>
                             </td>
                             <td>
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold" title="<?php echo e($totalPica); ?> rincian tindakan kriteria">
@@ -259,9 +307,15 @@ ob_start();
                         <h5 class="modal-title fw-bold mb-0">
                             <i class="bi bi-tools text-danger me-2"></i> Pengawasan PICA — Area: <?php echo e($sesi->area_audit); ?>
 
+                            <span class="badge bg-danger border border-light border-opacity-50 ms-1 fw-bold fs-6">
+                                <i class="bi bi-calendar-check me-1"></i>Periode Tahun: <?php echo e($sesi->tahun_periode ?? $sesi->tanggal_mulai->format('Y')); ?>
+
+                            </span>
                         </h5>
                         <small class="text-slate-300" style="font-size: 0.8rem; color: #cbd5e1;">
-                            <i class="bi bi-person me-1"></i> Auditor: <?php echo e($auditor ? $auditor->name : '-'); ?> | <i class="bi bi-calendar me-1"></i> <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?> | <strong>Total <?php echo e($subElemenCount); ?> Temuan Sub-Elemen (Maks. 51)</strong> &bull; <?php echo e($totalPicaCount); ?> Tindakan Kriteria
+                            <i class="bi bi-person me-1"></i> Auditor: <?php echo e($auditor ? $auditor->name : '-'); ?> | 
+                            <i class="bi bi-calendar-event me-1"></i> Waktu Pelaksanaan: <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?> | 
+                            <strong>Total <?php echo e($subElemenCount); ?> Temuan Sub-Elemen (Maks. 51)</strong> &bull; <?php echo e($totalPicaCount); ?> Tindakan Kriteria
                         </small>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

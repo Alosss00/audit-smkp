@@ -351,6 +351,33 @@ ob_start();
 <?php endforeach; ?>
 
 <script nonce="<?php echo e($cspNonce ?? ''); ?>">
+    function cekKonsistensi() {
+        const scoreInputs = document.querySelectorAll('.input-score');
+        scoreInputs.forEach(function(input) {
+            const row = input.closest('tr');
+            if (!row) return;
+            
+            const maxScore = parseFloat(input.getAttribute('max') || '4') || 4;
+            const currentScore = parseFloat(input.value) || 0;
+            const isNa = input.disabled && row.querySelector('.na-checkbox')?.checked;
+            const catatanWrapper = row.querySelector('.catatan-wrapper');
+            
+            if (!isNa && currentScore < maxScore && catatanWrapper) {
+                const textareas = catatanWrapper.querySelectorAll('textarea');
+                let hasText = false;
+                textareas.forEach(function(t) { if (t.value.trim() !== '') hasText = true; });
+                
+                if (!hasText) {
+                    catatanWrapper.classList.add('border', 'border-warning', 'p-1', 'rounded-2');
+                } else {
+                    catatanWrapper.classList.remove('border', 'border-warning', 'p-1', 'rounded-2');
+                }
+            } else if (catatanWrapper) {
+                catatanWrapper.classList.remove('border', 'border-warning', 'p-1', 'rounded-2');
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const checkNas = document.querySelectorAll('.check-na');
 
@@ -549,6 +576,12 @@ ob_start();
                         });
                     }
                 }
+            }
+        });
+
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.tagName === 'TEXTAREA' && e.target.closest('.catatan-wrapper')) {
+                cekKonsistensi();
             }
         });
 

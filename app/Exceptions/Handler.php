@@ -45,4 +45,30 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    /**
+     * Render an exception into an HTTP response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $e
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Throwable
+     */
+    public function render($request, Throwable $e)
+    {
+        // Gracefully handle CSRF token expiration (419 Page Expired)
+        if ($e instanceof \Illuminate\Session\TokenMismatchException || ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException && $e->getStatusCode() === 419)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Sesi Anda telah kedaluwarsa. Silakan refresh halaman dan coba kembali.',
+                ], 419);
+            }
+
+            return redirect()->route('login')
+                ->with('error', 'Sesi Anda telah kedaluwarsa atau halaman telah expired. Silakan coba login kembali.');
+        }
+
+        return parent::render($request, $e);
+    }
 }

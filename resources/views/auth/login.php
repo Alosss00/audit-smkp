@@ -72,6 +72,39 @@ ob_start();
                 </div>
             <?php endif; ?>
 
+            <?php if (session('error') || session('warning')): ?>
+                <div class="alert alert-warning rounded-3 py-2 px-3 mb-4" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-circle-fill text-warning fs-5"></i>
+                        <div class="small fw-semibold text-dark">
+                            <?php echo e(session('error') ?? session('warning')); ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session('info')): ?>
+                <div class="alert alert-info rounded-3 py-2 px-3 mb-4" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle-fill text-info fs-5"></i>
+                        <div class="small fw-semibold">
+                            <?php echo e(session('info')); ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session('success')): ?>
+                <div class="alert alert-success rounded-3 py-2 px-3 mb-4" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <div class="small fw-semibold">
+                            <?php echo e(session('success')); ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <form action="<?php echo route('login'); ?>" method="POST">
                 <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
 

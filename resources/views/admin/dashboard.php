@@ -27,7 +27,7 @@ ob_start();
             <label for="filterPerusahaan" class="form-label small fw-semibold text-slate-600 mb-1">
                 <i class="bi bi-building me-1 text-primary"></i>Perusahaan / Area Audit:
             </label>
-            <select name="perusahaan_id" id="filterPerusahaan" class="form-select form-select-sm rounded-3 border-slate-300 shadow-none fw-semibold" onchange="this.form.submit()">
+            <select name="perusahaan_id" id="filterPerusahaan" class="form-select form-select-sm rounded-3 border-slate-300 shadow-none fw-semibold" data-auto-submit="true">
                 <option value="semua" <?php echo ($selectedPerusahaan === 'semua' || empty($selectedPerusahaan)) ? 'selected' : ''; ?>>🏢 Semua Perusahaan (Gabungan)</option>
                 <?php if(!empty($availablePerusahaans)): ?>
                     <?php foreach($availablePerusahaans as $p): ?>
@@ -44,7 +44,7 @@ ob_start();
             <label for="filterTahunPeriode" class="form-label small fw-semibold text-slate-600 mb-1">
                 <i class="bi bi-calendar-range me-1 text-primary"></i>Periode Audit (Tahun):
             </label>
-            <select name="tahun_periode" id="filterTahunPeriode" class="form-select form-select-sm rounded-3 border-slate-300 shadow-none fw-semibold" onchange="this.form.submit()">
+            <select name="tahun_periode" id="filterTahunPeriode" class="form-select form-select-sm rounded-3 border-slate-300 shadow-none fw-semibold" data-auto-submit="true">
                 <option value="semua" <?php echo ($selectedTahun === 'semua' || empty($selectedTahun)) ? 'selected' : ''; ?>>🗓️ Semua Tahun Periode</option>
                 <?php if(!empty($availableYears)): ?>
                     <?php foreach($availableYears as $yr): ?>

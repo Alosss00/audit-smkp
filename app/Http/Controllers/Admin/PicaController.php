@@ -27,6 +27,16 @@ class PicaController extends Controller
                 'auditDetails.kriteria.subElemen.kriterias'
             ]);
 
+        // Filter by Perusahaan (perusahaan_id)
+        if ($request->filled('perusahaan_id')) {
+            $query->where('perusahaan_id', $request->perusahaan_id);
+        }
+
+        // Filter by Tahun Periode
+        if ($request->filled('tahun_periode')) {
+            $query->where('tahun_periode', $request->tahun_periode);
+        }
+
         // Filter by Status (sessions having at least one PICA with matching status)
         if ($request->filled('status')) {
             $status = $request->status;
@@ -40,13 +50,16 @@ class PicaController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        // Filter by Search Query (area_audit or deskripsi_temuan / akar_masalah / auditor name)
+        // Filter by Search Query (area_audit or deskripsi_temuan / akar_masalah / auditor name / perusahaan name)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('area_audit', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($qu) use ($search) {
                       $qu->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('perusahaan', function ($qp) use ($search) {
+                      $qp->where('nama_perusahaan', 'like', "%{$search}%");
                   })
                   ->orWhereHas('auditDetails.pica', function ($qp) use ($search) {
                       $qp->where('deskripsi_temuan', 'like', "%{$search}%")
@@ -55,10 +68,23 @@ class PicaController extends Controller
             });
         }
 
-        $auditSesis = $query->latest()->paginate(10);
+        $auditSesis = $query->latest()->paginate(10)->withQueryString();
 
-        // Global Stats Summary (Agregasi berbasis Sub-Elemen per Sesi Audit)
-        $allPicas = Pica::with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
+        // Stats Summary (Agregasi berbasis Sub-Elemen per Sesi Audit)
+        $picaQuery = Pica::with(['auditDetail.kriteria', 'auditDetail.auditSesi']);
+        if ($request->filled('perusahaan_id')) {
+            $perusahaanId = $request->perusahaan_id;
+            $picaQuery->whereHas('auditDetail.auditSesi', function ($q) use ($perusahaanId) {
+                $q->where('perusahaan_id', $perusahaanId);
+            });
+        }
+        if ($request->filled('tahun_periode')) {
+            $tahunPeriode = $request->tahun_periode;
+            $picaQuery->whereHas('auditDetail.auditSesi', function ($q) use ($tahunPeriode) {
+                $q->where('tahun_periode', $tahunPeriode);
+            });
+        }
+        $allPicas = $picaQuery->get();
         
         $groupedSubTemuan = $allPicas->groupBy(function($p) {
             $sesiId = $p->auditDetail->audit_sesi_id ?? 0;
@@ -93,10 +119,16 @@ class PicaController extends Controller
             'overdue'             => $allPicas->filter(fn($p) => $p->status !== 'closed' && $p->tenggat_waktu && $p->tenggat_waktu->isPast())->count(),
         ];
 
+        // Perusahaan list for filter dropdown & navigation
+        $perusahaans = \App\Models\Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
+
+        // Available audit years for filter
+        $tahunPeriodes = AuditSesi::select('tahun_periode')->whereNotNull('tahun_periode')->distinct()->pluck('tahun_periode')->sortDesc();
+
         // Auditor list for filter dropdown
         $auditors = User::where('role', 'auditor')->orderBy('name')->get();
 
-        return view('admin.pica.index', compact('auditSesis', 'stats', 'auditors'));
+        return view('admin.pica.index', compact('auditSesis', 'stats', 'auditors', 'perusahaans', 'tahunPeriodes'));
     }
 
     /**

@@ -28,7 +28,7 @@ Route::get('/', function () {
 // Guest Routes (Authentication)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post')->middleware('throttle:login');
 });
 
 // Authenticated Routes (Protected with Anti-Back-History Cache)
@@ -62,7 +62,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::delete('/audit-sesi/{id}/force-delete', [AuditSesiAdminController::class, 'forceDelete'])->name('audit-sesi.force-delete');
         Route::resource('audit-sesi', AuditSesiAdminController::class);
 
-        // Hubungan Antar Elemen SMKP — Advisory Relasi API
+        // Hubungan Antar Elemen SMKP ï¿½ Advisory Relasi API
         Route::get('/api/kriteria/{kode}/relasi', [\App\Http\Controllers\Api\KriteriaRelasiController::class, 'show'])->name('api.kriteria.relasi');
 
         // Master Data CRUD & Restore Points & User Management (Administrator Only)

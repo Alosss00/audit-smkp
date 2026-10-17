@@ -156,8 +156,16 @@ ob_start();
                         <tr>
                             <td class="ps-4 fw-semibold text-muted"><?php echo e($auditSesis->firstItem() + $index); ?></td>
                             <td>
+                                <div class="mb-1">
+                                    <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-0.5 small fw-bold d-inline-flex align-items-center">
+                                        <i class="bi bi-calendar-check me-1"></i>Periode Tahun <?php echo e($sesi->tahun_periode ?? $sesi->tanggal_mulai->format('Y')); ?>
+
+                                    </span>
+                                </div>
                                 <strong class="d-block text-slate-800 fs-6"><?php echo e($sesi->area_audit); ?></strong>
-                                <small class="text-muted"><i class="bi bi-calendar me-1"></i> <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></small>
+                                <div class="text-muted small mt-0.5" style="font-size: 0.78rem;">
+                                    <i class="bi bi-calendar-event me-1 text-secondary"></i>Waktu Pelaksanaan: <span class="fw-medium text-slate-700"><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></span>
+                                </div>
                             </td>
                             <td>
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold" title="<?php echo e($totalPica); ?> rincian tindakan kriteria">
@@ -226,9 +234,14 @@ ob_start();
                         <h5 class="modal-title fw-bold mb-0">
                             <i class="bi bi-tools text-info me-2"></i> Daftar Temuan PICA — Area: <?php echo e($sesi->area_audit); ?>
 
+                            <span class="badge bg-info text-dark border border-light border-opacity-50 ms-1 fw-bold fs-6">
+                                <i class="bi bi-calendar-check me-1"></i>Periode Tahun: <?php echo e($sesi->tahun_periode ?? $sesi->tanggal_mulai->format('Y')); ?>
+
+                            </span>
                         </h5>
                         <small class="text-slate-300" style="font-size: 0.8rem; color: #cbd5e1;">
-                            <i class="bi bi-calendar me-1"></i> <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?> | <strong>Total <?php echo e($subElemenCount); ?> Temuan Sub-Elemen (Maks. 51)</strong> &bull; <?php echo e($totalPicaCount); ?> Tindakan Kriteria
+                            <i class="bi bi-calendar-event me-1"></i> Waktu Pelaksanaan: <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?> | 
+                            <strong>Total <?php echo e($subElemenCount); ?> Temuan Sub-Elemen (Maks. 51)</strong> &bull; <?php echo e($totalPicaCount); ?> Tindakan Kriteria
                         </small>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
