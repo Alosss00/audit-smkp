@@ -19,6 +19,7 @@ class Pica extends Model
         'akar_masalah',
         'tindakan_koreksi',
         'tindakan_pencegahan',
+        'pic_perbaikan',
         'bukti_perbaikan',
         'tenggat_waktu',
         'status',

@@ -163,6 +163,25 @@ ob_start();
     </div>
 </div>
 
+<!-- Visual Chart Analytics Section: Multi-Year Final Score Comparison per Perusahaan (Grafik Nilai Akhir Sesi Audit) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card card-custom p-4 border-start border-4 border-primary">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-slate-800">
+                        <i class="bi bi-award-fill me-2 text-primary"></i>Perbandingan Nilai Akhir Audit Antar Tahun Periode
+                    </h5>
+                    <p class="text-muted small mb-0">Grafik komparasi nilai akhir (total skor persentase pencapaian audit SMKP) dari setiap periode audit per perusahaan.</p>
+                </div>
+            </div>
+            <div style="height: 380px; position: relative;">
+                <canvas id="finalScoreMultiYearChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Visual Chart Analytics Section: Multi-Year Grouped Bar Chart per Elemen (Batch Grafik per Tahun Periode) -->
 <div class="row g-4 mb-4">
     <div class="col-12">
@@ -174,21 +193,37 @@ ob_start();
                     </h5>
                     <p class="text-muted small mb-0">Grafik komparasi batch (grouped bar & garis kurva tren) nilai audit per Elemen SMKP (I - VII) dari tahun ke tahun.</p>
                 </div>
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <label for="multiYearElementFilter" class="small fw-semibold text-muted mb-0 d-flex align-items-center">
-                        <i class="bi bi-funnel text-info me-1"></i>Filter Elemen:
-                    </label>
-                    <select id="multiYearElementFilter" class="form-select form-select-sm rounded-3 border-slate-300 fw-semibold shadow-none" style="min-width: 250px;">
-                        <option value="all">🏢 Semua Elemen (I - VII)</option>
-                        <?php if(!empty($elemens)): ?>
-                            <?php foreach($elemens as $el): ?>
-                                <option value="<?php echo e($el->id); ?>">
-                                    📌 Elemen <?php echo e($el->kode_elemen); ?>: <?php echo e($el->nama_elemen); ?>
-
-                                </option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="multiYearCompanyFilter" class="small fw-semibold text-muted mb-0 d-flex align-items-center">
+                            <i class="bi bi-building text-info me-1"></i>Filter Perusahaan:
+                        </label>
+                        <select id="multiYearCompanyFilter" class="form-select form-select-sm rounded-3 border-slate-300 fw-semibold shadow-none" style="min-width: 220px;">
+                            <option value="all">🏢 Semua Perusahaan</option>
+                            <?php if(!empty($availablePerusahaans)): ?>
+                                <?php foreach($availablePerusahaans as $p): ?>
+                                    <option value="<?php echo e($p->id); ?>" <?php echo ((string)$selectedPerusahaan === (string)$p->id) ? 'selected' : ''; ?>>
+                                        🏢 <?php echo e($p->nama_perusahaan); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="multiYearElementFilter" class="small fw-semibold text-muted mb-0 d-flex align-items-center">
+                            <i class="bi bi-funnel text-info me-1"></i>Filter Elemen:
+                        </label>
+                        <select id="multiYearElementFilter" class="form-select form-select-sm rounded-3 border-slate-300 fw-semibold shadow-none" style="min-width: 240px;">
+                            <option value="all">📚 Semua Elemen (I - VII)</option>
+                            <?php if(!empty($elemens)): ?>
+                                <?php foreach($elemens as $el): ?>
+                                    <option value="<?php echo e($el->id); ?>">
+                                        📌 Elemen <?php echo e($el->kode_elemen); ?>: <?php echo e($el->nama_elemen); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div style="height: 420px; position: relative;">
@@ -248,6 +283,45 @@ ob_start();
                 <?php else: ?>
                     <div class="text-center py-4 text-muted">Belum ada data temuan audit akumulasi.</div>
                 <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visual Chart Analytics Section: Multi-Period PICA Status Breakdown per Perusahaan (Open, In Progress, Closed) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card card-custom p-4 border-start border-4 border-warning">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-slate-800">
+                        <i class="bi bi-clock-history me-2 text-warning"></i>Perbandingan Status Temuan PICA Antar Periode Audit
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Grafik komparasi status temuan PICA (Open, In Progress, dan Closed) per tahun periode audit<?php 
+                            if ($selectedPerusahaan && $selectedPerusahaan !== 'semua') {
+                                $currP = $availablePerusahaans->firstWhere('id', $selectedPerusahaan);
+                                echo ' untuk <strong class="text-slate-800">' . e($currP ? $currP->nama_perusahaan : 'Perusahaan Terpilih') . '</strong>';
+                            } else {
+                                echo ' (Gabungan Seluruh Perusahaan)';
+                            }
+                        ?>.
+                    </p>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <label for="picaStatusFilter" class="small fw-semibold text-muted mb-0 d-flex align-items-center">
+                        <i class="bi bi-funnel text-warning me-1"></i>Filter Status PICA:
+                    </label>
+                    <select id="picaStatusFilter" class="form-select form-select-sm rounded-3 border-slate-300 fw-semibold shadow-none" style="min-width: 230px;">
+                        <option value="all">📋 Semua Status (Open, In Prog, Closed)</option>
+                        <option value="open">🔴 Status Open Saja</option>
+                        <option value="in_progress">🟡 Status In Progress Saja</option>
+                        <option value="closed">🟢 Status Closed Saja</option>
+                    </select>
+                </div>
+            </div>
+            <div style="height: 380px; position: relative;">
+                <canvas id="picaStatusMultiPeriodChart"></canvas>
             </div>
         </div>
     </div>
@@ -812,7 +886,183 @@ ob_start();
             }
         }
 
-        // 5. Multi-Year Grouped Bar Chart per Elemen (Batch Grafik per Tahun Periode)
+        // 5a. Multi-Year Final Score Comparison Chart per Perusahaan
+        const ctxFinalScore = document.getElementById('finalScoreMultiYearChart');
+        if (ctxFinalScore) {
+            const finalScoreData = <?php echo json_encode($finalScoreTrendData ?? ['years' => [], 'companies' => [], 'overallAverage' => []]); ?>;
+            const fsYears = finalScoreData.years || [];
+            const fsCompanies = finalScoreData.companies || {};
+            const fsOverall = finalScoreData.overallAverage || [];
+
+            const fsYearLabels = fsYears.map(y => 'Tahun ' + y);
+
+            const companyColorPalette = [
+                '#0284c7', // Sky Blue (PT Meares Soputan Mining)
+                '#f59e0b', // Amber / Gold (PT Tambang Tondano Nusa Jaya)
+                '#10b981', // Emerald
+                '#8b5cf6', // Purple
+                '#ec4899', // Pink
+                '#ef4444', // Red
+                '#06b6d4'  // Cyan
+            ];
+
+            function buildFinalScoreDatasets(selectedComp = 'all') {
+                const datasets = [];
+
+                if (selectedComp === 'all') {
+                    // Ketika 'Semua Perusahaan', hanya tampilkan bar per perusahaan tanpa garis
+                    let colorIdx = 0;
+                    Object.values(fsCompanies).forEach(comp => {
+                        const col = companyColorPalette[colorIdx % companyColorPalette.length];
+                        datasets.push({
+                            type: 'bar',
+                            label: comp.nama,
+                            data: comp.scores,
+                            backgroundColor: col,
+                            borderColor: col,
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barPercentage: 0.75,
+                            categoryPercentage: 0.7,
+                            order: 2
+                        });
+                        colorIdx++;
+                    });
+                } else {
+                    // Garis tren hanya ada jika filter perusahaan diaktifkan
+                    const comp = fsCompanies[selectedComp] || Object.values(fsCompanies).find(c => String(c.id) === String(selectedComp));
+                    if (comp) {
+                        const col = '#0284c7';
+                        datasets.push({
+                            type: 'bar',
+                            label: 'Nilai Akhir: ' + comp.nama,
+                            data: comp.scores,
+                            backgroundColor: 'rgba(2, 132, 199, 0.85)',
+                            borderColor: '#0284c7',
+                            borderWidth: 1.5,
+                            borderRadius: 8,
+                            barPercentage: 0.45,
+                            categoryPercentage: 0.6,
+                            order: 2
+                        });
+
+                        datasets.push({
+                            type: 'line',
+                            label: 'Kurva Tren Nilai Akhir ' + comp.nama,
+                            data: comp.scores,
+                            borderColor: '#0369a1',
+                            backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                            borderWidth: 3.5,
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: 7,
+                            pointHoverRadius: 10,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#0369a1',
+                            pointBorderWidth: 3,
+                            order: 1
+                        });
+                    }
+                }
+
+                return datasets;
+            }
+
+            const finalScoreBarTextPlugin = {
+                id: 'finalScoreBarTextPlugin',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        if (dataset.type === 'line') return;
+                        const meta = chart.getDatasetMeta(datasetIndex);
+                        if (!meta || meta.hidden) return;
+
+                        meta.data.forEach((bar, index) => {
+                            const value = dataset.data[index];
+                            if (value !== undefined && value !== null && value > 0) {
+                                ctx.save();
+                                ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'bottom';
+                                ctx.fillStyle = '#0f172a';
+                                ctx.fillText(value + '%', bar.x, bar.y - 3);
+                                ctx.restore();
+                            }
+                        });
+                    });
+                }
+            };
+
+            const globalSelectedCompany = <?php echo json_encode((string)$selectedPerusahaan); ?>;
+            const initialFsCompany = (globalSelectedCompany && globalSelectedCompany !== 'semua') ? globalSelectedCompany : 'all';
+
+            const finalScoreChartInstance = new Chart(ctxFinalScore.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: fsYearLabels,
+                    datasets: buildFinalScoreDatasets(initialFsCompany)
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 13, weight: 'bold', family: "'Plus Jakarta Sans', sans-serif" },
+                                color: '#1e293b'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 110,
+                            ticks: {
+                                stepSize: 10,
+                                callback: function(val) { return val <= 100 ? val + '%' : ''; },
+                                font: { size: 11, weight: '600' }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Nilai Akhir (%)',
+                                font: { size: 12, weight: 'bold' },
+                                color: '#64748b'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'start',
+                            labels: {
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                padding: 14,
+                                usePointStyle: true,
+                                font: { size: 11, weight: '600', family: "'Plus Jakarta Sans', sans-serif" }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(items) {
+                                    return items[0].label;
+                                },
+                                label: function(context) {
+                                    const val = context.raw;
+                                    let rating = '';
+                                    if (val >= 85) rating = ' (Memuaskan)';
+                                    else if (val >= 70) rating = ' (Baik)';
+                                    else if (val > 0) rating = ' (Kurang)';
+                                    return ` ${context.dataset.label}: ${val}%${rating}`;
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [finalScoreBarTextPlugin]
+            });
+        }
+
+        // 5b. Multi-Year Grouped Bar Chart per Elemen (Batch Grafik per Tahun Periode)
         const ctxMultiYear = document.getElementById('multiYearGroupedBarChart');
         if (ctxMultiYear) {
             const trendYears = <?php echo json_encode($elementTrendData['years'] ?? []); ?>;
@@ -839,6 +1089,9 @@ ob_start();
                     let scoreArr = el.scores || [];
                     if (companyType === 'msm') scoreArr = el.msmScores || [];
                     else if (companyType === 'ttn') scoreArr = el.ttnScores || [];
+                    else if (companyType !== 'all' && el.scoresByCompany && el.scoresByCompany[companyType]) {
+                        scoreArr = el.scoresByCompany[companyType] || [];
+                    }
 
                     scoreArr.forEach((sc, i) => {
                         if (sc !== null && sc !== undefined) {
@@ -870,6 +1123,8 @@ ob_start();
                         scoreArr = el.msmScores || [];
                     } else if (companyType === 'ttn') {
                         scoreArr = el.ttnScores || [];
+                    } else if (companyType !== 'all' && el.scoresByCompany && el.scoresByCompany[companyType]) {
+                        scoreArr = el.scoresByCompany[companyType] || [];
                     }
 
                     const color = elementPalette[idx % elementPalette.length];
@@ -954,11 +1209,14 @@ ob_start();
                 }
             };
 
+            const initialMultiYearCompany = document.getElementById('multiYearCompanyFilter')?.value || 'all';
+            const initialMultiYearElement = document.getElementById('multiYearElementFilter')?.value || 'all';
+
             const multiYearChartInstance = new Chart(ctxMultiYear.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: yearLabels,
-                    datasets: buildGroupedDatasets('all', 'all')
+                    datasets: buildGroupedDatasets(initialMultiYearCompany, initialMultiYearElement)
                 },
                 options: {
                     responsive: true,
@@ -1033,6 +1291,231 @@ ob_start();
             }
             if (companyFilterEl) {
                 companyFilterEl.addEventListener('change', updateMultiYearChart);
+            }
+        }
+
+        // 5c. Multi-Period PICA Status Breakdown per Tahun Periode Audit
+        const ctxPicaStatus = document.getElementById('picaStatusMultiPeriodChart');
+        if (ctxPicaStatus) {
+            const picaData = <?php echo json_encode($picaStatusTrendData ?? []); ?>;
+            const isSingleCompany = <?php echo ($selectedPerusahaan && $selectedPerusahaan !== 'semua') ? 'true' : 'false'; ?>;
+
+            const picaLabels = picaData.map(item => 'Tahun ' + item.tahun);
+
+            const openData = picaData.map(item => item.open);
+            const inProgData = picaData.map(item => item.in_progress);
+            const closedData = picaData.map(item => item.closed);
+
+            const statusConfigs = [
+                {
+                    key: 'open',
+                    label: 'Open',
+                    data: openData,
+                    color: '#ef4444',
+                    borderColor: '#dc2626'
+                },
+                {
+                    key: 'in_progress',
+                    label: 'In Progress',
+                    data: inProgData,
+                    color: '#f59e0b',
+                    borderColor: '#d97706'
+                },
+                {
+                    key: 'closed',
+                    label: 'Closed',
+                    data: closedData,
+                    color: '#10b981',
+                    borderColor: '#059669'
+                }
+            ];
+
+            function buildPicaDatasets(selectedStatus = 'all') {
+                const datasets = [];
+
+                if (selectedStatus === 'all') {
+                    // Ketika 'all': tampilkan 3 bar grouped (Open, In Progress, Closed) TANPA garis penghubung
+                    statusConfigs.forEach(cfg => {
+                        datasets.push({
+                            type: 'bar',
+                            label: cfg.label,
+                            data: cfg.data,
+                            backgroundColor: cfg.color,
+                            borderColor: cfg.borderColor,
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barPercentage: 0.75,
+                            categoryPercentage: 0.75,
+                            order: 2
+                        });
+                    });
+                } else {
+                    // Ketika filter status aktif: tampilkan bar status terpilih + GARIS PENGHUBUNG TREN
+                    const activeCfg = statusConfigs.find(c => c.key === selectedStatus);
+                    if (activeCfg) {
+                        datasets.push({
+                            type: 'bar',
+                            label: 'Status ' + activeCfg.label,
+                            data: activeCfg.data,
+                            backgroundColor: activeCfg.color,
+                            borderColor: activeCfg.borderColor,
+                            borderWidth: 1.5,
+                            borderRadius: 8,
+                            barPercentage: 0.45,
+                            categoryPercentage: 0.6,
+                            order: 2
+                        });
+
+                        // Garis penghubung hanya ada jika filter status diaktifkan
+                        datasets.push({
+                            type: 'line',
+                            label: 'Garis Tren ' + activeCfg.label,
+                            data: activeCfg.data,
+                            borderColor: activeCfg.borderColor,
+                            backgroundColor: activeCfg.color,
+                            borderWidth: 3.5,
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: 7,
+                            pointHoverRadius: 10,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: activeCfg.borderColor,
+                            pointBorderWidth: 3,
+                            order: 1
+                        });
+                    }
+                }
+
+                return datasets;
+            }
+
+            const picaBarTextPlugin = {
+                id: 'picaBarTextPlugin',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        // Skip line curve datasets so numbers are only drawn once per bar
+                        if (dataset.type === 'line') return;
+
+                        const meta = chart.getDatasetMeta(datasetIndex);
+                        if (!meta || meta.hidden) return;
+
+                        meta.data.forEach((bar, index) => {
+                            const value = dataset.data[index];
+                            if (value !== undefined && value !== null && value > 0) {
+                                ctx.save();
+                                ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'bottom';
+                                ctx.fillStyle = '#0f172a';
+                                ctx.fillText(value, bar.x, bar.y - 3);
+                                ctx.restore();
+                            }
+                        });
+                    });
+                }
+            };
+
+            const allPicaValues = picaData.flatMap(item => [item.open, item.in_progress, item.closed]);
+            const maxPicaVal = Math.max(...allPicaValues, 10);
+            const yMax = Math.ceil((maxPicaVal + 5) / 5) * 5;
+
+            const initialPicaStatus = document.getElementById('picaStatusFilter')?.value || 'all';
+
+            const picaChartInstance = new Chart(ctxPicaStatus.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: picaLabels,
+                    datasets: buildPicaDatasets(initialPicaStatus)
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 13, weight: 'bold', family: "'Plus Jakarta Sans', sans-serif" },
+                                color: '#1e293b'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: yMax,
+                            ticks: {
+                                precision: 0,
+                                font: { size: 11, weight: '600' }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Jumlah Temuan Sub-Elemen',
+                                font: { size: 12, weight: 'bold' },
+                                color: '#64748b'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'start',
+                            labels: {
+                                boxWidth: 14,
+                                boxHeight: 14,
+                                padding: 16,
+                                usePointStyle: true,
+                                font: { size: 12, weight: '700', family: "'Plus Jakarta Sans', sans-serif" },
+                                filter: function(legendItem) {
+                                    return !legendItem.text.startsWith('Garis Tren');
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(items) {
+                                    const idx = items[0].dataIndex;
+                                    const item = picaData[idx];
+                                    if (!item) return items[0].label;
+                                    return `Periode Audit: Tahun ${item.tahun}${isSingleCompany ? '' : ' (Semua Perusahaan)'}`;
+                                },
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    const item = picaData[idx];
+                                    const statusName = context.dataset.label;
+                                    const subVal = context.raw;
+                                    let kritVal = 0;
+                                    if (statusName.includes('Open')) kritVal = item.open_kriteria;
+                                    else if (statusName.includes('In Progress')) kritVal = item.in_progress_kriteria;
+                                    else if (statusName.includes('Closed')) kritVal = item.closed_kriteria;
+                                    return ` ${statusName}: ${subVal} Sub-Elemen (${kritVal} Kriteria Tindakan)`;
+                                },
+                                afterBody: function(items) {
+                                    const idx = items[0].dataIndex;
+                                    const item = picaData[idx];
+                                    if (!item) return [];
+                                    const lines = [];
+                                    lines.push(`Total: ${item.total} Sub-Elemen (${item.open_kriteria + item.in_progress_kriteria + item.closed_kriteria} Kriteria Tindakan)`);
+                                    if (!isSingleCompany && item.companies && item.companies.length > 1) {
+                                        lines.push('──────────────────────────────');
+                                        lines.push('Rincian per Perusahaan:');
+                                        item.companies.forEach(c => {
+                                            lines.push(` • ${c.nama}: ${c.open} Open, ${c.in_progress} InProg, ${c.closed} Closed`);
+                                        });
+                                    }
+                                    return lines;
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [picaBarTextPlugin]
+            });
+
+            const picaStatusFilterEl = document.getElementById('picaStatusFilter');
+            if (picaStatusFilterEl) {
+                picaStatusFilterEl.addEventListener('change', function() {
+                    picaChartInstance.data.datasets = buildPicaDatasets(this.value);
+                    picaChartInstance.update();
+                });
             }
         }
     });

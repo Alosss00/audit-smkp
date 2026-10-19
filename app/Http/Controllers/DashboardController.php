@@ -192,11 +192,8 @@ class DashboardController extends Controller
             $trendYears = [(int)date('Y')];
         }
 
-        $trendQuery = AuditSesi::with(['auditDetails.kriteria.subElemen', 'perusahaan']);
-        if ($perusahaanFilterInt) {
-            $trendQuery->where('perusahaan_id', $perusahaanFilterInt);
-        }
-        $allTrendSessions = $trendQuery->get();
+        // Load all trend sessions so multi-year analytics and PICA breakdown can calculate dynamically
+        $allTrendSessions = AuditSesi::with(['auditDetails.kriteria.subElemen', 'auditDetails.pica', 'perusahaan'])->get();
 
         $elementTrendData = [
             'years' => $trendYears,
@@ -208,6 +205,11 @@ class DashboardController extends Controller
             $msmScoresPerYear = [];
             $ttnScoresPerYear = [];
 
+            $scoresByCompany = [];
+            foreach ($availablePerusahaans as $p) {
+                $scoresByCompany[$p->id] = [];
+            }
+
             foreach ($trendYears as $yr) {
                 $yearSessions = $allTrendSessions->where('tahun_periode', $yr);
                 
@@ -218,7 +220,15 @@ class DashboardController extends Controller
                 $ttnAktual = 0;
                 $ttnMaks = 0;
 
+                $compAktual = [];
+                $compMaks = [];
+                foreach ($availablePerusahaans as $p) {
+                    $compAktual[$p->id] = 0;
+                    $compMaks[$p->id] = 0;
+                }
+
                 foreach ($yearSessions as $session) {
+                    $pId = $session->perusahaan_id;
                     $companyName = $session->perusahaan ? strtolower($session->perusahaan->nama_perusahaan) : strtolower($session->area_audit);
                     $isMsm = str_contains($companyName, 'meares soputan');
                     $isTtn = str_contains($companyName, 'tambang tondano');
@@ -249,12 +259,28 @@ class DashboardController extends Controller
                             $ttnAktual += $sessionAktual;
                             $ttnMaks += $sessionMaks;
                         }
+                        if ($pId && isset($compMaks[$pId])) {
+                            $compAktual[$pId] += $sessionAktual;
+                            $compMaks[$pId] += $sessionMaks;
+                        } else {
+                            foreach ($availablePerusahaans as $p) {
+                                if (str_contains(strtolower($companyName), strtolower($p->nama_perusahaan))) {
+                                    $compAktual[$p->id] += $sessionAktual;
+                                    $compMaks[$p->id] += $sessionMaks;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
 
                 $scoresPerYear[] = $totalMaks > 0 ? round(($totalAktual / $totalMaks) * 100, 2) : 0;
                 $msmScoresPerYear[] = $msmMaks > 0 ? round(($msmAktual / $msmMaks) * 100, 2) : 0;
                 $ttnScoresPerYear[] = $ttnMaks > 0 ? round(($ttnAktual / $ttnMaks) * 100, 2) : 0;
+
+                foreach ($availablePerusahaans as $p) {
+                    $scoresByCompany[$p->id][] = $compMaks[$p->id] > 0 ? round(($compAktual[$p->id] / $compMaks[$p->id]) * 100, 2) : 0;
+                }
             }
 
             $elementTrendData['elements'][$el->id] = [
@@ -264,6 +290,129 @@ class DashboardController extends Controller
                 'scores' => $scoresPerYear,
                 'msmScores' => $msmScoresPerYear,
                 'ttnScores' => $ttnScoresPerYear,
+                'scoresByCompany' => $scoresByCompany,
+            ];
+        }
+
+        // Multi-Year Final Score Analysis per Perusahaan
+        $finalScoreTrendData = [
+            'years' => $trendYears,
+            'companies' => [],
+            'overallAverage' => []
+        ];
+
+        foreach ($availablePerusahaans as $p) {
+            $scores = [];
+            foreach ($trendYears as $yr) {
+                $sessions = $allTrendSessions->filter(function($s) use ($p, $yr) {
+                    $matchesCompany = $s->perusahaan_id == $p->id || 
+                        (empty($s->perusahaan_id) && str_contains(strtolower($s->area_audit), strtolower($p->nama_perusahaan)));
+                    return $matchesCompany && $s->tahun_periode == $yr;
+                });
+
+                if ($sessions->count() > 0) {
+                    $avgScore = $sessions->avg(function($s) {
+                        return (float) ($s->skor_akhir ?? $s->hitungSkorAkhir());
+                    });
+                    $scores[] = round($avgScore, 2);
+                } else {
+                    $scores[] = null;
+                }
+            }
+
+            $finalScoreTrendData['companies'][$p->id] = [
+                'id' => $p->id,
+                'nama' => $p->nama_perusahaan,
+                'kode' => $p->kode_perusahaan ?? $p->nama_perusahaan,
+                'scores' => $scores
+            ];
+        }
+
+        foreach ($trendYears as $idx => $yr) {
+            $validScores = [];
+            foreach ($finalScoreTrendData['companies'] as $c) {
+                if (isset($c['scores'][$idx]) && $c['scores'][$idx] !== null) {
+                    $validScores[] = $c['scores'][$idx];
+                }
+            }
+            $finalScoreTrendData['overallAverage'][$idx] = count($validScores) > 0 ? round(array_sum($validScores) / count($validScores), 2) : 0;
+        }
+
+        // Multi-Period PICA Status Breakdown per Tahun Periode Audit (Filtered by Dashboard Controls)
+        $picaYears = $tahunFilterInt ? [$tahunFilterInt] : $trendYears;
+        $picaStatusTrendData = [];
+
+        foreach ($picaYears as $yr) {
+            $yearSessions = $allTrendSessions->where('tahun_periode', $yr);
+            if ($perusahaanFilterInt) {
+                $yearSessions = $yearSessions->filter(function($s) use ($perusahaanFilterInt) {
+                    return $s->perusahaan_id == $perusahaanFilterInt;
+                });
+            }
+
+            $openSub = 0;
+            $inProgSub = 0;
+            $closedSub = 0;
+            $totalSub = 0;
+            $openKrit = 0;
+            $inProgKrit = 0;
+            $closedKrit = 0;
+            $companiesBreakdown = [];
+
+            foreach ($yearSessions as $sesi) {
+                $pName = $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit;
+                $detailsWithPica = $sesi->auditDetails->filter(fn($d) => $d->pica !== null);
+
+                $subGroups = $detailsWithPica->groupBy(fn($d) => $d->kriteria->sub_elemen_id ?? 0);
+                $subOpen = 0;
+                $subInProg = 0;
+                $subClosed = 0;
+                foreach ($subGroups as $g) {
+                    if ($g->contains('pica.status', 'open')) {
+                        $subOpen++;
+                    } elseif ($g->contains('pica.status', 'in_progress')) {
+                        $subInProg++;
+                    } else {
+                        $subClosed++;
+                    }
+                }
+
+                $sOpenKrit = $detailsWithPica->where('pica.status', 'open')->count();
+                $sInProgKrit = $detailsWithPica->where('pica.status', 'in_progress')->count();
+                $sClosedKrit = $detailsWithPica->where('pica.status', 'closed')->count();
+
+                $openSub += $subOpen;
+                $inProgSub += $subInProg;
+                $closedSub += $subClosed;
+                $totalSub += $subGroups->count();
+
+                $openKrit += $sOpenKrit;
+                $inProgKrit += $sInProgKrit;
+                $closedKrit += $sClosedKrit;
+
+                $companiesBreakdown[] = [
+                    'perusahaan_id' => $sesi->perusahaan_id,
+                    'nama' => $pName,
+                    'open' => $subOpen,
+                    'in_progress' => $subInProg,
+                    'closed' => $subClosed,
+                    'total' => $subGroups->count(),
+                    'open_kriteria' => $sOpenKrit,
+                    'in_progress_kriteria' => $sInProgKrit,
+                    'closed_kriteria' => $sClosedKrit,
+                ];
+            }
+
+            $picaStatusTrendData[] = [
+                'tahun' => $yr,
+                'open' => $openSub,
+                'in_progress' => $inProgSub,
+                'closed' => $closedSub,
+                'total' => $totalSub,
+                'open_kriteria' => $openKrit,
+                'in_progress_kriteria' => $inProgKrit,
+                'closed_kriteria' => $closedKrit,
+                'companies' => $companiesBreakdown,
             ];
         }
 
@@ -279,6 +428,8 @@ class DashboardController extends Controller
             'selectedPerusahaan',
             'selectedTahun',
             'elementTrendData',
+            'finalScoreTrendData',
+            'picaStatusTrendData',
             'elemens'
         ));
     }

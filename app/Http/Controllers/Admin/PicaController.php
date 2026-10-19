@@ -7,6 +7,7 @@ use App\Models\AuditSesi;
 use App\Models\Pica;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PicaController extends Controller
 {
@@ -146,6 +147,7 @@ class PicaController extends Controller
             'akar_masalah'               => 'nullable|string',
             'tindakan_koreksi'           => 'nullable|string',
             'tindakan_pencegahan'        => 'nullable|string',
+            'pic_perbaikan'              => 'nullable|string',
             'tenggat_waktu'              => 'nullable|date',
             'status'                     => 'required|in:open,in_progress,closed',
             'catatan_verifikasi_auditor' => 'required_if:status,closed|nullable|string',
@@ -193,6 +195,7 @@ class PicaController extends Controller
             'akar_masalah'               => $request->akar_masalah,
             'tindakan_koreksi'           => $request->tindakan_koreksi,
             'tindakan_pencegahan'        => $request->tindakan_pencegahan,
+            'pic_perbaikan'              => $request->pic_perbaikan,
             'tenggat_waktu'              => $request->tenggat_waktu,
             'status'                     => $status,
             'catatan_verifikasi_auditor' => $request->catatan_verifikasi_auditor,
@@ -209,6 +212,171 @@ class PicaController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Data PICA berhasil diperbarui oleh Administrator!');
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data PICA ' . ($pica->auditDetail->kriteria->kode_kriteria ?? '') . ' berhasil disimpan!',
+                'pica' => [
+                    'id'              => $pica->id,
+                    'status'          => $pica->status,
+                    'kategori_temuan' => $pica->kategori_temuan,
+                    'tenggat_waktu'   => $pica->tenggat_waktu ? $pica->tenggat_waktu->format('Y-m-d') : null,
+                ]
+            ]);
+        }
+
+        $sesiId = $pica->auditDetail->audit_sesi_id ?? null;
+        return back()->with('success', 'Data PICA berhasil diperbarui oleh Administrator!')
+                     ->with('open_pica_modal', $sesiId);
+    }
+
+    /**
+     * Batch update all PICA records for an entire Audit Session.
+     */
+    public function batchUpdate(Request $request)
+    {
+        $picaItems = $request->input('picas', []);
+        if (empty($picaItems) || !is_array($picaItems)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data PICA yang dikirim untuk disimpan.'
+                ], 422);
+            }
+            return back()->with('error', 'Tidak ada data PICA yang dikirim untuk disimpan.');
+        }
+
+        $errors = [];
+        // Conditional validation
+        foreach ($picaItems as $item) {
+            $picaId = $item['id'] ?? null;
+            if (!$picaId) continue;
+
+            $status = $item['status'] ?? 'open';
+            $kategori = $item['kategori_temuan'] ?? null;
+            $justifikasi = trim($item['justifikasi_kategori'] ?? '');
+            $catatanVerif = trim($item['catatan_verifikasi_auditor'] ?? '');
+
+            if ($kategori === 'kritikal' && empty($justifikasi)) {
+                $errors["picas.{$picaId}.justifikasi_kategori"] = "Justifikasi wajib diisi untuk temuan berstatus Kritikal (PICA ID #{$picaId}).";
+            }
+
+            if ($status === 'closed' && empty($catatanVerif)) {
+                $errors["picas.{$picaId}.catatan_verifikasi_auditor"] = "Catatan verifikasi auditor wajib diisi jika status diubah ke Closed (PICA ID #{$picaId}).";
+            }
+        }
+
+        if (!empty($errors)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat data yang belum lengkap (misal: Catatan verifikasi saat Closed, atau Justifikasi saat Kritikal).',
+                    'errors' => $errors
+                ], 422);
+            }
+            return back()->withErrors($errors)->withInput();
+        }
+
+        DB::beginTransaction();
+        try {
+            $updatedCount = 0;
+            $updatedList = [];
+
+            foreach ($picaItems as $item) {
+                $picaId = $item['id'] ?? null;
+                if (!$picaId) continue;
+
+                $pica = Pica::with('auditDetail.kriteria', 'auditDetail.auditSesi')->find($picaId);
+                if (!$pica) continue;
+
+                $originalData = $pica->getOriginal();
+                $status = $item['status'] ?? $pica->status;
+                $akarMasalah = $item['akar_masalah'] ?? null;
+
+                if ($status === 'open' && !empty($akarMasalah)) {
+                    $status = 'in_progress';
+                }
+
+                $kategoriTemuan = $item['kategori_temuan'] ?? $pica->kategori_temuan;
+                $justifikasi = $item['justifikasi_kategori'] ?? $pica->justifikasi_kategori;
+                $isManual = $pica->kategori_ditetapkan_manual;
+
+                if (isset($item['kategori_ditetapkan_manual'])) {
+                    $isManual = filter_var($item['kategori_ditetapkan_manual'], FILTER_VALIDATE_BOOLEAN);
+                } elseif (!empty($item['kategori_temuan'])) {
+                    if ($item['kategori_temuan'] === 'kritikal' || $item['kategori_temuan'] !== $pica->kategori_temuan) {
+                        $isManual = true;
+                    }
+                }
+
+                if (!$isManual) {
+                    $subElemenId = $pica->auditDetail->kriteria->sub_elemen_id ?? null;
+                    $sesi = $pica->auditDetail->auditSesi ?? null;
+                    if ($subElemenId && $sesi) {
+                        $kategoriTemuan = $sesi->hitungKategoriMayorPath1($subElemenId);
+                        $justifikasi = null;
+                    }
+                }
+
+                $pica->update([
+                    'deskripsi_ketidaksesuaian'  => $item['deskripsi_ketidaksesuaian'] ?? null,
+                    'kategori_temuan'            => $kategoriTemuan,
+                    'kategori_ditetapkan_manual' => $isManual,
+                    'justifikasi_kategori'       => $justifikasi,
+                    'akar_masalah'               => $akarMasalah,
+                    'tindakan_koreksi'           => $item['tindakan_koreksi'] ?? null,
+                    'tindakan_pencegahan'        => $item['tindakan_pencegahan'] ?? null,
+                    'pic_perbaikan'              => $item['pic_perbaikan'] ?? null,
+                    'tenggat_waktu'              => !empty($item['tenggat_waktu']) ? $item['tenggat_waktu'] : null,
+                    'status'                     => $status,
+                    'catatan_verifikasi_auditor' => $item['catatan_verifikasi_auditor'] ?? null,
+                ]);
+
+                if ($pica->wasChanged()) {
+                    $updatedCount++;
+                    \App\Models\AuditLog::create([
+                        'user_id'         => auth()->id(),
+                        'modul'           => 'PICA',
+                        'tindakan'        => "Batch Update PICA #{$pica->id} (Kategori: {$pica->kategori_temuan}, Status: {$pica->status})",
+                        'data_lama'       => $originalData,
+                        'data_baru'       => $pica->getChanges(),
+                        'waktu_perubahan' => now(),
+                    ]);
+                }
+
+                $updatedList[$pica->id] = [
+                    'id'              => $pica->id,
+                    'status'          => $pica->status,
+                    'kategori_temuan' => $pica->kategori_temuan,
+                    'pic_perbaikan'   => $pica->pic_perbaikan,
+                ];
+            }
+
+            DB::commit();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Seluruh data PICA pada sesi audit ini berhasil disimpan! ({$updatedCount} data diperbarui).",
+                    'updated_count' => $updatedCount,
+                    'total_count' => count($picaItems),
+                    'picas' => $updatedList
+                ]);
+            }
+
+            $sesiId = $request->input('sesi_id');
+            return back()->with('success', "Seluruh isian PICA ({$updatedCount} diperbarui) berhasil disimpan!")
+                         ->with('open_pica_modal', $sesiId);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyimpan batch PICA: ' . $e->getMessage()
+                ], 500);
+            }
+            return back()->with('error', 'Gagal menyimpan batch PICA: ' . $e->getMessage());
+        }
     }
 }

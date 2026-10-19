@@ -322,6 +322,8 @@ ob_start();
                 </div>
                 <div class="modal-body p-4 bg-light">
                     
+                    <div id="picaModalAlert_<?php echo e($sesi->id); ?>" style="display: none;"></div>
+
                     <div class="alert alert-primary bg-primary bg-opacity-10 border-0 rounded-3 py-2 px-3 mb-3 d-flex align-items-center gap-2 small">
                         <i class="bi bi-info-circle-fill text-primary fs-5"></i>
                         <div>
@@ -435,25 +437,17 @@ ob_start();
                                                                         </span>
                                                                     </div>
                                                                     <div class="d-flex align-items-center gap-2">
-                                                                        <?php if($pica->kategori_temuan === 'kritikal'): ?>
-                                                                            <span class="badge bg-danger rounded-pill px-2.5 py-1 small">Kritikal</span>
-                                                                        <?php elseif($pica->kategori_temuan === 'mayor'): ?>
-                                                                            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 small">Mayor</span>
-                                                                        <?php else: ?>
-                                                                            <span class="badge bg-info text-white rounded-pill px-2.5 py-1 small">Minor</span>
-                                                                        <?php endif; ?>
+                                                                        <span class="badge <?php echo e($pica->kategori_temuan === 'kritikal' ? 'bg-danger' : ($pica->kategori_temuan === 'mayor' ? 'bg-warning text-dark' : 'bg-info text-white')); ?> rounded-pill px-2.5 py-1 small badge-kategori-pica-<?php echo e($pica->id); ?>" id="badgeKategori_<?php echo e($pica->id); ?>">
+                                                                            <?php echo e(ucfirst($pica->kategori_temuan)); ?>
+                                                                        </span>
 
                                                                         <?php if($isOverdue): ?>
                                                                             <span class="badge bg-danger small">Overdue</span>
                                                                         <?php endif; ?>
 
-                                                                        <?php if($pica->status === 'open'): ?>
-                                                                            <span class="badge bg-danger rounded-pill px-2.5 py-1 small">Open</span>
-                                                                        <?php elseif($pica->status === 'in_progress'): ?>
-                                                                            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 small">In Progress</span>
-                                                                        <?php else: ?>
-                                                                            <span class="badge bg-success rounded-pill px-2.5 py-1 small">Closed</span>
-                                                                        <?php endif; ?>
+                                                                        <span class="badge <?php echo e($pica->status === 'open' ? 'bg-danger' : ($pica->status === 'in_progress' ? 'bg-warning text-dark' : 'bg-success')); ?> rounded-pill px-2.5 py-1 small badge-status-pica-<?php echo e($pica->id); ?>" id="badgeStatus_<?php echo e($pica->id); ?>">
+                                                                            <?php echo e($pica->status === 'in_progress' ? 'In Progress' : ucfirst($pica->status)); ?>
+                                                                        </span>
                                                                     </div>
                                                                 </div>
                                                             </button>
@@ -462,7 +456,7 @@ ob_start();
                                                             data-bs-parent="#adminNestedAccordion_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>">
                                                             <div class="accordion-body bg-white p-4 border-top">
                                                                 
-                                                                <form action="<?php echo e(route('admin.pica.update', $pica->id)); ?>" method="POST">
+                                                                <form action="<?php echo e(route('admin.pica.update', $pica->id)); ?>" method="POST" class="pica-form-item" data-sesi-id="<?php echo e($sesi->id); ?>" data-pica-id="<?php echo e($pica->id); ?>" id="formPica_<?php echo e($pica->id); ?>">
                                                                     <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
                                                                     <input type="hidden" name="_method" value="PUT">
                                                                     
@@ -555,7 +549,7 @@ ob_start();
                                                                     </div>
 
                                                                     <div class="mt-3 text-end">
-                                                                        <button type="submit" class="btn btn-danger px-4 rounded-3 fw-semibold">
+                                                                        <button type="submit" class="btn btn-danger px-4 rounded-3 fw-semibold btn-simpan-pica-single shadow-sm" data-pica-id="<?php echo e($pica->id); ?>" id="btnSimpanPica_<?php echo e($pica->id); ?>">
                                                                             <i class="bi bi-save me-1"></i> Simpan PICA <?php echo e($kriteria ? $kriteria->kode_kriteria : ''); ?>
 
                                                                         </button>
@@ -576,7 +570,7 @@ ob_start();
                                             ?>
                                             <div class="card border-0 shadow-sm rounded-3">
                                                 <div class="card-body p-4 bg-white">
-                                                    <form action="<?php echo e(route('admin.pica.update', $pica->id)); ?>" method="POST">
+                                                    <form action="<?php echo e(route('admin.pica.update', $pica->id)); ?>" method="POST" class="pica-form-item" data-sesi-id="<?php echo e($sesi->id); ?>" data-pica-id="<?php echo e($pica->id); ?>" id="formPica_<?php echo e($pica->id); ?>">
                                                         <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
                                                         <input type="hidden" name="_method" value="PUT">
                                                         
@@ -670,7 +664,7 @@ ob_start();
                                                         </div>
 
                                                         <div class="mt-3 text-end">
-                                                            <button type="submit" class="btn btn-danger px-4 rounded-3 fw-semibold">
+                                                            <button type="submit" class="btn btn-danger px-4 rounded-3 fw-semibold btn-simpan-pica-single shadow-sm" data-pica-id="<?php echo e($pica->id); ?>" id="btnSimpanPica_<?php echo e($pica->id); ?>">
                                                                 <i class="bi bi-save me-1"></i> Simpan PICA Sub-Elemen <?php echo e($subKode); ?>
 
                                                             </button>
@@ -687,8 +681,19 @@ ob_start();
                     </div>
 
                 </div>
-                <div class="modal-footer bg-light rounded-bottom-4">
-                    <button type="button" class="btn btn-secondary px-4 rounded-3" data-bs-dismiss="modal">Tutup</button>
+                <div class="modal-footer bg-light rounded-bottom-4 d-flex justify-content-between align-items-center">
+                    <div class="text-muted small d-none d-md-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary fs-6"></i>
+                        <span>Perubahan form dapat disimpan per kriteria atau <strong>sekaligus seluruhnya</strong>.</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        <button type="button" class="btn btn-secondary px-4 rounded-3" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i> Tutup
+                        </button>
+                        <button type="button" class="btn btn-danger px-4 rounded-3 fw-semibold btn-simpan-semua-pica shadow-sm" data-sesi-id="<?php echo e($sesi->id); ?>" id="btnSimpanSemua_<?php echo e($sesi->id); ?>">
+                            <i class="bi bi-save2-fill me-1"></i> Simpan Semua PICA
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -714,6 +719,297 @@ ob_start();
             if (picaId) toggleJustifikasi(picaId);
         }
     });
+
+    // Helper: Update status & category badges in the UI
+    function updatePicaBadges(picaId, status, kategori) {
+        if (status) {
+            const statusBadges = document.querySelectorAll('#badgeStatus_' + picaId + ', .badge-status-pica-' + picaId);
+            statusBadges.forEach(b => {
+                b.className = 'badge rounded-pill px-2.5 py-1 small ' + 
+                    (status === 'open' ? 'bg-danger' : (status === 'in_progress' ? 'bg-warning text-dark' : 'bg-success'));
+                b.textContent = status === 'in_progress' ? 'In Progress' : (status.charAt(0).toUpperCase() + status.slice(1));
+            });
+        }
+        if (kategori) {
+            const katBadges = document.querySelectorAll('#badgeKategori_' + picaId + ', .badge-kategori-pica-' + picaId);
+            katBadges.forEach(b => {
+                b.className = 'badge rounded-pill px-2.5 py-1 small ' + 
+                    (kategori === 'kritikal' ? 'bg-danger' : (kategori === 'mayor' ? 'bg-warning text-dark' : 'bg-info text-white'));
+                b.textContent = kategori.charAt(0).toUpperCase() + kategori.slice(1);
+            });
+        }
+    }
+
+    // Helper: Show floating alert inside the modal
+    function showModalAlert(sesiId, type, message) {
+        const container = document.getElementById('picaModalAlert_' + sesiId);
+        if (!container) return;
+
+        const icon = type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-danger';
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+
+        container.className = `alert ${alertClass} alert-dismissible fade show d-flex align-items-center gap-2 rounded-3 shadow-sm py-2.5 px-3 mb-3`;
+        container.innerHTML = `
+            <i class="bi ${icon} fs-5 flex-shrink-0"></i>
+            <div class="flex-grow-1 small">${message}</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        container.style.display = 'flex';
+
+        // Auto scroll smoothly to the alert
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        if (type === 'success') {
+            setTimeout(() => {
+                if (container && container.style.display !== 'none') {
+                    container.style.display = 'none';
+                }
+            }, 6000);
+        }
+    }
+
+    // Helper: Safely close a collapse element
+    function closeCollapse(el) {
+        if (!el) return;
+        if (window.bootstrap && bootstrap.Collapse) {
+            const instance = bootstrap.Collapse.getInstance(el) || new bootstrap.Collapse(el, { toggle: false });
+            instance.hide();
+        } else {
+            el.classList.remove('show');
+            const btn = el.previousElementSibling ? el.previousElementSibling.querySelector('button[data-bs-toggle="collapse"]') : null;
+            if (btn) {
+                btn.classList.add('collapsed');
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        }
+    }
+
+    // Helper: Safely open a collapse element
+    function openCollapse(el) {
+        if (!el) return;
+        if (window.bootstrap && bootstrap.Collapse) {
+            const instance = bootstrap.Collapse.getInstance(el) || new bootstrap.Collapse(el, { toggle: false });
+            instance.show();
+        } else {
+            el.classList.add('show');
+            const btn = el.previousElementSibling ? el.previousElementSibling.querySelector('button[data-bs-toggle="collapse"]') : null;
+            if (btn) {
+                btn.classList.remove('collapsed');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        }
+    }
+
+    // Helper: Close current PICA dropdown and automatically open the next finding
+    function autoAdvanceToNextPica(form, sesiId) {
+        const modal = form.closest('.modal') || document.getElementById('adminAreaPicaModal' + sesiId);
+        if (!modal) return;
+
+        const allForms = Array.from(modal.querySelectorAll('form.pica-form-item'));
+        const currentIndex = allForms.indexOf(form);
+
+        // 1. Tutup collapse / dropdown item saat ini
+        const currentCollapseEl = form.closest('.accordion-collapse');
+        if (currentCollapseEl) {
+            closeCollapse(currentCollapseEl);
+        }
+
+        // 2. Buka temuan berikutnya jika ada
+        if (currentIndex !== -1 && currentIndex + 1 < allForms.length) {
+            const nextForm = allForms[currentIndex + 1];
+
+            // Kumpulkan semua collapse induk dari nextForm (level Sub-Elemen hingga Sub-Sub Kriteria)
+            const collapsesToOpen = [];
+            let parentEl = nextForm.parentElement;
+            while (parentEl && parentEl !== modal) {
+                if (parentEl.classList.contains('accordion-collapse')) {
+                    collapsesToOpen.push(parentEl);
+                }
+                parentEl = parentEl.parentElement;
+            }
+
+            // Buka dari yang paling luar (Sub-Elemen) ke yang dalam (Sub-Sub Kriteria)
+            collapsesToOpen.reverse().forEach(collEl => {
+                openCollapse(collEl);
+            });
+
+            // Scroll halus ke header atau form temuan berikutnya
+            const nextCollapseEl = nextForm.closest('.accordion-collapse');
+            const targetToScroll = (nextCollapseEl && nextCollapseEl.previousElementSibling) ? nextCollapseEl.previousElementSibling : nextForm;
+            setTimeout(() => {
+                targetToScroll.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const firstInput = nextForm.querySelector('select:not([disabled]), textarea:not([disabled]), input:not([type="hidden"]):not([disabled])');
+                if (firstInput) {
+                    firstInput.focus({ preventScroll: true });
+                }
+            }, 300);
+        } else {
+            showModalAlert(sesiId, 'success', `<strong>Selesai!</strong> Data PICA berhasil disimpan. Seluruh temuan pada sesi audit ini telah tercapai.`);
+        }
+    }
+
+    // 1. Single PICA Form AJAX Submission
+    document.addEventListener('submit', function(e) {
+        const form = e.target.closest('form.pica-form-item');
+        if (!form) return;
+
+        e.preventDefault();
+
+        const picaId = form.dataset.picaId;
+        const sesiId = form.dataset.sesiId;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+        const origBtnClass = submitBtn ? submitBtn.className : '';
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
+        }
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                let errMsg = data.message || 'Gagal menyimpan data PICA.';
+                if (data.errors) {
+                    const firstErr = Object.values(data.errors)[0];
+                    if (firstErr) errMsg = typeof firstErr === 'string' ? firstErr : firstErr[0];
+                }
+                throw new Error(errMsg);
+            }
+            return data;
+        })
+        .then(data => {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.className = 'btn btn-success px-4 rounded-3 fw-semibold shadow-sm';
+                submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Tersimpan! ✓';
+                setTimeout(() => {
+                    submitBtn.className = origBtnClass;
+                    submitBtn.innerHTML = origBtnHtml;
+                }, 2500);
+            }
+
+            if (data.pica) {
+                updatePicaBadges(data.pica.id, data.pica.status, data.pica.kategori_temuan);
+            }
+
+            showModalAlert(sesiId, 'success', `<strong>Berhasil!</strong> ${data.message || 'Data PICA berhasil disimpan.'}`);
+
+            // Tutup dropdown PICA ini dan buka temuan berikutnya secara otomatis
+            setTimeout(() => {
+                autoAdvanceToNextPica(form, sesiId);
+            }, 450);
+        })
+        .catch(err => {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.className = origBtnClass;
+                submitBtn.innerHTML = origBtnHtml;
+            }
+            showModalAlert(sesiId, 'danger', `<strong>Peringatan Validasi:</strong> ${err.message}`);
+        });
+    });
+
+    // 2. Batch Save All PICA for Session
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-simpan-semua-pica');
+        if (!btn) return;
+
+        const sesiId = btn.dataset.sesiId;
+        const modal = document.getElementById('adminAreaPicaModal' + sesiId);
+        if (!modal) return;
+
+        const forms = modal.querySelectorAll('form.pica-form-item');
+        if (forms.length === 0) return;
+
+        const origBtnHtml = btn.innerHTML;
+        const origBtnClass = btn.className;
+
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan Semua (${forms.length} Form)...`;
+
+        const picas = [];
+        forms.forEach(f => {
+            const fd = new FormData(f);
+            const picaObj = { id: f.dataset.picaId };
+            for (let [k, v] of fd.entries()) {
+                if (k !== '_token' && k !== '_method') {
+                    picaObj[k] = v;
+                }
+            }
+            picas.push(picaObj);
+        });
+
+        fetch('<?php echo route('admin.pica.batch-update'); ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '<?php echo csrf_token(); ?>',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                sesi_id: sesiId,
+                picas: picas
+            })
+        })
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                let errMsg = data.message || 'Gagal menyimpan seluruh data PICA.';
+                if (data.errors) {
+                    const firstErr = Object.values(data.errors)[0];
+                    if (firstErr) errMsg = typeof firstErr === 'string' ? firstErr : firstErr[0];
+                }
+                throw new Error(errMsg);
+            }
+            return data;
+        })
+        .then(data => {
+            btn.disabled = false;
+            btn.className = 'btn btn-success px-4 rounded-3 fw-semibold shadow-sm';
+            btn.innerHTML = '<i class="bi bi-check2-all me-1"></i> Semua PICA Tersimpan! ✓';
+
+            setTimeout(() => {
+                btn.className = origBtnClass;
+                btn.innerHTML = origBtnHtml;
+            }, 3000);
+
+            if (data.picas) {
+                Object.values(data.picas).forEach(p => {
+                    updatePicaBadges(p.id, p.status, p.kategori_temuan);
+                });
+            }
+
+            showModalAlert(sesiId, 'success', `<strong>Berhasil Disimpan!</strong> ${data.message || 'Seluruh data pengisian PICA pada sesi ini telah berhasil diperbarui.'}`);
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.className = origBtnClass;
+            btn.innerHTML = origBtnHtml;
+            showModalAlert(sesiId, 'danger', `<strong>Peringatan Validasi:</strong> ${err.message}`);
+        });
+    });
+
+    <?php if(session('open_pica_modal')): ?>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('adminAreaPicaModal<?php echo e(session('open_pica_modal')); ?>');
+        if (modalEl) {
+            const bsModal = new bootstrap.Modal(modalEl);
+            bsModal.show();
+        }
+    });
+    <?php endif; ?>
 </script>
 <?php
 $content = ob_get_clean();

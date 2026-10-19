@@ -94,7 +94,7 @@
                                     <th style="width: 90px;" class="text-center">Capaian</th>
                                     <th style="min-width: 220px;">Uraian Ketidaksesuaian & Akar Masalah</th>
                                     <th style="min-width: 230px;">Tindakan Koreksi & Pencegahan</th>
-                                    <th style="width: 140px;">PIC & Target</th>
+                                    <th style="width: 160px;">PIC / Penanggung Jawab</th>
                                     <th style="width: 110px;" class="text-center">Status</th>
                                     <th style="width: 90px;" class="text-center pe-4">Aksi</th>
                                 </tr>
@@ -178,10 +178,9 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <strong class="small text-slate-800 d-block"><?php echo e($pica->pic_perbaikan ?? ($pica->pj_nama ?? '-')); ?></strong>
-                                                <small class="text-muted d-block">
-                                                    Target: <?php echo e($pica->tenggat_waktu ? \Carbon\Carbon::parse($pica->tenggat_waktu)->format('d/m/Y') : '-'); ?>
-                                                </small>
+                                                <span class="small fw-semibold text-slate-800 d-block" <?php if(!empty($pica->tenggat_waktu)): ?> title="Target Penyelesaian: <?php echo e(\Carbon\Carbon::parse($pica->tenggat_waktu)->format('d/m/Y')); ?>" <?php endif; ?>>
+                                                    <?php echo e(!empty($pica->pic_perbaikan) ? $pica->pic_perbaikan : (!empty($pica->pj_nama) ? $pica->pj_nama : '-')); ?>
+                                                </span>
                                             </td>
                                             <td class="text-center">
                                                 <span class="badge <?php echo e($stBadge); ?> rounded-pill px-3 py-1 small fw-semibold">
@@ -288,10 +287,9 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <strong class="small text-slate-800 d-block"><?php echo e($pica->pic_perbaikan ?? ($pica->pj_nama ?? '-')); ?></strong>
-                                                    <small class="text-muted d-block">
-                                                        Target: <?php echo e($pica->tenggat_waktu ? \Carbon\Carbon::parse($pica->tenggat_waktu)->format('d/m/Y') : '-'); ?>
-                                                    </small>
+                                                    <span class="small fw-semibold text-slate-800 d-block" <?php if(!empty($pica->tenggat_waktu)): ?> title="Target Penyelesaian: <?php echo e(\Carbon\Carbon::parse($pica->tenggat_waktu)->format('d/m/Y')); ?>" <?php endif; ?>>
+                                                        <?php echo e(!empty($pica->pic_perbaikan) ? $pica->pic_perbaikan : (!empty($pica->pj_nama) ? $pica->pj_nama : '-')); ?>
+                                                    </span>
                                                 </td>
                                                 <td class="text-center">
                                                     <span class="badge <?php echo e($stBadge); ?> rounded-pill px-3 py-1 small fw-semibold">

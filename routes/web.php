@@ -48,6 +48,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
         // Monitoring PICA (Problem Identification and Corrective Action) — Oversight
         Route::get('/pica', [AdminPicaController::class, 'index'])->name('pica.index');
+        Route::post('/pica/batch-update', [AdminPicaController::class, 'batchUpdate'])->name('pica.batch-update');
         Route::put('/pica/{id}', [AdminPicaController::class, 'update'])->name('pica.update');
 
         // Audit Sesi & Matrix Scoring
