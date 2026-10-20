@@ -360,7 +360,7 @@ ob_start();
                                 $isSubOverdue = $subDetails->contains(fn($d) => $d->pica && $d->pica->status !== 'closed' && $d->pica->tenggat_waktu && $d->pica->tenggat_waktu->isPast());
                             ?>
 
-                            <div class="accordion-item border rounded-3 mb-3 shadow-sm overflow-hidden">
+                            <div class="accordion-item border rounded-3 mb-3 shadow-sm overflow-hidden sub-elemen-accordion-item" data-sesi-id="<?php echo e($sesi->id); ?>" data-sub-elemen-id="<?php echo e($subElemenId); ?>" id="subElemenItem_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>">
                                 <h2 class="accordion-header" id="adminHeadingSub<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>">
                                     <button class="accordion-button <?php echo e($subIndex > 1 ? 'collapsed' : ''); ?> bg-white py-3" type="button" 
                                         data-bs-toggle="collapse" data-bs-target="#adminCollapseSub<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>" 
@@ -370,14 +370,11 @@ ob_start();
                                                 <span class="badge bg-secondary font-monospace fs-6 px-2.5 py-1"><?php echo e($subKode); ?></span>
                                                 <strong class="text-slate-800 text-truncate" style="max-width: 480px;" title="<?php echo e($subNama); ?>">
                                                     <?php echo e($subNama); ?>
-
                                                 </strong>
                                                 <?php if($hasSubSub): ?>
-                                                    <span class="badge bg-light text-primary border rounded-pill px-2.5 py-1 small fw-bold">
+                                                    <span class="badge bg-light text-primary border rounded-pill px-2.5 py-1 small fw-bold sub-kriteria-counter" id="subCounter_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>" data-total="<?php echo e($kriTotalCount); ?>">
                                                         <i class="bi bi-diagram-3 me-1"></i><?php echo e($kriTotalCount); ?> Sub-Sub Kriteria
-                                                        <?php if($kriClosedCount > 0 && $kriClosedCount < $kriTotalCount): ?>
-                                                            <span class="text-success ms-1">(<?php echo e($kriClosedCount); ?>/<?php echo e($kriTotalCount); ?> Closed)</span>
-                                                        <?php endif; ?>
+                                                        <span class="sub-counter-closed <?php echo e($kriClosedCount > 0 && $kriClosedCount < $kriTotalCount ? 'text-success ms-1' : 'd-none'); ?>">(<span class="closed-num"><?php echo e($kriClosedCount); ?></span>/<?php echo e($kriTotalCount); ?> Closed)</span>
                                                     </span>
                                                 <?php else: ?>
                                                     <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">
@@ -387,23 +384,23 @@ ob_start();
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
                                                 <?php if($subKategori === 'kritikal'): ?>
-                                                    <span class="badge bg-danger rounded-pill px-3 py-1"><i class="bi bi-shield-exclamation me-1"></i> Kritikal</span>
+                                                    <span class="badge bg-danger rounded-pill px-3 py-1 badge-sub-kat-<?php echo e($sesi->id); ?>-<?php echo e($subElemenId); ?> <?php echo e(!$hasSubSub && $firstDetail->pica ? 'badge-kategori-pica-'.$firstDetail->pica->id : ''); ?>" id="badgeSubKategori_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>"><i class="bi bi-shield-exclamation me-1"></i> Kritikal</span>
                                                 <?php elseif($subKategori === 'mayor'): ?>
-                                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Mayor</span>
+                                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1 badge-sub-kat-<?php echo e($sesi->id); ?>-<?php echo e($subElemenId); ?> <?php echo e(!$hasSubSub && $firstDetail->pica ? 'badge-kategori-pica-'.$firstDetail->pica->id : ''); ?>" id="badgeSubKategori_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>"><i class="bi bi-exclamation-triangle-fill me-1"></i> Mayor</span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-info text-white rounded-pill px-3 py-1"><i class="bi bi-info-circle-fill me-1"></i> Minor</span>
+                                                    <span class="badge bg-info text-white rounded-pill px-3 py-1 badge-sub-kat-<?php echo e($sesi->id); ?>-<?php echo e($subElemenId); ?> <?php echo e(!$hasSubSub && $firstDetail->pica ? 'badge-kategori-pica-'.$firstDetail->pica->id : ''); ?>" id="badgeSubKategori_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>"><i class="bi bi-info-circle-fill me-1"></i> Minor</span>
                                                 <?php endif; ?>
 
                                                 <?php if($isSubOverdue): ?>
-                                                    <span class="badge bg-danger">Overdue</span>
+                                                    <span class="badge bg-danger badge-sub-overdue-<?php echo e($sesi->id); ?>-<?php echo e($subElemenId); ?> <?php echo e(!$hasSubSub && $firstDetail->pica ? 'badge-overdue-pica-'.$firstDetail->pica->id : ''); ?>" id="badgeSubOverdue_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>">Overdue</span>
                                                 <?php endif; ?>
 
                                                 <?php if($subStatus === 'open'): ?>
-                                                    <span class="badge bg-danger rounded-pill px-3 py-1">Open</span>
+                                                    <span class="badge bg-danger rounded-pill px-3 py-1 badge-sub-status-<?php echo e($sesi->id); ?>-<?php echo e($subElemenId); ?> <?php echo e(!$hasSubSub && $firstDetail->pica ? 'badge-status-pica-'.$firstDetail->pica->id : ''); ?>" id="badgeSubStatus_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>">Open</span>
                                                 <?php elseif($subStatus === 'in_progress'): ?>
-                                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1">In Progress</span>
+                                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1 badge-sub-status-<?php echo e($sesi->id); ?>-<?php echo e($subElemenId); ?> <?php echo e(!$hasSubSub && $firstDetail->pica ? 'badge-status-pica-'.$firstDetail->pica->id : ''); ?>" id="badgeSubStatus_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>">In Progress</span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-success rounded-pill px-3 py-1">Closed</span>
+                                                    <span class="badge bg-success rounded-pill px-3 py-1 badge-sub-status-<?php echo e($sesi->id); ?>-<?php echo e($subElemenId); ?> <?php echo e(!$hasSubSub && $firstDetail->pica ? 'badge-status-pica-'.$firstDetail->pica->id : ''); ?>" id="badgeSubStatus_<?php echo e($sesi->id); ?>_<?php echo e($subElemenId); ?>">Closed</span>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
@@ -442,7 +439,7 @@ ob_start();
                                                                         </span>
 
                                                                         <?php if($isOverdue): ?>
-                                                                            <span class="badge bg-danger small">Overdue</span>
+                                                                            <span class="badge bg-danger small badge-overdue-pica-<?php echo e($pica->id); ?>">Overdue</span>
                                                                         <?php endif; ?>
 
                                                                         <span class="badge <?php echo e($pica->status === 'open' ? 'bg-danger' : ($pica->status === 'in_progress' ? 'bg-warning text-dark' : 'bg-success')); ?> rounded-pill px-2.5 py-1 small badge-status-pica-<?php echo e($pica->id); ?>" id="badgeStatus_<?php echo e($pica->id); ?>">
@@ -534,7 +531,7 @@ ob_start();
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label fw-semibold small text-secondary">Status PICA <span class="text-danger">*</span></label>
-                                                                            <select name="status" class="form-select bg-light fw-bold">
+                                                                            <select name="status" class="form-select bg-light fw-bold status-select-toggle" data-pica-id="<?php echo e($pica->id); ?>" id="statusSelect_<?php echo e($pica->id); ?>">
                                                                                 <option value="open" <?php echo e(old('status', $pica->status) == 'open' ? 'selected' : ''); ?>>🔴 Open (Belum Ditindaklanjuti)</option>
                                                                                 <option value="in_progress" <?php echo e(old('status', $pica->status) == 'in_progress' ? 'selected' : ''); ?>>🟡 In Progress (Dalam Perbaikan)</option>
                                                                                 <option value="closed" <?php echo e(old('status', $pica->status) == 'closed' ? 'selected' : ''); ?>>🟢 Closed (Selesai Verifikasi)</option>
@@ -542,9 +539,15 @@ ob_start();
                                                                         </div>
 
                                                                         <div class="col-md-6">
-                                                                            <label class="form-label fw-semibold small text-secondary">Catatan Verifikasi / Pengawasan (Admin)</label>
-                                                                            <textarea name="catatan_verifikasi_auditor" rows="2" class="form-control bg-light" 
+                                                                            <label class="form-label fw-semibold small text-secondary">
+                                                                                Catatan Verifikasi / Pengawasan (Admin)
+                                                                                <span class="text-danger fw-bold verification-required-star" id="starVerif_<?php echo e($pica->id); ?>" style="<?php echo e(old('status', $pica->status) == 'closed' ? '' : 'display: none;'); ?>">* (Wajib diisi saat Closed)</span>
+                                                                            </label>
+                                                                            <textarea name="catatan_verifikasi_auditor" id="catatanVerif_<?php echo e($pica->id); ?>" rows="2" class="form-control bg-light" 
                                                                                 placeholder="Wajib diisi saat status diubah ke Closed..."><?php echo e(old('catatan_verifikasi_auditor', $pica->catatan_verifikasi_auditor)); ?></textarea>
+                                                                            <div class="text-danger small mt-1 d-none" id="errorMsgVerif_<?php echo e($pica->id); ?>">
+                                                                                <i class="bi bi-exclamation-circle-fill me-1"></i>Catatan verifikasi auditor wajib diisi untuk mengubah status ke Closed.
+                                                                            </div>
                                                                         </div>
                                                                     </div>
 
@@ -649,7 +652,7 @@ ob_start();
 
                                                             <div class="col-md-6">
                                                                 <label class="form-label fw-semibold small text-secondary">Status PICA <span class="text-danger">*</span></label>
-                                                                <select name="status" class="form-select bg-light fw-bold">
+                                                                <select name="status" class="form-select bg-light fw-bold status-select-toggle" data-pica-id="<?php echo e($pica->id); ?>" id="statusSelect_<?php echo e($pica->id); ?>">
                                                                     <option value="open" <?php echo e(old('status', $pica->status) == 'open' ? 'selected' : ''); ?>>🔴 Open (Belum Ditindaklanjuti)</option>
                                                                     <option value="in_progress" <?php echo e(old('status', $pica->status) == 'in_progress' ? 'selected' : ''); ?>>🟡 In Progress (Dalam Perbaikan)</option>
                                                                     <option value="closed" <?php echo e(old('status', $pica->status) == 'closed' ? 'selected' : ''); ?>>🟢 Closed (Selesai Verifikasi)</option>
@@ -657,9 +660,15 @@ ob_start();
                                                             </div>
 
                                                             <div class="col-md-6">
-                                                                <label class="form-label fw-semibold small text-secondary">Catatan Verifikasi / Pengawasan (Admin)</label>
-                                                                <textarea name="catatan_verifikasi_auditor" rows="2" class="form-control bg-light" 
+                                                                <label class="form-label fw-semibold small text-secondary">
+                                                                    Catatan Verifikasi / Pengawasan (Admin)
+                                                                    <span class="text-danger fw-bold verification-required-star" id="starVerif_<?php echo e($pica->id); ?>" style="<?php echo e(old('status', $pica->status) == 'closed' ? '' : 'display: none;'); ?>">* (Wajib diisi saat Closed)</span>
+                                                                </label>
+                                                                <textarea name="catatan_verifikasi_auditor" id="catatanVerif_<?php echo e($pica->id); ?>" rows="2" class="form-control bg-light" 
                                                                     placeholder="Wajib diisi saat status diubah ke Closed..."><?php echo e(old('catatan_verifikasi_auditor', $pica->catatan_verifikasi_auditor)); ?></textarea>
+                                                                <div class="text-danger small mt-1 d-none" id="errorMsgVerif_<?php echo e($pica->id); ?>">
+                                                                    <i class="bi bi-exclamation-circle-fill me-1"></i>Catatan verifikasi auditor wajib diisi untuk mengubah status ke Closed.
+                                                                </div>
                                                             </div>
                                                         </div>
 
@@ -701,6 +710,8 @@ ob_start();
 <?php endforeach; ?>
 
 <script nonce="<?php echo e($cspNonce ?? ''); ?>">
+    let hasMadeChangesInModal = false;
+
     function toggleJustifikasi(picaId) {
         const select = document.getElementById('kategoriSelect' + picaId);
         const container = document.getElementById('justifikasiContainer' + picaId);
@@ -718,9 +729,47 @@ ob_start();
             const picaId = e.target.dataset.picaId;
             if (picaId) toggleJustifikasi(picaId);
         }
+
+        // Live validation and visual cue when status is set to closed
+        if (e.target && e.target.classList.contains('status-select-toggle')) {
+            const picaId = e.target.dataset.picaId;
+            const star = document.getElementById('starVerif_' + picaId);
+            const textarea = document.getElementById('catatanVerif_' + picaId);
+            const errorMsg = document.getElementById('errorMsgVerif_' + picaId);
+
+            if (e.target.value === 'closed') {
+                if (star) star.style.display = 'inline';
+                if (textarea) {
+                    textarea.placeholder = 'Catatan verifikasi auditor wajib diisi sebelum menyimpan dengan status Closed...';
+                    if (!textarea.value.trim()) {
+                        textarea.classList.add('border-danger');
+                    }
+                }
+            } else {
+                if (star) star.style.display = 'none';
+                if (textarea) {
+                    textarea.classList.remove('border-danger', 'is-invalid');
+                    textarea.placeholder = 'Wajib diisi saat status diubah ke Closed...';
+                }
+                if (errorMsg) errorMsg.classList.add('d-none');
+            }
+        }
     });
 
-    // Helper: Update status & category badges in the UI
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.name === 'catatan_verifikasi_auditor') {
+            const picaId = e.target.id ? e.target.id.replace('catatanVerif_', '') : null;
+            if (e.target.value.trim().length > 0) {
+                e.target.classList.remove('border-danger', 'is-invalid');
+                if (picaId) {
+                    const errorMsg = document.getElementById('errorMsgVerif_' + picaId);
+                    if (errorMsg) errorMsg.classList.add('d-none');
+                }
+            }
+        }
+    });
+
+    // Helper: Update status & category badges in the UI and recalculate parent Sub-Elemen
     function updatePicaBadges(picaId, status, kategori) {
         if (status) {
             const statusBadges = document.querySelectorAll('#badgeStatus_' + picaId + ', .badge-status-pica-' + picaId);
@@ -729,6 +778,13 @@ ob_start();
                     (status === 'open' ? 'bg-danger' : (status === 'in_progress' ? 'bg-warning text-dark' : 'bg-success'));
                 b.textContent = status === 'in_progress' ? 'In Progress' : (status.charAt(0).toUpperCase() + status.slice(1));
             });
+
+            // If closed, hide overdue badge
+            if (status === 'closed') {
+                document.querySelectorAll('.badge-overdue-pica-' + picaId).forEach(ob => {
+                    ob.style.display = 'none';
+                });
+            }
         }
         if (kategori) {
             const katBadges = document.querySelectorAll('#badgeKategori_' + picaId + ', .badge-kategori-pica-' + picaId);
@@ -737,6 +793,62 @@ ob_start();
                     (kategori === 'kritikal' ? 'bg-danger' : (kategori === 'mayor' ? 'bg-warning text-dark' : 'bg-info text-white'));
                 b.textContent = kategori.charAt(0).toUpperCase() + kategori.slice(1);
             });
+        }
+
+        // Recalculate parent Sub-Elemen status & counter
+        const form = document.getElementById('formPica_' + picaId);
+        if (form) {
+            const subElemenItem = form.closest('.sub-elemen-accordion-item');
+            if (subElemenItem) {
+                const sid = subElemenItem.dataset.sesiId;
+                const subId = subElemenItem.dataset.subElemenId;
+                const childForms = Array.from(subElemenItem.querySelectorAll('form.pica-form-item'));
+
+                if (childForms.length > 0) {
+                    let countClosed = 0;
+                    let countProgress = 0;
+                    let countOpen = 0;
+
+                    childForms.forEach(cf => {
+                        const stVal = cf.querySelector('select[name="status"]')?.value;
+                        if (stVal === 'closed') countClosed++;
+                        else if (stVal === 'in_progress') countProgress++;
+                        else countOpen++;
+                    });
+
+                    // Update Sub-Elemen Status Badge
+                    const subBadge = document.getElementById(`badgeSubStatus_${sid}_${subId}`);
+                    if (subBadge) {
+                        if (countClosed === childForms.length) {
+                            subBadge.className = `badge bg-success rounded-pill px-3 py-1 badge-sub-status-${sid}-${subId}`;
+                            subBadge.textContent = 'Closed';
+                            const subOverdue = document.getElementById(`badgeSubOverdue_${sid}_${subId}`);
+                            if (subOverdue) subOverdue.style.display = 'none';
+                        } else if (countProgress > 0) {
+                            subBadge.className = `badge bg-warning text-dark rounded-pill px-3 py-1 badge-sub-status-${sid}-${subId}`;
+                            subBadge.textContent = 'In Progress';
+                        } else {
+                            subBadge.className = `badge bg-danger rounded-pill px-3 py-1 badge-sub-status-${sid}-${subId}`;
+                            subBadge.textContent = 'Open';
+                        }
+                    }
+
+                    // Update Sub-Elemen Counter (X/Y Closed)
+                    const counterBox = document.getElementById(`subCounter_${sid}_${subId}`);
+                    if (counterBox) {
+                        const closedWrap = counterBox.querySelector('.sub-counter-closed');
+                        const closedNum = counterBox.querySelector('.closed-num');
+                        if (closedWrap && closedNum) {
+                            closedNum.textContent = countClosed;
+                            if (countClosed > 0 && countClosed < childForms.length) {
+                                closedWrap.className = 'sub-counter-closed text-success ms-1';
+                            } else {
+                                closedWrap.className = 'sub-counter-closed d-none';
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -857,6 +969,26 @@ ob_start();
 
         const picaId = form.dataset.picaId;
         const sesiId = form.dataset.sesiId;
+        const statusSelect = form.querySelector('select[name="status"]');
+        const catatanTextarea = form.querySelector('textarea[name="catatan_verifikasi_auditor"]');
+        const errorMsg = document.getElementById('errorMsgVerif_' + picaId);
+
+        // Client-side validation: Closed status MUST have catatan_verifikasi_auditor
+        if (statusSelect && statusSelect.value === 'closed' && (!catatanTextarea || !catatanTextarea.value.trim())) {
+            if (catatanTextarea) {
+                catatanTextarea.classList.add('is-invalid');
+                catatanTextarea.focus();
+            }
+            if (errorMsg) errorMsg.classList.remove('d-none');
+            showModalAlert(sesiId, 'danger', '<strong>Validasi Gagal:</strong> Status diubah ke <strong>Closed</strong>, namun <strong>Catatan Verifikasi Auditor</strong> masih kosong. Silakan isi catatan verifikasi terlebih dahulu agar status dapat ditutup.');
+            return;
+        }
+
+        if (catatanTextarea) {
+            catatanTextarea.classList.remove('is-invalid', 'border-danger');
+        }
+        if (errorMsg) errorMsg.classList.add('d-none');
+
         const submitBtn = form.querySelector('button[type="submit"]');
         const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
         const origBtnClass = submitBtn ? submitBtn.className : '';
@@ -889,6 +1021,8 @@ ob_start();
             return data;
         })
         .then(data => {
+            hasMadeChangesInModal = true;
+
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.className = 'btn btn-success px-4 rounded-3 fw-semibold shadow-sm';
@@ -916,6 +1050,13 @@ ob_start();
                 submitBtn.className = origBtnClass;
                 submitBtn.innerHTML = origBtnHtml;
             }
+            if (err.message && err.message.toLowerCase().includes('catatan verifikasi')) {
+                if (catatanTextarea) {
+                    catatanTextarea.classList.add('is-invalid');
+                    catatanTextarea.focus();
+                }
+                if (errorMsg) errorMsg.classList.remove('d-none');
+            }
             showModalAlert(sesiId, 'danger', `<strong>Peringatan Validasi:</strong> ${err.message}`);
         });
     });
@@ -931,6 +1072,35 @@ ob_start();
 
         const forms = modal.querySelectorAll('form.pica-form-item');
         if (forms.length === 0) return;
+
+        // Pre-validate: ensure any form with status Closed has catatan_verifikasi_auditor
+        let invalidClosedForm = null;
+        forms.forEach(f => {
+            const st = f.querySelector('select[name="status"]')?.value;
+            const note = f.querySelector('textarea[name="catatan_verifikasi_auditor"]')?.value.trim();
+            if (st === 'closed' && !note && !invalidClosedForm) {
+                invalidClosedForm = f;
+            }
+        });
+
+        if (invalidClosedForm) {
+            const invalidPicaId = invalidClosedForm.dataset.picaId;
+            const invalidTextarea = invalidClosedForm.querySelector('textarea[name="catatan_verifikasi_auditor"]');
+            const invalidErrorMsg = document.getElementById('errorMsgVerif_' + invalidPicaId);
+            
+            // Expand accordion containing this invalid form
+            const collEl = invalidClosedForm.closest('.accordion-collapse');
+            if (collEl) openCollapse(collEl);
+
+            if (invalidTextarea) {
+                invalidTextarea.classList.add('is-invalid');
+                setTimeout(() => invalidTextarea.focus(), 300);
+            }
+            if (invalidErrorMsg) invalidErrorMsg.classList.remove('d-none');
+
+            showModalAlert(sesiId, 'danger', '<strong>Validasi Simpan Semua:</strong> Terdapat temuan dengan status <strong>Closed</strong> yang belum memiliki <strong>Catatan Verifikasi Auditor</strong>. Mohon lengkapi catatan verifikasi terlebih dahulu.');
+            return;
+        }
 
         const origBtnHtml = btn.innerHTML;
         const origBtnClass = btn.className;
@@ -976,6 +1146,8 @@ ob_start();
             return data;
         })
         .then(data => {
+            hasMadeChangesInModal = true;
+
             btn.disabled = false;
             btn.className = 'btn btn-success px-4 rounded-3 fw-semibold shadow-sm';
             btn.innerHTML = '<i class="bi bi-check2-all me-1"></i> Semua PICA Tersimpan! ✓';
@@ -999,6 +1171,13 @@ ob_start();
             btn.innerHTML = origBtnHtml;
             showModalAlert(sesiId, 'danger', `<strong>Peringatan Validasi:</strong> ${err.message}`);
         });
+    });
+
+    // Refresh background table & statistics when modal closes if changes were saved
+    document.addEventListener('hidden.bs.modal', function(e) {
+        if (hasMadeChangesInModal && e.target && e.target.classList.contains('modal')) {
+            window.location.reload();
+        }
     });
 
     <?php if(session('open_pica_modal')): ?>
