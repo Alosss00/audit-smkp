@@ -444,6 +444,11 @@
                         <span>Log Aktivitas & File</span>
                     </a>
 
+                    <a href="<?php echo route('admin.login-logs.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.login-logs.*') ? 'active' : ''; ?>">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>Log Riwayat Login</span>
+                    </a>
+
                     <a href="<?php echo route('admin.restore-points.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.restore-points.*') ? 'active' : ''; ?>">
                         <i class="bi bi-arrow-counterclockwise"></i>
                         <span>Pusat Pemulihan Data</span>
@@ -502,6 +507,39 @@
                                     <i class="bi bi-check2-circle me-1"></i> Ya, Keluar
                                 </button>
                             </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Peringatan Inaktivitas Sesi & Auto-Logout -->
+        <div class="modal fade" id="sessionTimeoutWarningModal" tabindex="-1" aria-labelledby="sessionTimeoutWarningModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                    <div class="modal-header border-0 pb-0 pt-4 px-4 justify-content-center">
+                        <div class="d-flex align-items-center justify-content-center rounded-circle" 
+                             style="width: 72px; height: 72px; background: rgba(245, 158, 11, 0.12); border: 2px solid rgba(245, 158, 11, 0.25);">
+                            <i class="bi bi-hourglass-split text-warning" style="font-size: 2.2rem;"></i>
+                        </div>
+                    </div>
+                    <div class="modal-body text-center px-4 pt-3 pb-4">
+                        <h5 class="fw-bold text-slate-800 mb-2" id="sessionTimeoutWarningModalLabel">Peringatan Tidak Ada Aktivitas</h5>
+                        <p class="text-secondary small mb-3">
+                            Demi keamanan data audit internal <strong>SMKP Minerba</strong>, sistem akan otomatis mengeluarkan Anda karena tidak ada aktivitas dalam beberapa saat.
+                        </p>
+                        <div class="p-3 rounded-3 bg-light border mb-4">
+                            <div class="text-muted small mb-1">Otomatis keluar dalam waktu:</div>
+                            <div class="fw-bolder text-danger font-monospace" style="font-size: 2.3rem;" id="sessionCountdownDisplay">60s</div>
+                            <small class="text-muted" style="font-size: 0.75rem;">Klik <strong>Tetap Masuk</strong> untuk melanjutkan sesi Anda.</small>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="btn btn-outline-danger px-3 py-2 rounded-3 fw-semibold flex-fill" id="btnTimeoutLogoutNow">
+                                <i class="bi bi-box-arrow-right me-1"></i> Keluar
+                            </button>
+                            <button type="button" class="btn btn-primary px-4 py-2 rounded-3 fw-semibold flex-fill shadow-sm" id="btnTimeoutKeepAlive" style="background: linear-gradient(135deg, #0284c7, #0369a1); border: none;">
+                                <i class="bi bi-arrow-repeat me-1"></i> Tetap Masuk
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -690,6 +728,149 @@
             initSearchableSelects(event.target);
         });
     </script>
+
+    <?php if (auth()->check()): ?>
+        <!-- Client-Side Auto-Logout on Inactivity Watcher -->
+        <script nonce="<?php echo e($cspNonce ?? ''); ?>">
+            (function() {
+                const idleTimeoutMinutes = <?php echo (int) config('session.idle_timeout', 15); ?>;
+                const idleTimeoutSeconds = idleTimeoutMinutes * 60;
+                const warningWindowSeconds = Math.min(60, Math.max(10, Math.floor(idleTimeoutSeconds * 0.2)));
+
+                const keepAliveUrl = "<?php echo route('session.keep-alive'); ?>";
+                const autoLogoutUrl = "<?php echo route('session.auto-logout'); ?>";
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "<?php echo csrf_token(); ?>";
+
+                let lastActivityTime = Date.now();
+                let isWarningModalShown = false;
+                let warningModalInstance = null;
+                let isLoggingOut = false;
+
+                function getModal() {
+                    if (!warningModalInstance) {
+                        const modalEl = document.getElementById('sessionTimeoutWarningModal');
+                        if (modalEl && typeof bootstrap !== 'undefined') {
+                            warningModalInstance = new bootstrap.Modal(modalEl, {
+                                backdrop: 'static',
+                                keyboard: false
+                            });
+                        }
+                    }
+                    return warningModalInstance;
+                }
+
+                function recordUserActivity() {
+                    if (isWarningModalShown || isLoggingOut) return;
+                    const now = Date.now();
+                    if (now - lastActivityTime > 3000) {
+                        lastActivityTime = now;
+                    }
+                }
+
+                function keepAlive() {
+                    fetch(keepAliveUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            lastActivityTime = Date.now();
+                            hideWarningModal();
+                        } else if (response.status === 401) {
+                            window.location.href = "<?php echo route('login'); ?>";
+                        }
+                    }).catch(() => {
+                        lastActivityTime = Date.now();
+                        hideWarningModal();
+                    });
+                }
+
+                function triggerAutoLogout() {
+                    if (isLoggingOut) return;
+                    isLoggingOut = true;
+
+                    const countdownEl = document.getElementById('sessionCountdownDisplay');
+                    if (countdownEl) {
+                        countdownEl.textContent = '0s';
+                    }
+
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = autoLogoutUrl;
+
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '_token';
+                    tokenInput.value = csrfToken;
+                    form.appendChild(tokenInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+
+                function showWarningModal(remainingSeconds) {
+                    if (isLoggingOut) return;
+                    isWarningModalShown = true;
+                    const countdownEl = document.getElementById('sessionCountdownDisplay');
+                    if (countdownEl) {
+                        countdownEl.textContent = remainingSeconds + 's';
+                    }
+                    const modal = getModal();
+                    if (modal) {
+                        modal.show();
+                    }
+                }
+
+                function hideWarningModal() {
+                    isWarningModalShown = false;
+                    const modal = getModal();
+                    if (modal) {
+                        modal.hide();
+                    }
+                }
+
+                const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+                activityEvents.forEach(evt => {
+                    window.addEventListener(evt, recordUserActivity, { passive: true });
+                });
+
+                const inactivityInterval = setInterval(function() {
+                    if (isLoggingOut) return;
+
+                    const elapsedSeconds = Math.floor((Date.now() - lastActivityTime) / 1000);
+                    const remainingSeconds = idleTimeoutSeconds - elapsedSeconds;
+
+                    if (remainingSeconds <= 0) {
+                        clearInterval(inactivityInterval);
+                        triggerAutoLogout();
+                    } else if (remainingSeconds <= warningWindowSeconds) {
+                        showWarningModal(remainingSeconds);
+                    } else if (isWarningModalShown) {
+                        hideWarningModal();
+                    }
+                }, 1000);
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const btnKeepAlive = document.getElementById('btnTimeoutKeepAlive');
+                    if (btnKeepAlive) {
+                        btnKeepAlive.addEventListener('click', function() {
+                            keepAlive();
+                        });
+                    }
+
+                    const btnLogoutNow = document.getElementById('btnTimeoutLogoutNow');
+                    if (btnLogoutNow) {
+                        btnLogoutNow.addEventListener('click', function() {
+                            triggerAutoLogout();
+                        });
+                    }
+                });
+            })();
+        </script>
+    <?php endif; ?>
 
     <?php echo $scripts ?? ''; ?>
 </body>

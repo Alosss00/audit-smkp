@@ -72,12 +72,23 @@ ob_start();
                 </div>
             <?php endif; ?>
 
-            <?php if (session('error') || session('warning')): ?>
-                <div class="alert alert-warning rounded-3 py-2 px-3 mb-4" role="alert">
+            <?php if (session('warning')): ?>
+                <div class="alert alert-warning border border-warning border-opacity-50 rounded-3 py-2.5 px-3 mb-4 shadow-xs" role="alert">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-exclamation-circle-fill text-warning fs-5"></i>
+                        <i class="bi bi-hourglass-bottom text-warning fs-5"></i>
                         <div class="small fw-semibold text-dark">
-                            <?php echo e(session('error') ?? session('warning')); ?>
+                            <?php echo e(session('warning')); ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session('error')): ?>
+                <div class="alert alert-danger border border-danger border-opacity-50 rounded-3 py-2.5 px-3 mb-4 shadow-xs" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-circle-fill text-danger fs-5"></i>
+                        <div class="small fw-semibold text-dark">
+                            <?php echo e(session('error')); ?>
                         </div>
                     </div>
                 </div>

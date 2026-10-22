@@ -31,9 +31,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.post')->middleware('throttle:login');
 });
 
-// Authenticated Routes (Protected with Anti-Back-History Cache)
-Route::middleware(['auth', 'prevent-back-history'])->group(function () {
+// Authenticated Routes (Protected with Anti-Back-History Cache & Auto-Logout Inactivity)
+Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/session/keep-alive', [AuthController::class, 'keepAlive'])->name('session.keep-alive');
+    Route::post('/session/auto-logout', [AuthController::class, 'autoLogout'])->name('session.auto-logout');
 
     // Administrator & Auditor SMKP Routes (Dashboard, Penilaian & Monitoring)
     Route::middleware('role:admin,auditor_smkp')->prefix('admin')->as('admin.')->group(function () {
@@ -89,6 +91,10 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
             // Log Aktivitas User & Audit Trail Perubahan File
             Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
+
+            // Log Riwayat Login & Sesi Pengguna
+            Route::get('/login-logs', [\App\Http\Controllers\Admin\LoginLogController::class, 'index'])->name('login-logs.index');
+            Route::delete('/login-logs/cleanup', [\App\Http\Controllers\Admin\LoginLogController::class, 'cleanup'])->name('login-logs.cleanup');
 
             // Pusat Pemulihan Data Terhapus (Recycle Bin / Soft Delete Recovery)
             Route::get('/restore-points', [\App\Http\Controllers\Admin\RestorePointController::class, 'index'])->name('restore-points.index');

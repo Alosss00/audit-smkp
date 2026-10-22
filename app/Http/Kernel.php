@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'prevent-back-history' => \App\Http\Middleware\PreventBackHistory::class,
+        'session.idle' => \App\Http\Middleware\AutoLogoutIdleUser::class,
     ];
 }

@@ -57,6 +57,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Relationship to LoginLog.
+     */
+    public function loginLogs()
+    {
+        return $this->hasMany(LoginLog::class);
+    }
+
+    /**
      * Helper to check if user is Administrator (Full Access).
      */
     public function isAdmin(): bool

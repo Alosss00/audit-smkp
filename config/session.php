@@ -33,6 +33,17 @@ return [
 
     'lifetime' => env('SESSION_LIFETIME', 60),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Idle Inactivity Timeout (Minutes)
+    |--------------------------------------------------------------------------
+    |
+    | Batas waktu user tidak aktif (idle) sebelum otomatis dikeluarkan (auto-logout).
+    | Standar audit & keamanan internal: 15 menit.
+    |
+    */
+    'idle_timeout' => (int) env('SESSION_IDLE_TIMEOUT', 15),
+
     'expire_on_close' => false,
 
     /*
