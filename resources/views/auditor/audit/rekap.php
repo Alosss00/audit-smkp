@@ -20,6 +20,9 @@ ob_start();
         <a href="<?php echo e(route('auditor.audit-sesi.cetak', $sesi->id)); ?>" target="_blank" class="btn btn-dark rounded-3 px-3">
             <i class="bi bi-printer me-1"></i> Cetak Laporan (PDF)
         </a>
+        <a href="<?php echo e(route('auditor.audit-sesi.cetak-ketidaksesuaian', $sesi->id)); ?>" target="_blank" class="btn btn-outline-danger fw-semibold rounded-3 px-3">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Cetak Laporan Temuan Ketidaksesuaian
+        </a>
         <a href="<?php echo e(route('auditor.pica.index')); ?>" class="btn btn-outline-primary fw-semibold rounded-3 px-3">
             <i class="bi bi-tools me-1"></i> Tindak Lanjut PICA
         </a>

@@ -212,8 +212,11 @@ ob_start();
                                     <a href="<?php echo e(route('admin.rekap-audit.show', $sesi->id)); ?>" class="btn btn-sm btn-outline-primary rounded-2">
                                         <i class="bi bi-eye me-1"></i> Detail Rekap
                                     </a>
-                                    <a href="<?php echo e(route('admin.rekap-audit.cetak', $sesi->id)); ?>" target="_blank" class="btn btn-sm btn-dark rounded-2">
+                                    <a href="<?php echo e(route('admin.rekap-audit.cetak', $sesi->id)); ?>" target="_blank" class="btn btn-sm btn-dark rounded-2" title="Cetak Laporan Lengkap (PDF)">
                                         <i class="bi bi-printer me-1"></i> Cetak
+                                    </a>
+                                    <a href="<?php echo e(route('admin.rekap-audit.cetak-ketidaksesuaian', $sesi->id)); ?>" target="_blank" class="btn btn-sm btn-outline-danger rounded-2" title="Cetak Laporan Temuan Ketidaksesuaian">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i> Cetak PICA
                                     </a>
                                 </div>
                             </td>

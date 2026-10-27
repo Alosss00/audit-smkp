@@ -75,6 +75,9 @@ ob_start();
                     <a href="<?php echo e(route('admin.rekap-audit.cetak', $sesi->id)); ?>" target="_blank" class="btn btn-dark rounded-3 px-3">
                         <i class="bi bi-printer me-1"></i> Cetak Laporan
                     </a>
+                    <a href="<?php echo e(route('admin.rekap-audit.cetak-ketidaksesuaian', $sesi->id)); ?><?php echo e(($selectedYear ?? '') && $selectedYear !== 'semua' ? '?tahun_periode=' . $selectedYear : ''); ?>" target="_blank" class="btn btn-outline-danger rounded-3 px-3">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Cetak Laporan Temuan Ketidaksesuaian
+                    </a>
                 <?php else: ?>
                     <a href="<?php echo e(route('auditor.audit-sesi.rekap', $sesi->id)); ?>" class="btn btn-outline-secondary rounded-3 px-3">
                         <i class="bi bi-arrow-left me-1"></i> Kembali ke Rekap
@@ -84,6 +87,9 @@ ob_start();
                     </a>
                     <a href="<?php echo e(route('auditor.audit-sesi.cetak', $sesi->id)); ?>" target="_blank" class="btn btn-dark rounded-3 px-3">
                         <i class="bi bi-printer me-1"></i> Cetak Laporan
+                    </a>
+                    <a href="<?php echo e(route('auditor.audit-sesi.cetak-ketidaksesuaian', $sesi->id)); ?><?php echo e(($selectedYear ?? '') && $selectedYear !== 'semua' ? '?tahun_periode=' . $selectedYear : ''); ?>" target="_blank" class="btn btn-outline-danger rounded-3 px-3">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Cetak Laporan Temuan Ketidaksesuaian
                     </a>
                 <?php endif; ?>
             </div>
@@ -826,13 +832,20 @@ ob_start();
         <div class="tab-pane fade" id="section-temuan" role="tabpanel" aria-labelledby="tab-temuan">
             <div class="card card-custom border-0 bg-white mb-4">
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="stat-icon-box bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border-radius: 12px;">
-                            <i class="bi bi-tools fs-4"></i>
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="stat-icon-box bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border-radius: 12px;">
+                                <i class="bi bi-tools fs-4"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold text-slate-800 mb-1">2.4 Daftar Temuan Ketidaksesuaian</h4>
+                                <p class="text-muted small mb-0">Rincian ketidaksesuaian hasil audit yang diklasifikasikan berdasarkan tingkat keparahan (Kritikal, Mayor, Minor) serta status rencana tindak lanjut perbaikannya.</p>
+                            </div>
                         </div>
                         <div>
-                            <h4 class="fw-bold text-slate-800 mb-1">2.4 Daftar Temuan Ketidaksesuaian</h4>
-                            <p class="text-muted small mb-0">Rincian ketidaksesuaian hasil audit yang diklasifikasikan berdasarkan tingkat keparahan (Kritikal, Mayor, Minor) serta status rencana tindak lanjut perbaikannya.</p>
+                            <a href="<?php echo e(auth()->user()->role === 'admin' ? route('admin.rekap-audit.cetak-ketidaksesuaian', $sesi->id) : route('auditor.audit-sesi.cetak-ketidaksesuaian', $sesi->id)); ?><?php echo e(($selectedYear ?? '') && $selectedYear !== 'semua' ? '?tahun_periode=' . $selectedYear : ''); ?>" target="_blank" class="btn btn-danger fw-semibold rounded-3 px-3 shadow-sm text-nowrap">
+                                <i class="bi bi-printer me-1"></i> Cetak Laporan Temuan Ketidaksesuaian (PDF)
+                            </a>
                         </div>
                     </div>
                 </div>

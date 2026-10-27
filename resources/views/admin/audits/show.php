@@ -20,6 +20,9 @@ ob_start();
         <a href="<?php echo e(route('admin.rekap-audit.cetak', $sesi->id)); ?>" target="_blank" class="btn btn-dark rounded-3 px-3">
             <i class="bi bi-printer me-1"></i> Cetak Laporan (PDF)
         </a>
+        <a href="<?php echo e(route('admin.rekap-audit.cetak-ketidaksesuaian', $sesi->id)); ?>" target="_blank" class="btn btn-outline-danger fw-semibold rounded-3 px-3">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Cetak Laporan Temuan Ketidaksesuaian
+        </a>
     </div>
 </div>
 

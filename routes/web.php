@@ -46,6 +46,7 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/rekap-audit/{id}', [AuditOversightController::class, 'show'])->name('rekap-audit.show');
         Route::get('/rekap-audit/{id}/laporan-detail', [AuditSesiAdminController::class, 'laporanDetail'])->name('rekap-audit.laporan-detail');
         Route::get('/rekap-audit/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('rekap-audit.cetak');
+        Route::get('/rekap-audit/{id}/cetak-ketidaksesuaian', [AuditSesiAdminController::class, 'cetakKetidaksesuaian'])->name('rekap-audit.cetak-ketidaksesuaian');
         Route::get('/rekap-audit/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('rekap-audit.export-excel');
 
         // Monitoring PICA (Problem Identification and Corrective Action) — Oversight
@@ -59,6 +60,7 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiAdminController::class, 'rekap'])->name('audit-sesi.rekap');
         Route::get('/audit-sesi/{id}/laporan-detail', [AuditSesiAdminController::class, 'laporanDetail'])->name('audit-sesi.laporan-detail');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('audit-sesi.cetak');
+        Route::get('/audit-sesi/{id}/cetak-ketidaksesuaian', [AuditSesiAdminController::class, 'cetakKetidaksesuaian'])->name('audit-sesi.cetak-ketidaksesuaian');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiAdminController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
         Route::post('/audit-sesi/{id}/restore', [AuditSesiAdminController::class, 'restore'])->name('audit-sesi.restore');
@@ -122,6 +124,7 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiController::class, 'rekap'])->name('audit-sesi.rekap');
         Route::get('/audit-sesi/{id}/laporan-detail', [AuditSesiController::class, 'laporanDetail'])->name('audit-sesi.laporan-detail');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('audit-sesi.cetak');
+        Route::get('/audit-sesi/{id}/cetak-ketidaksesuaian', [AuditSesiController::class, 'cetakKetidaksesuaian'])->name('audit-sesi.cetak-ketidaksesuaian');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 
         // Modul PICA (Tindak Lanjut Perbaikan Temuan Audit oleh Auditee / PIC Area)

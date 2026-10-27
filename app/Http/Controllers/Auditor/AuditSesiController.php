@@ -6,6 +6,7 @@ use App\Exports\AuditSesiExport;
 use App\Http\Controllers\Controller;
 use App\Models\AuditSesi;
 use App\Models\Perusahaan;
+use App\Models\Pica;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -68,6 +69,47 @@ class AuditSesiController extends Controller
         $skorAkhir = $sesi->hitungSkorAkhir();
 
         return view('auditor.audit.cetak', compact('sesi', 'rekap', 'hierarki', 'skorAkhir'));
+    }
+
+    /**
+     * Display printable nonconformity report (Formulir Rencana Tindak Lanjut Ketidaksesuaian / PICA).
+     */
+    public function cetakKetidaksesuaian($id)
+    {
+        $sesi = $this->findAuditorSession($id);
+        $tahunFilter = request('tahun_periode');
+
+        $query = Pica::with(['auditDetail.kriteria.subElemen.elemen', 'auditDetail.auditSesi.perusahaan']);
+
+        if (request('filter') === 'company' || (!empty($tahunFilter) && $tahunFilter === 'semua')) {
+            $query->whereHas('auditDetail.auditSesi', function ($q) use ($sesi) {
+                if ($sesi->perusahaan_id) {
+                    $q->where('perusahaan_id', $sesi->perusahaan_id);
+                } else {
+                    $q->where('area_audit', $sesi->area_audit);
+                }
+            });
+        } elseif (!empty($tahunFilter) && $tahunFilter !== 'semua') {
+            $query->whereHas('auditDetail.auditSesi', function ($q) use ($sesi, $tahunFilter) {
+                if ($sesi->perusahaan_id) {
+                    $q->where('perusahaan_id', $sesi->perusahaan_id);
+                } else {
+                    $q->where('area_audit', $sesi->area_audit);
+                }
+                $q->where('tahun_periode', $tahunFilter);
+            });
+        } else {
+            $query->whereHas('auditDetail', function ($q) use ($sesi) {
+                $q->where('audit_sesi_id', $sesi->id);
+            });
+        }
+
+        $picas = $query->get()->sortBy(function ($pica) {
+            $kri = $pica->auditDetail->kriteria ?? null;
+            return $kri ? $kri->id : 999999;
+        })->values();
+
+        return view('laporan.cetak_ketidaksesuaian', compact('sesi', 'picas', 'tahunFilter'));
     }
 
     /**
