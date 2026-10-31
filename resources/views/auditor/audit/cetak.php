@@ -291,18 +291,18 @@
         <table class="table-hierarki mb-3">
             <thead>
                 <tr>
-                    <th rowspan="2" colspan="3" class="align-middle text-center">KRITERIA / PARAMETER EVALUASI</th>
-                    <th rowspan="2" class="th-vertical" style="width: 55px;">Nilai Elemen %</th>
-                    <th rowspan="2" class="th-vertical" style="width: 55px;">Nilai Sub Elemen</th>
-                    <th rowspan="2" class="th-vertical" style="width: 55px;">Nilai Sub-sub Elemen</th>
+                    <th rowspan="2" colspan="3" class="align-middle text-center" style="width: 38%;">KRITERIA / PARAMETER EVALUASI</th>
+                    <th rowspan="2" class="th-vertical" style="width: 48px;">Nilai Elemen %</th>
+                    <th rowspan="2" class="th-vertical" style="width: 48px;">Nilai Sub Elemen</th>
+                    <th rowspan="2" class="th-vertical" style="width: 48px;">Nilai Sub-sub Elemen</th>
                     <th colspan="4" class="text-center align-middle">Nilai Hasil Audit</th>
-                    <th rowspan="2" class="align-middle text-center" style="width: 75px;">Keterangan</th>
+                    <th rowspan="2" class="align-middle text-center" style="width: 24%;">Keterangan</th>
                 </tr>
                 <tr>
-                    <th class="th-vertical bg-primary text-white" style="width: 55px;">Nilai Sub Elemen</th>
-                    <th class="th-vertical" style="width: 55px;">Nilai Sub-sub Elemen</th>
-                    <th class="th-vertical bg-success text-white" style="width: 55px;">Total Nilai Elemen</th>
-                    <th class="th-vertical" style="width: 55px;">Presentase Elemen</th>
+                    <th class="th-vertical bg-primary text-white" style="width: 48px;">Nilai Sub Elemen</th>
+                    <th class="th-vertical" style="width: 48px;">Nilai Sub-sub Elemen</th>
+                    <th class="th-vertical bg-success text-white" style="width: 48px;">Total Nilai Elemen</th>
+                    <th class="th-vertical" style="width: 52px;">Presentase Elemen</th>
                 </tr>
             </thead>
             <tbody>
@@ -328,12 +328,6 @@
                                 <td class="text-center font-monospace fw-bold" style="width: 48px;"><?php echo e($sub['kode_sub']); ?></td>
                                 <td colspan="2">
                                     <div><?php echo e($sub['nama_sub']); ?></div>
-                                    <?php if(!empty($sub['direct_detail']['catatan'])): ?>
-                                        <div class="small text-danger fw-semibold" style="font-size: 8.5px;">
-                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Temuan: <?php echo e($sub['direct_detail']['catatan']); ?>
-
-                                        </div>
-                                    <?php endif; ?>
                                 </td>
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center font-monospace fw-bold"><?php echo e(number_format($sub['total_nilai_maks_efektif'], 0)); ?></td>
@@ -381,12 +375,6 @@
                                     <td class="text-center font-monospace small text-secondary" style="width: 60px;"><?php echo e($d['kode_kriteria']); ?></td>
                                     <td class="small ps-2">
                                         <div><?php echo e($d['deskripsi']); ?></div>
-                                        <?php if(!empty($d['catatan'])): ?>
-                                            <div class="small text-danger fw-semibold mt-0.5" style="font-size: 8.5px;">
-                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Temuan: <?php echo e($d['catatan']); ?>
-
-                                            </div>
-                                        <?php endif; ?>
                                     </td>
                                     <td class="text-center text-muted">-</td>
                                     <td class="text-center text-muted">-</td>
@@ -441,60 +429,14 @@
             </div>
         </div>
 
-        <div class="section-title">II. Catatan Temuan Audit & Uraian Ketidaksesuaian</div>
-        <?php
-            $findings = $sesi->auditDetails->filter(function($d) {
-                return (!empty($d->catatan) || ($d->nilai < ($d->kriteria->nilai_maksimal ?? 4) && !$d->is_na));
-            });
-        ?>
-
-        <?php if($findings->isEmpty()): ?>
-            <div class="p-2 px-3 border rounded mb-3 bg-light text-muted fst-italic text-center" style="font-size: 10px;">
-                <i class="bi bi-check2-all text-success me-1"></i> Tidak ada catatan temuan ketidaksesuaian khusus pada sesi audit ini. Seluruh parameter dinilai memenuhi standar.
-            </div>
-        <?php else: ?>
-            <table class="table-findings mb-3">
-                <thead>
-                    <tr>
-                        <th style="width: 80px;" class="text-center">Kriteria</th>
-                        <th style="width: 300px;">Deskripsi Kriteria / Sub-Subbab</th>
-                        <th style="width: 80px;" class="text-center">Skor</th>
-                        <th>Catatan Temuan / Uraian Ketidaksesuaian</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach($findings as $item): ?>
-                        <tr>
-                            <td class="text-center font-monospace fw-bold"><?php echo e($item->kriteria->kode_kriteria ?? '-'); ?></td>
-                            <td class="small"><?php echo e($item->kriteria->deskripsi ?? '-'); ?></td>
-                            <td class="text-center fw-bold">
-                                <?php if($item->is_na): ?>
-                                    <span class="badge bg-secondary">N/A</span>
-                                <?php else: ?>
-                                    <span class="<?php echo e($item->nilai < ($item->kriteria->nilai_maksimal ?? 4) ? 'text-danger' : 'text-success'); ?>">
-                                        <?php echo e(number_format($item->nilai, 0)); ?> / <?php echo e(number_format($item->kriteria->nilai_maksimal ?? 4, 0)); ?>
-
-                                    </span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="small text-danger fw-semibold">
-                                <?php echo e($item->catatan ?: 'Skor belum maksimal (Perlu evaluasi pemenuhan standar dokumen/implementasi).'); ?>
-
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-
         <div class="signature-section">
             <div class="row text-center">
                 <div class="col-6">
                     <p class="mb-0 fw-bold">Auditor Pelaksana,</p>
                     <small class="text-muted d-block mb-1">SMKP Minerba Internal Auditor</small>
                     <div class="signature-space"></div>
-                    <p class="fw-bold mb-0 text-decoration-underline"><?php echo e($sesi->user->name ?? 'Auditor Pelaksana'); ?></p>
-                    <small class="text-muted">ID / NIPP: <?php echo e($sesi->user->username ?? '-'); ?></small>
+                    <p class="fw-bold mb-0 text-decoration-underline">( ________________________________ )</p>
+                    <small class="text-muted">ID / NIPP: ........................................</small>
                 </div>
                 <div class="col-6">
                     <p class="mb-0 fw-bold">Manajemen / PJO / KTT,</p>

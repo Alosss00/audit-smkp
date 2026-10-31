@@ -205,20 +205,9 @@ ob_start();
                                 </span>
                             </td>
                             <td class="text-end">
-                                <div class="btn-group gap-1">
-                                    <a href="<?php echo e(route('admin.rekap-audit.laporan-detail', $sesi->id)); ?>" class="btn btn-sm btn-outline-info text-dark fw-semibold rounded-2">
-                                        <i class="bi bi-file-earmark-text me-1"></i> Laporan Detail
-                                    </a>
-                                    <a href="<?php echo e(route('admin.rekap-audit.show', $sesi->id)); ?>" class="btn btn-sm btn-outline-primary rounded-2">
-                                        <i class="bi bi-eye me-1"></i> Detail Rekap
-                                    </a>
-                                    <a href="<?php echo e(route('admin.rekap-audit.cetak', $sesi->id)); ?>" target="_blank" class="btn btn-sm btn-dark rounded-2" title="Cetak Laporan Lengkap (PDF)">
-                                        <i class="bi bi-printer me-1"></i> Cetak
-                                    </a>
-                                    <a href="<?php echo e(route('admin.rekap-audit.cetak-ketidaksesuaian', $sesi->id)); ?>" target="_blank" class="btn btn-sm btn-outline-danger rounded-2" title="Cetak Laporan Temuan Ketidaksesuaian">
-                                        <i class="bi bi-file-earmark-pdf me-1"></i> Cetak PICA
-                                    </a>
-                                </div>
+                                <a href="<?php echo e(route('admin.rekap-audit.laporan-detail', $sesi->id)); ?>" class="btn btn-sm btn-outline-info text-dark fw-semibold rounded-2">
+                                    <i class="bi bi-file-earmark-text me-1"></i> Detail Laporan
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -158,18 +158,18 @@ ob_start();
         <table class="table table-bordered table-kepdirjen-185 align-middle mb-0">
             <thead class="table-light align-middle text-uppercase fw-bold text-center">
                 <tr>
-                    <th rowspan="2" colspan="3" class="align-middle text-center bg-white text-dark fw-bold">KRITERIA</th>
-                    <th rowspan="2" class="th-vertical bg-white text-dark"><div>Nilai Elemen %</div></th>
-                    <th rowspan="2" class="th-vertical bg-white text-dark"><div>Nilai Sub Elemen</div></th>
-                    <th rowspan="2" class="th-vertical bg-white text-dark"><div>Nilai Sub sub Elemen</div></th>
+                    <th rowspan="2" colspan="3" class="align-middle text-center bg-white text-dark fw-bold" style="width: 38%;">KRITERIA</th>
+                    <th rowspan="2" class="th-vertical bg-white text-dark" style="width: 48px;"><div>Nilai Elemen %</div></th>
+                    <th rowspan="2" class="th-vertical bg-white text-dark" style="width: 48px;"><div>Nilai Sub Elemen</div></th>
+                    <th rowspan="2" class="th-vertical bg-white text-dark" style="width: 48px;"><div>Nilai Sub sub Elemen</div></th>
                     <th colspan="4" class="text-center align-middle bg-white text-dark fw-bold">Nilai Audit</th>
-                    <th rowspan="2" class="align-middle text-center bg-white text-dark fw-bold" style="width: 110px;">KETERANGAN</th>
+                    <th rowspan="2" class="align-middle text-center bg-white text-dark fw-bold" style="width: 28%; min-width: 220px;">KETERANGAN</th>
                 </tr>
                 <tr>
-                    <th class="th-vertical bg-blue-header"><div>Nilai Sub Elemen</div></th>
-                    <th class="th-vertical bg-white text-dark"><div>Nilai sub sub elemen</div></th>
-                    <th class="th-vertical bg-green-header"><div>Total Nilai Elemen</div></th>
-                    <th class="th-vertical bg-white text-dark"><div>Presentase Nilai Elemen</div></th>
+                    <th class="th-vertical bg-blue-header" style="width: 48px;"><div>Nilai Sub Elemen</div></th>
+                    <th class="th-vertical bg-white text-dark" style="width: 48px;"><div>Nilai sub sub elemen</div></th>
+                    <th class="th-vertical bg-green-header" style="width: 48px;"><div>Total Nilai Elemen</div></th>
+                    <th class="th-vertical bg-white text-dark" style="width: 55px;"><div>Presentase Nilai Elemen</div></th>
                 </tr>
             </thead>
             <tbody>
@@ -196,12 +196,9 @@ ob_start();
                         <?php if(!empty($sub['is_direct'])): ?>
                             <!-- Sub-Elemen Penilaian Langsung (1 Baris) -->
                             <tr class="collapse show el-collapse-<?php echo e($el['elemen_id']); ?> bg-sub-elemen">
-                                <td class="text-center font-monospace fw-bold" style="width: 70px;"><?php echo e($sub['kode_sub']); ?></td>
+                                <td class="text-center font-monospace fw-bold" style="width: 65px;"><?php echo e($sub['kode_sub']); ?></td>
                                 <td colspan="2" class="fw-semibold text-slate-800">
                                     <div><?php echo e($sub['nama_sub']); ?></div>
-                                    <?php if(!empty($sub['direct_detail']['catatan'])): ?>
-                                        <div class="mt-1 small text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Temuan: <?php echo e($sub['direct_detail']['catatan']); ?></div>
-                                    <?php endif; ?>
                                 </td>
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center font-monospace fw-bold"><?php echo e(number_format($sub['total_nilai_maks_efektif'], 0)); ?></td>
@@ -227,7 +224,7 @@ ob_start();
                         <?php else: ?>
                             <!-- Sub-Elemen dengan Beberapa Sub-sub Elemen / Kriteria -->
                             <tr class="collapse show el-collapse-<?php echo e($el['elemen_id']); ?> bg-sub-elemen" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target=".sub-collapse-<?php echo e($sub['sub_elemen_id']); ?>">
-                                <td class="text-center font-monospace fw-bold" style="width: 70px;">
+                                <td class="text-center font-monospace fw-bold" style="width: 65px;">
                                     <i class="bi bi-chevron-down toggle-icon me-1 text-secondary small"></i><?php echo e($sub['kode_sub']); ?>
 
                                 </td>
@@ -245,13 +242,10 @@ ob_start();
                             <!-- Level 3: Baris Sub-sub Elemen / Kriteria Penilaian -->
                             <?php foreach($sub['details'] as $d): ?>
                                 <tr class="collapse show el-collapse-<?php echo e($el['elemen_id']); ?> sub-collapse-<?php echo e($sub['sub_elemen_id']); ?> bg-white">
-                                    <td style="width: 70px;"></td>
-                                    <td class="text-center font-monospace small text-secondary" style="width: 85px;"><?php echo e($d['kode_kriteria']); ?></td>
+                                    <td style="width: 65px;"></td>
+                                    <td class="text-center font-monospace small text-secondary" style="width: 75px;"><?php echo e($d['kode_kriteria']); ?></td>
                                     <td class="small text-slate-700 ps-3">
                                         <div><?php echo e($d['deskripsi']); ?></div>
-                                        <?php if($d['catatan']): ?>
-                                            <div class="mt-1 small text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Temuan: <?php echo e($d['catatan']); ?></div>
-                                        <?php endif; ?>
                                     </td>
                                     <td class="text-center text-muted">-</td>
                                     <td class="text-center text-muted">-</td>
