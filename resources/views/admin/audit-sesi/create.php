@@ -115,7 +115,7 @@ ob_start();
                 <div class="d-flex align-items-center justify-content-end gap-2 mt-4 pt-3 border-top">
                     <a href="<?php echo route('admin.audit-sesi.index'); ?>" class="btn btn-outline-secondary rounded-3 px-4">Batal</a>
                     <button type="submit" class="btn btn-danger rounded-3 px-4">
-                        <i class="bi bi-arrow-right-circle me-1"></i> Lanjut Isi Matriks
+                        <i class="bi bi-arrow-right-circle me-1"></i> Lanjut Isi Dokumen Tahap Awal
                     </button>
                 </div>
             </form>

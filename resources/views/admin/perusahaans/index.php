@@ -156,6 +156,9 @@ ob_start();
                             </td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
+                                    <a href="<?php echo e(route('admin.master-tahap-awal.edit', $perusahaan->id)); ?>" class="btn btn-sm btn-light rounded-circle" title="Kelola Master Dokumen Tahap Awal Audit">
+                                        <i class="bi bi-journal-bookmark-fill text-primary"></i>
+                                    </a>
                                     <button type="button" class="btn btn-sm btn-light rounded-circle" data-bs-toggle="modal" data-bs-target="#modalEditPerusahaan<?php echo e($perusahaan->id); ?>" title="Edit">
                                         <i class="bi bi-pencil-fill text-warning"></i>
                                     </button>

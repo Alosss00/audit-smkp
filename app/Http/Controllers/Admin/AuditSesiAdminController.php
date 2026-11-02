@@ -98,6 +98,8 @@ class AuditSesiAdminController extends Controller
                 'skor_akhir'      => 0,
             ]);
 
+            \App\Models\AuditTahapAwal::getOrCreateForSesi($sesi);
+
             $subElemens = \App\Models\SubElemen::with('kriterias')->get();
             foreach ($subElemens as $sub) {
                 $sub->syncDefaultKriteria();
@@ -127,8 +129,8 @@ class AuditSesiAdminController extends Controller
 
             DB::commit();
 
-            return redirect()->route('admin.audit-sesi.matrix', $sesi->id)
-                ->with('success', 'Sesi audit baru berhasil dibuat! Silakan isi matriks penilaian.');
+            return redirect()->route('admin.audit-sesi.tahap-awal', $sesi->id)
+                ->with('success', 'Sesi audit baru berhasil dibuat! Silakan susun Dokumen Tahap Awal Audit (TT-MGT-FRS-026L).');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal membuat sesi audit: ' . $e->getMessage());
@@ -385,7 +387,7 @@ class AuditSesiAdminController extends Controller
      */
     public function rekap($id)
     {
-        $sesi      = AuditSesi::with('user')->findOrFail($id);
+        $sesi      = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'auditDetails.pica'])->findOrFail($id);
         $rekap     = $sesi->getRekapPerElemen();
         $hierarki  = $sesi->getRekapHierarkis();
         $skorAkhir = $sesi->hitungSkorAkhir();
@@ -483,6 +485,33 @@ class AuditSesiAdminController extends Controller
         return view('laporan.detail', compact(
             'sesi', 'rekapElemen', 'hierarki', 'praktekBaik', 'temuanKategori', 
             'skorAkhir', 'isReadOnly', 'chartData', 'semuaSesi', 'availableYears', 'selectedYear'
+        ));
+    }
+
+    /**
+     * Display printable full comprehensive report (Tabel Penilaian Audit + Tabel Praktik Terbaik + Tabel PICA).
+     */
+    public function cetakLengkap($id)
+    {
+        $sesi           = AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
+        $tahunFilter    = request('tahun_periode', $sesi->tahun_periode);
+
+        $companyReport  = AuditSesi::getCompanyAggregatedReport($sesi, $tahunFilter);
+        $rekap          = $companyReport['rekapElemen'];
+        $hierarki       = $companyReport['hierarki'];
+        $praktekBaik    = $companyReport['praktekBaik'];
+        $temuanKategori = $companyReport['temuanKategori'];
+        $skorAkhir      = $companyReport['skorAkhir'];
+        $selectedYear   = $companyReport['selectedYear'];
+
+        return view('laporan.cetak_lengkap', compact(
+            'sesi',
+            'rekap',
+            'hierarki',
+            'praktekBaik',
+            'temuanKategori',
+            'skorAkhir',
+            'selectedYear'
         ));
     }
 

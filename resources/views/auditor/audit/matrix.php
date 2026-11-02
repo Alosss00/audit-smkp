@@ -15,7 +15,11 @@ ob_start();
                 <h3 class="fw-bold text-slate-800 mb-1 mt-1">Matriks Penilaian Audit Internal SMKP</h3>
                 <p class="text-muted small mb-0">Area: <strong><?php echo e($sesi->area_audit); ?></strong> | Tanggal Pelaksanaan: <strong><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></strong> | Status: <span class="badge bg-warning text-dark text-uppercase"><?php echo e($sesi->status); ?></span></p>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="<?php echo e(route('admin.audit-sesi.tahap-awal', $sesi->id)); ?>" class="btn btn-outline-primary rounded-3 px-3 fw-semibold">
+                    <i class="bi bi-journal-bookmark-fill me-1"></i> Dokumen Tahap Awal
+                </a>
+
                 <button type="submit" class="btn btn-primary rounded-3 px-3">
                     <i class="bi bi-save me-1"></i> Simpan Matriks
                 </button>

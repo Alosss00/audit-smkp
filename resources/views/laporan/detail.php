@@ -65,9 +65,15 @@ ob_start();
                     </select>
                 </form>
 
-                <?php if(auth()->user()->role === 'admin'): ?>
+                <?php if(auth()->user()->role === 'admin' || auth()->user()->role === 'auditor_smkp'): ?>
                     <a href="<?php echo e(route('admin.rekap-audit.show', $sesi->id)); ?>" class="btn btn-outline-secondary rounded-3 px-3">
                         <i class="bi bi-arrow-left me-1"></i> Kembali ke Monitoring
+                    </a>
+                    <a href="<?php echo e(route('admin.audit-sesi.tahap-awal', $sesi->id)); ?>" class="btn btn-outline-primary rounded-3 px-3">
+                        <i class="bi bi-journal-bookmark-fill me-1"></i> Dokumen Tahap Awal
+                    </a>
+                    <a href="<?php echo e(route('admin.rekap-audit.cetak-tahap-awal', $sesi->id)); ?>" target="_blank" class="btn btn-outline-dark rounded-3 px-3">
+                        <i class="bi bi-file-earmark-medical me-1"></i> Cetak Tahap Awal
                     </a>
                     <a href="<?php echo e(route('admin.rekap-audit.export-excel', $sesi->id)); ?>" class="btn btn-success rounded-3 px-3">
                         <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
@@ -78,9 +84,15 @@ ob_start();
                     <a href="<?php echo e(route('admin.rekap-audit.cetak-ketidaksesuaian', $sesi->id)); ?><?php echo e(($selectedYear ?? '') && $selectedYear !== 'semua' ? '?tahun_periode=' . $selectedYear : ''); ?>" target="_blank" class="btn btn-outline-danger rounded-3 px-3">
                         <i class="bi bi-file-earmark-pdf me-1"></i> Cetak Laporan Temuan Ketidaksesuaian
                     </a>
+                    <a href="<?php echo e(route('admin.rekap-audit.cetak-lengkap', $sesi->id)); ?><?php echo e(($selectedYear ?? '') ? '?tahun_periode=' . $selectedYear : ''); ?>" target="_blank" class="btn btn-primary rounded-3 px-3 fw-semibold shadow-sm">
+                        <i class="bi bi-printer-fill me-1"></i> Cetak Laporan Lengkap
+                    </a>
                 <?php else: ?>
                     <a href="<?php echo e(route('auditor.audit-sesi.rekap', $sesi->id)); ?>" class="btn btn-outline-secondary rounded-3 px-3">
                         <i class="bi bi-arrow-left me-1"></i> Kembali ke Rekap
+                    </a>
+                    <a href="<?php echo e(route('auditor.audit-sesi.cetak-tahap-awal', $sesi->id)); ?>" target="_blank" class="btn btn-outline-dark rounded-3 px-3">
+                        <i class="bi bi-file-earmark-medical me-1"></i> Cetak Tahap Awal
                     </a>
                     <a href="<?php echo e(route('auditor.audit-sesi.export-excel', $sesi->id)); ?>" class="btn btn-success rounded-3 px-3">
                         <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
@@ -90,6 +102,9 @@ ob_start();
                     </a>
                     <a href="<?php echo e(route('auditor.audit-sesi.cetak-ketidaksesuaian', $sesi->id)); ?><?php echo e(($selectedYear ?? '') && $selectedYear !== 'semua' ? '?tahun_periode=' . $selectedYear : ''); ?>" target="_blank" class="btn btn-outline-danger rounded-3 px-3">
                         <i class="bi bi-file-earmark-pdf me-1"></i> Cetak Laporan Temuan Ketidaksesuaian
+                    </a>
+                    <a href="<?php echo e(route('auditor.audit-sesi.cetak-lengkap', $sesi->id)); ?><?php echo e(($selectedYear ?? '') ? '?tahun_periode=' . $selectedYear : ''); ?>" target="_blank" class="btn btn-primary rounded-3 px-3 fw-semibold shadow-sm">
+                        <i class="bi bi-printer-fill me-1"></i> Cetak Laporan Lengkap
                     </a>
                 <?php endif; ?>
             </div>

@@ -419,6 +419,11 @@
                         <span>Master Perusahaan</span>
                     </a>
 
+                    <a href="<?php echo route('admin.master-tahap-awal.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.master-tahap-awal.*') ? 'active' : ''; ?>">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        <span>Kelola Data Tahap Awal</span>
+                    </a>
+
                     <a href="<?php echo route('admin.elemens.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.elemens.*') ? 'active' : ''; ?>">
                         <i class="bi bi-folder"></i>
                         <span>Master Elemen</span>

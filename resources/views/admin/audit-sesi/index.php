@@ -141,6 +141,9 @@ ob_start();
                             </td>
                             <td class="text-end">
                                 <div class="btn-group gap-1">
+                                    <a href="<?php echo e(route('admin.audit-sesi.tahap-awal', $sesi->id)); ?>" class="btn btn-sm btn-outline-primary rounded-2 fw-semibold" title="Susun Dokumen Tahap Awal Audit (TT-MGT-FRS-026L)">
+                                        <i class="bi bi-journal-bookmark-fill me-1"></i> Tahap Awal
+                                    </a>
                                     <?php if($sesi->status !== 'selesai'): ?>
                                         <a href="<?php echo e(route('admin.audit-sesi.matrix', $sesi->id)); ?>" class="btn btn-sm btn-danger rounded-2">
                                             <i class="bi bi-pencil-square me-1"></i> Isi Matriks

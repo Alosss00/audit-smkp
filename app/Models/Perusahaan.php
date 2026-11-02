@@ -16,6 +16,12 @@ class Perusahaan extends Model
         'nama_perusahaan',
         'kode_perusahaan',
         'kategori',
+        'jenis_perizinan',
+        'jenis_komoditas',
+        'alamat_kantor_site',
+        'alamat_lokasi_tambang',
+        'alamat_kantor_pusat',
+        'nama_ktt_default',
         'is_active',
     ];
 
@@ -29,5 +35,13 @@ class Perusahaan extends Model
     public function auditSesis()
     {
         return $this->hasMany(AuditSesi::class, 'perusahaan_id');
+    }
+
+    /**
+     * Relationship to MasterTahapAwal (Master Data Dokumen Tahap Awal Audit per Perusahaan).
+     */
+    public function masterTahapAwal()
+    {
+        return $this->hasOne(MasterTahapAwal::class, 'perusahaan_id');
     }
 }

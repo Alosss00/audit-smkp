@@ -14,6 +14,9 @@ ob_start();
         <a href="<?php echo e(route('auditor.audit-sesi.laporan-detail', $sesi->id)); ?>" class="btn btn-outline-info text-dark fw-semibold rounded-3 px-3">
             <i class="bi bi-file-earmark-text me-1"></i> Laporan Detail Sesi
         </a>
+        <a href="<?php echo e(route('auditor.audit-sesi.cetak-tahap-awal', $sesi->id)); ?>" target="_blank" class="btn btn-outline-dark rounded-3 px-3">
+            <i class="bi bi-file-earmark-medical me-1"></i> Cetak Tahap Awal (PDF)
+        </a>
         <a href="<?php echo e(route('auditor.audit-sesi.export-excel', $sesi->id)); ?>" class="btn btn-success rounded-3 px-3">
             <i class="bi bi-file-earmark-excel me-1"></i> Export Excel (.xlsx)
         </a>
@@ -304,43 +307,148 @@ ob_start();
 </script>
 
 <!-- Finding Notes & Proof Attachments List -->
-<div class="card card-custom p-4">
-    <h5 class="fw-bold mb-3"><i class="bi bi-card-checklist me-2 text-warning"></i>Catatan Temuan & Bukti Lampiran Audit</h5>
+<?php
+    $allNotesAndAttachments = $sesi->auditDetails->filter(function($d) {
+        return !empty($d->catatan) || !empty($d->lampiran);
+    })->sortBy(function($d) {
+        return $d->kriteria->id ?? 999999;
+    });
 
-    <?php
-        $findings = $sesi->auditDetails->filter(function($d) {
-            return !empty($d->catatan) || !empty($d->lampiran);
-        });
-    ?>
+    $bestPracticeNotes = $allNotesAndAttachments->filter(function($d) {
+        $max = (float) ($d->kriteria->nilai_maksimal ?? 4);
+        return !$d->is_na && (float) $d->nilai >= $max;
+    });
 
-    <?php if($findings->isEmpty()): ?>
-        <div class="text-center py-4 text-muted">
-            <i class="bi bi-check-all fs-2 d-block mb-1 opacity-50"></i>
-            Tidak ada catatan temuan atau lampiran khusus pada sesi audit ini.
+    $picaFindingNotes = $allNotesAndAttachments->filter(function($d) {
+        $max = (float) ($d->kriteria->nilai_maksimal ?? 4);
+        return $d->is_na || (float) $d->nilai < $max;
+    });
+?>
+
+<!-- Section 1: Best Practices (Full Audit Score) Notes & Proof Attachments -->
+<div class="card card-custom p-4 mb-4 border-start border-4 border-success">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold text-slate-800 mb-1">
+                <i class="bi bi-award-fill me-2 text-success"></i>Catatan & Bukti Lampiran Praktik Terbaik (Nilai Audit Penuh)
+            </h5>
+            <p class="text-muted small mb-0">Daftar catatan evaluasi dan bukti lampiran pada kriteria yang memperoleh skor audit maksimal (100%).</p>
+        </div>
+        <span class="badge bg-success rounded-pill px-3 py-2">
+            <i class="bi bi-check2-circle me-1"></i> <?php echo e($bestPracticeNotes->count()); ?> Kriteria Nilai Penuh
+        </span>
+    </div>
+
+    <?php if($bestPracticeNotes->isEmpty()): ?>
+        <div class="text-center py-4 text-muted bg-light rounded-3">
+            <i class="bi bi-award fs-2 d-block mb-1 opacity-50 text-success"></i>
+            Belum ada catatan atau bukti lampiran pada kriteria dengan nilai audit penuh.
         </div>
     <?php else: ?>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 100px;">Kriteria</th>
+                        <th style="width: 110px;">Kriteria</th>
                         <th>Pertanyaan / Kriteria</th>
-                        <th class="text-center" style="width: 90px;">Skor</th>
-                        <th>Catatan Temuan</th>
-                        <th style="width: 160px;">Bukti Lampiran</th>
+                        <th class="text-center" style="width: 110px;">Skor</th>
+                        <th>Catatan Praktik Terbaik</th>
+                        <th style="width: 180px;">Bukti Lampiran</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach($findings as $item): ?>
+                    <?php foreach($bestPracticeNotes as $item): ?>
                         <tr>
-                            <td><span class="badge bg-secondary"><?php echo e($item->kriteria->kode_kriteria ?? '-'); ?></span></td>
+                            <td>
+                                <span class="badge bg-success"><?php echo e($item->kriteria->kode_kriteria ?? '-'); ?></span>
+                            </td>
                             <td class="small"><?php echo e($item->kriteria->deskripsi ?? '-'); ?></td>
-                            <td class="text-center font-monospace fw-bold">
+                            <td class="text-center font-monospace fw-bold text-success">
+                                <?php echo e(number_format($item->nilai, 2)); ?> / <?php echo e(number_format($item->kriteria->nilai_maksimal ?? 4, 2)); ?>
+                            </td>
+                            <td class="small text-slate-800" style="white-space: pre-line;"><?php echo e($item->catatan ?? '-'); ?></td>
+                            <td>
+                                <?php if(!empty($item->lampiran_urls)): ?>
+                                    <div class="d-flex flex-column gap-1">
+                                        <?php foreach($item->lampiran_urls as $lFile): ?>
+                                            <a href="<?php echo e($lFile['url']); ?>" target="_blank" class="btn btn-sm btn-outline-success py-0 px-2 text-start text-truncate" style="max-width: 170px;" title="<?php echo e($lFile['name']); ?>">
+                                                <i class="bi bi-paperclip me-1"></i> <?php echo e($lFile['name']); ?>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-muted small">-</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</div>
+
+<!-- Section 2: PICA Findings Notes & Proof Attachments -->
+<div class="card card-custom p-4 border-start border-4 border-danger">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold text-slate-800 mb-1">
+                <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Catatan Temuan & Bukti Lampiran PICA (Ketidaksesuaian)
+            </h5>
+            <p class="text-muted small mb-0">Daftar catatan temuan ketidaksesuaian dan bukti lampiran pada kriteria yang belum mencapai skor maksimal (PICA).</p>
+        </div>
+        <span class="badge bg-danger rounded-pill px-3 py-2">
+            <i class="bi bi-tools me-1"></i> <?php echo e($picaFindingNotes->count()); ?> Temuan PICA
+        </span>
+    </div>
+
+    <?php if($picaFindingNotes->isEmpty()): ?>
+        <div class="text-center py-4 text-muted bg-light rounded-3">
+            <i class="bi bi-check-all fs-2 d-block mb-1 opacity-50 text-success"></i>
+            Tidak ada catatan temuan ketidaksesuaian (PICA) atau lampiran khusus pada sesi audit ini.
+        </div>
+    <?php else: ?>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 110px;">Kriteria</th>
+                        <th>Pertanyaan / Kriteria</th>
+                        <th class="text-center" style="width: 110px;">Skor</th>
+                        <th class="text-center" style="width: 120px;">Status PICA</th>
+                        <th>Catatan Temuan PICA</th>
+                        <th style="width: 180px;">Bukti Lampiran</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach($picaFindingNotes as $item): ?>
+                        <?php
+                            $picaObj = $item->pica;
+                            $katTemuan = $picaObj->kategori_temuan ?? 'minor';
+                            $katBadge = $katTemuan === 'kritikal' ? 'bg-danger' : ($katTemuan === 'mayor' ? 'bg-warning text-dark' : 'bg-info text-dark');
+                        ?>
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary"><?php echo e($item->kriteria->kode_kriteria ?? '-'); ?></span>
+                            </td>
+                            <td class="small"><?php echo e($item->kriteria->deskripsi ?? '-'); ?></td>
+                            <td class="text-center font-monospace fw-bold text-danger">
                                 <?php if($item->is_na): ?>
                                     <span class="badge bg-secondary">N/A</span>
                                 <?php else: ?>
                                     <?php echo e(number_format($item->nilai, 2)); ?> / <?php echo e(number_format($item->kriteria->nilai_maksimal ?? 4, 2)); ?>
-
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-center">
+                                <?php if($picaObj): ?>
+                                    <span class="badge <?php echo e($katBadge); ?> rounded-pill px-2 py-1 d-inline-block mb-1">
+                                        <?php echo e(ucfirst($katTemuan)); ?>
+                                    </span>
+                                    <div class="small text-muted" style="font-size: 0.72rem;">
+                                        <?php echo e(strtoupper(str_replace('_', ' ', $picaObj->status ?? 'OPEN'))); ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-muted small">-</span>
                                 <?php endif; ?>
                             </td>
                             <td class="small text-slate-800" style="white-space: pre-line;"><?php echo e($item->catatan ?? '-'); ?></td>
@@ -350,7 +458,6 @@ ob_start();
                                         <?php foreach($item->lampiran_urls as $lFile): ?>
                                             <a href="<?php echo e($lFile['url']); ?>" target="_blank" class="btn btn-sm btn-outline-info text-dark py-0 px-2 text-start text-truncate" style="max-width: 170px;" title="<?php echo e($lFile['name']); ?>">
                                                 <i class="bi bi-paperclip me-1"></i> <?php echo e($lFile['name']); ?>
-
                                             </a>
                                         <?php endforeach; ?>
                                     </div>

@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Admin\AuditOversightController;
 use App\Http\Controllers\Admin\AuditSesiAdminController;
+use App\Http\Controllers\Admin\AuditTahapAwalController;
 use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
+use App\Http\Controllers\Admin\MasterTahapAwalController;
 use App\Http\Controllers\Admin\PicaController as AdminPicaController;
 use App\Http\Controllers\Admin\PerusahaanController;
 use App\Http\Controllers\Admin\SubElemenController;
@@ -45,7 +47,9 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/rekap-audit', [AuditOversightController::class, 'index'])->name('rekap-audit.index');
         Route::get('/rekap-audit/{id}', [AuditOversightController::class, 'show'])->name('rekap-audit.show');
         Route::get('/rekap-audit/{id}/laporan-detail', [AuditSesiAdminController::class, 'laporanDetail'])->name('rekap-audit.laporan-detail');
+        Route::get('/rekap-audit/{id}/cetak-lengkap', [AuditSesiAdminController::class, 'cetakLengkap'])->name('rekap-audit.cetak-lengkap');
         Route::get('/rekap-audit/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('rekap-audit.cetak');
+        Route::get('/rekap-audit/{id}/cetak-tahap-awal', [AuditTahapAwalController::class, 'cetak'])->name('rekap-audit.cetak-tahap-awal');
         Route::get('/rekap-audit/{id}/cetak-ketidaksesuaian', [AuditSesiAdminController::class, 'cetakKetidaksesuaian'])->name('rekap-audit.cetak-ketidaksesuaian');
         Route::get('/rekap-audit/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('rekap-audit.export-excel');
 
@@ -54,11 +58,16 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::post('/pica/batch-update', [AdminPicaController::class, 'batchUpdate'])->name('pica.batch-update');
         Route::put('/pica/{id}', [AdminPicaController::class, 'update'])->name('pica.update');
 
-        // Audit Sesi & Matrix Scoring
+        // Audit Sesi & Matrix Scoring & Tahap Awal Audit (TT-MGT-FRS-026L)
+        Route::get('/audit-sesi/{id}/tahap-awal', [AuditTahapAwalController::class, 'edit'])->name('audit-sesi.tahap-awal');
+        Route::put('/audit-sesi/{id}/tahap-awal', [AuditTahapAwalController::class, 'update'])->name('audit-sesi.tahap-awal.update');
+        Route::post('/audit-sesi/{id}/tahap-awal/reset', [AuditTahapAwalController::class, 'resetPreset'])->name('audit-sesi.tahap-awal.reset');
+        Route::get('/audit-sesi/{id}/tahap-awal/cetak', [AuditTahapAwalController::class, 'cetak'])->name('audit-sesi.tahap-awal.cetak');
         Route::get('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'matrix'])->name('audit-sesi.matrix');
         Route::post('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'updateMatrix'])->name('audit-sesi.matrix.update');
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiAdminController::class, 'rekap'])->name('audit-sesi.rekap');
         Route::get('/audit-sesi/{id}/laporan-detail', [AuditSesiAdminController::class, 'laporanDetail'])->name('audit-sesi.laporan-detail');
+        Route::get('/audit-sesi/{id}/cetak-lengkap', [AuditSesiAdminController::class, 'cetakLengkap'])->name('audit-sesi.cetak-lengkap');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('audit-sesi.cetak');
         Route::get('/audit-sesi/{id}/cetak-ketidaksesuaian', [AuditSesiAdminController::class, 'cetakKetidaksesuaian'])->name('audit-sesi.cetak-ketidaksesuaian');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
@@ -90,6 +99,12 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::post('/perusahaans/{id}/restore', [PerusahaanController::class, 'restore'])->name('perusahaans.restore');
             Route::delete('/perusahaans/{id}/force-delete', [PerusahaanController::class, 'forceDelete'])->name('perusahaans.force-delete');
             Route::resource('perusahaans', PerusahaanController::class);
+
+            // Master Data Dokumen Tahap Awal Audit (TT-MGT-FRS-026L) per Perusahaan
+            Route::get('/master-tahap-awal', [MasterTahapAwalController::class, 'index'])->name('master-tahap-awal.index');
+            Route::get('/master-tahap-awal/{perusahaanId}', [MasterTahapAwalController::class, 'edit'])->name('master-tahap-awal.edit');
+            Route::put('/master-tahap-awal/{perusahaanId}', [MasterTahapAwalController::class, 'update'])->name('master-tahap-awal.update');
+            Route::post('/master-tahap-awal/{perusahaanId}/reset', [MasterTahapAwalController::class, 'reset'])->name('master-tahap-awal.reset');
 
             // Log Aktivitas User & Audit Trail Perubahan File
             Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
@@ -123,7 +138,9 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi', [AuditSesiController::class, 'index'])->name('audit-sesi.index');
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiController::class, 'rekap'])->name('audit-sesi.rekap');
         Route::get('/audit-sesi/{id}/laporan-detail', [AuditSesiController::class, 'laporanDetail'])->name('audit-sesi.laporan-detail');
+        Route::get('/audit-sesi/{id}/cetak-lengkap', [AuditSesiController::class, 'cetakLengkap'])->name('audit-sesi.cetak-lengkap');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('audit-sesi.cetak');
+        Route::get('/audit-sesi/{id}/cetak-tahap-awal', [AuditTahapAwalController::class, 'cetak'])->name('audit-sesi.cetak-tahap-awal');
         Route::get('/audit-sesi/{id}/cetak-ketidaksesuaian', [AuditSesiController::class, 'cetakKetidaksesuaian'])->name('audit-sesi.cetak-ketidaksesuaian');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 

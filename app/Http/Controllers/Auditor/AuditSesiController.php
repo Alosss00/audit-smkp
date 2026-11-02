@@ -157,6 +157,33 @@ class AuditSesiController extends Controller
     }
 
     /**
+     * Display printable full comprehensive report (Tabel Penilaian Audit + Tabel Praktik Terbaik + Tabel PICA) for Auditor.
+     */
+    public function cetakLengkap($id)
+    {
+        $sesi           = $this->findAuditorSession($id);
+        $tahunFilter    = request('tahun_periode', $sesi->tahun_periode);
+
+        $companyReport  = AuditSesi::getCompanyAggregatedReport($sesi, $tahunFilter);
+        $rekap          = $companyReport['rekapElemen'];
+        $hierarki       = $companyReport['hierarki'];
+        $praktekBaik    = $companyReport['praktekBaik'];
+        $temuanKategori = $companyReport['temuanKategori'];
+        $skorAkhir      = $companyReport['skorAkhir'];
+        $selectedYear   = $companyReport['selectedYear'];
+
+        return view('laporan.cetak_lengkap', compact(
+            'sesi',
+            'rekap',
+            'hierarki',
+            'praktekBaik',
+            'temuanKategori',
+            'skorAkhir',
+            'selectedYear'
+        ));
+    }
+
+    /**
      * Helper to find audit session scoped to auditor's area.
      */
     private function findAuditorSession($id)
@@ -166,7 +193,7 @@ class AuditSesiController extends Controller
             abort(403, 'Akun Anda belum ditugaskan ke area kerja manapun. Hubungi Administrator.');
         }
 
-        return AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])
+        return AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen', 'auditDetails.pica'])
             ->where('area_audit', 'like', '%' . $userArea . '%')
             ->findOrFail($id);
     }

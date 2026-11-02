@@ -14,6 +14,12 @@ ob_start();
         <a href="<?php echo e(route('admin.rekap-audit.laporan-detail', $sesi->id)); ?>" class="btn btn-outline-info text-dark fw-semibold rounded-3 px-3">
             <i class="bi bi-file-earmark-text me-1"></i> Laporan Detail Sesi
         </a>
+        <a href="<?php echo e(route('admin.audit-sesi.tahap-awal', $sesi->id)); ?>" class="btn btn-outline-primary fw-semibold rounded-3 px-3">
+            <i class="bi bi-journal-bookmark-fill me-1"></i> Dokumen Tahap Awal
+        </a>
+        <a href="<?php echo e(route('admin.rekap-audit.cetak-tahap-awal', $sesi->id)); ?>" target="_blank" class="btn btn-outline-dark rounded-3 px-3">
+            <i class="bi bi-file-earmark-medical me-1"></i> Cetak Tahap Awal (PDF)
+        </a>
         <a href="<?php echo e(route('admin.rekap-audit.export-excel', $sesi->id)); ?>" class="btn btn-success rounded-3 px-3">
             <i class="bi bi-file-earmark-excel me-1"></i> Export Excel (.xlsx)
         </a>

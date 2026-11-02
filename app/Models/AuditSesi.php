@@ -55,6 +55,14 @@ class AuditSesi extends Model
     }
 
     /**
+     * Relationship to AuditTahapAwal (Tahap I).
+     */
+    public function tahapAwal()
+    {
+        return $this->hasOne(AuditTahapAwal::class, 'audit_sesi_id');
+    }
+
+    /**
      * Calculate rekap score per element based on SMKP Minerba rules.
      *
      * Rules:
