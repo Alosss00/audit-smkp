@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Model KriteriaRelasi
@@ -61,13 +62,13 @@ class KriteriaRelasi extends Model
      * Gunakan join via kode_kriteria karena tabel kriteria_relasi menyimpan kode string,
      * bukan ID integer, agar tetap valid ketika master data di-seed ulang.
      */
-    public function kriteriaAsal()
+    public function kriteriaAsal(): BelongsTo
     {
         return $this->belongsTo(Kriteria::class, 'kriteria_asal_kode', 'kode_kriteria');
     }
 
     /** Kriteria tujuan (target penelusuran). */
-    public function kriteriaTujuan()
+    public function kriteriaTujuan(): BelongsTo
     {
         return $this->belongsTo(Kriteria::class, 'kriteria_tujuan_kode', 'kode_kriteria');
     }

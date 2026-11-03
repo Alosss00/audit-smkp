@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Kriteria extends Model
 {
@@ -31,6 +32,16 @@ class Kriteria extends Model
         'is_na'              => 'boolean',
         'pedoman_nilai_json' => 'array',
     ];
+
+    /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
 
     protected $appends = ['pedoman_array'];
 
@@ -88,7 +99,7 @@ class Kriteria extends Model
     /**
      * Relationship to SubElemen.
      */
-    public function subElemen()
+    public function subElemen(): BelongsTo
     {
         return $this->belongsTo(SubElemen::class, 'sub_elemen_id');
     }
@@ -96,7 +107,7 @@ class Kriteria extends Model
     /**
      * Relationship to AuditDetail.
      */
-    public function auditDetails()
+    public function auditDetails(): HasMany
     {
         return $this->hasMany(AuditDetail::class, 'kriteria_id');
     }
@@ -104,7 +115,7 @@ class Kriteria extends Model
     /**
      * Gating rules where this Kriteria acts as upstream/hulu.
      */
-    public function gatingRulesAsHulu()
+    public function gatingRulesAsHulu(): HasMany
     {
         return $this->hasMany(KriteriaGatingRule::class, 'kriteria_hulu_id');
     }
@@ -112,7 +123,7 @@ class Kriteria extends Model
     /**
      * Gating rules where this Kriteria acts as downstream/hilir.
      */
-    public function gatingRulesAsHilir()
+    public function gatingRulesAsHilir(): HasMany
     {
         return $this->hasMany(KriteriaGatingRule::class, 'kriteria_hilir_id');
     }

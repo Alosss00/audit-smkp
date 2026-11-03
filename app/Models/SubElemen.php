@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SubElemen extends Model
@@ -26,9 +28,19 @@ class SubElemen extends Model
     ];
 
     /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
+
+    /**
      * Relationship to Elemen.
      */
-    public function elemen()
+    public function elemen(): BelongsTo
     {
         return $this->belongsTo(Elemen::class, 'elemen_id');
     }
@@ -36,7 +48,7 @@ class SubElemen extends Model
     /**
      * Relationship to Kriteria.
      */
-    public function kriterias()
+    public function kriterias(): HasMany
     {
         return $this->hasMany(Kriteria::class, 'sub_elemen_id');
     }

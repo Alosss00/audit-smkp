@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditTahapAwal extends Model
 {
@@ -81,7 +82,17 @@ class AuditTahapAwal extends Model
         'alokasi_tahap_1'       => 'decimal:1',
     ];
 
-    public function auditSesi()
+    /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
+
+    public function auditSesi(): BelongsTo
     {
         return $this->belongsTo(AuditSesi::class, 'audit_sesi_id');
     }

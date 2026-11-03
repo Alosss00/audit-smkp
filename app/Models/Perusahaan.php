@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Perusahaan extends Model
@@ -30,18 +31,20 @@ class Perusahaan extends Model
     ];
 
     /**
-     * Relationship to AuditSesi.
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
      */
-    public function auditSesis()
+    protected function casts(): array
     {
-        return $this->hasMany(AuditSesi::class, 'perusahaan_id');
+        return $this->casts;
     }
 
     /**
-     * Relationship to MasterTahapAwal (Master Data Dokumen Tahap Awal Audit per Perusahaan).
+     * Relationship to AuditSesi.
      */
-    public function masterTahapAwal()
+    public function auditSesis(): HasMany
     {
-        return $this->hasOne(MasterTahapAwal::class, 'perusahaan_id');
+        return $this->hasMany(AuditSesi::class, 'perusahaan_id');
     }
 }

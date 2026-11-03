@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Elemen extends Model
@@ -25,6 +26,16 @@ class Elemen extends Model
     ];
 
     /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
+
+    /**
      * Get total accumulated max score of all active sub-elemens under this elemen.
      */
     public function getTotalNilaiSubTerpakaiAttribute(): float
@@ -35,7 +46,7 @@ class Elemen extends Model
     /**
      * Relationship to SubElemen.
      */
-    public function subElemens()
+    public function subElemens(): HasMany
     {
         return $this->hasMany(SubElemen::class, 'elemen_id');
     }

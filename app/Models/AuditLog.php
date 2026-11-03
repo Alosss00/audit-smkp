@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditLog extends Model
 {
@@ -27,9 +28,19 @@ class AuditLog extends Model
     ];
 
     /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
+
+    /**
      * Relationship to User who performed the action.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

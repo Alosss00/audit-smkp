@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LoginLog extends Model
 {
@@ -28,9 +30,19 @@ class LoginLog extends Model
     ];
 
     /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
+
+    /**
      * Relationship to the user who performed the login attempt.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -38,7 +50,7 @@ class LoginLog extends Model
     /**
      * Scope for successful logins.
      */
-    public function scopeSuccess($query)
+    public function scopeSuccess(Builder $query): Builder
     {
         return $query->where('status', 'success');
     }
@@ -46,7 +58,7 @@ class LoginLog extends Model
     /**
      * Scope for failed logins.
      */
-    public function scopeFailed($query)
+    public function scopeFailed(Builder $query): Builder
     {
         return $query->where('status', 'failed');
     }
@@ -54,7 +66,7 @@ class LoginLog extends Model
     /**
      * Scope for timeout / auto-logout.
      */
-    public function scopeTimeout($query)
+    public function scopeTimeout(Builder $query): Builder
     {
         return $query->where('status', 'timeout');
     }

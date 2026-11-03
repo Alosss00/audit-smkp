@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -49,9 +50,19 @@ class User extends Authenticatable
     ];
 
     /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
+
+    /**
      * Relationship to AuditSesi.
      */
-    public function auditSesis()
+    public function auditSesis(): HasMany
     {
         return $this->hasMany(AuditSesi::class);
     }
@@ -59,7 +70,7 @@ class User extends Authenticatable
     /**
      * Relationship to LoginLog.
      */
-    public function loginLogs()
+    public function loginLogs(): HasMany
     {
         return $this->hasMany(LoginLog::class);
     }

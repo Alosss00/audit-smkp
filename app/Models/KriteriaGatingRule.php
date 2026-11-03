@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KriteriaGatingRule extends Model
 {
@@ -30,7 +32,7 @@ class KriteriaGatingRule extends Model
     /**
      * Relationship to upstream/prerequisite Kriteria (Hulu).
      */
-    public function kriteriaHulu()
+    public function kriteriaHulu(): BelongsTo
     {
         return $this->belongsTo(Kriteria::class, 'kriteria_hulu_id');
     }
@@ -38,7 +40,7 @@ class KriteriaGatingRule extends Model
     /**
      * Relationship to downstream/dependent Kriteria (Hilir).
      */
-    public function kriteriaHilir()
+    public function kriteriaHilir(): BelongsTo
     {
         return $this->belongsTo(Kriteria::class, 'kriteria_hilir_id');
     }
@@ -46,7 +48,7 @@ class KriteriaGatingRule extends Model
     /**
      * Scope for active gating rules.
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
@@ -54,7 +56,7 @@ class KriteriaGatingRule extends Model
     /**
      * Scope for hard_block mode rules.
      */
-    public function scopeHardBlock($query)
+    public function scopeHardBlock(Builder $query): Builder
     {
         return $query->where('mode', 'hard_block');
     }
@@ -62,7 +64,7 @@ class KriteriaGatingRule extends Model
     /**
      * Scope for soft_flag mode rules.
      */
-    public function scopeSoftFlag($query)
+    public function scopeSoftFlag(Builder $query): Builder
     {
         return $query->where('mode', 'soft_flag');
     }

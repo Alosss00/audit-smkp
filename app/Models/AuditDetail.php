@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AuditDetail extends Model
 {
@@ -24,6 +26,16 @@ class AuditDetail extends Model
         'nilai'  => 'integer',
         'is_na'  => 'boolean',
     ];
+
+    /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
 
     protected $appends = ['lampiran_url', 'catatan_array', 'lampiran_array', 'lampiran_urls'];
 
@@ -92,7 +104,7 @@ class AuditDetail extends Model
     /**
      * Accessor for first attachment URL (backward compatibility).
      */
-    public function getLampiranUrlAttribute()
+    public function getLampiranUrlAttribute(): ?string
     {
         $urls = $this->lampiran_urls;
         return !empty($urls) ? $urls[0]['url'] : null;
@@ -101,7 +113,7 @@ class AuditDetail extends Model
     /**
      * Relationship to AuditSesi.
      */
-    public function auditSesi()
+    public function auditSesi(): BelongsTo
     {
         return $this->belongsTo(AuditSesi::class, 'audit_sesi_id');
     }
@@ -109,7 +121,7 @@ class AuditDetail extends Model
     /**
      * Relationship to Kriteria (including soft-deleted criteria so historic audits stay readable).
      */
-    public function kriteria()
+    public function kriteria(): BelongsTo
     {
         return $this->belongsTo(Kriteria::class, 'kriteria_id')->withTrashed();
     }
@@ -117,7 +129,7 @@ class AuditDetail extends Model
     /**
      * Relationship to Pica.
      */
-    public function pica()
+    public function pica(): HasOne
     {
         return $this->hasOne(Pica::class, 'audit_detail_id');
     }

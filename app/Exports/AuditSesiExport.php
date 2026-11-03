@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditSesiExport implements FromView, WithTitle, ShouldAutoSize, WithEvents
 {
-    protected $sesi;
+    protected AuditSesi $sesi;
 
     public function __construct(AuditSesi $sesi)
     {

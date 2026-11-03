@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Pica extends Model
 {
@@ -31,6 +32,16 @@ class Pica extends Model
         'kategori_ditetapkan_manual' => 'boolean',
     ];
 
+    /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
+
     protected $appends = ['bukti_perbaikan_url'];
 
     /**
@@ -47,7 +58,7 @@ class Pica extends Model
     /**
      * Relationship to AuditDetail.
      */
-    public function auditDetail()
+    public function auditDetail(): BelongsTo
     {
         return $this->belongsTo(AuditDetail::class, 'audit_detail_id');
     }

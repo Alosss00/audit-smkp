@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
         Paginator::useBootstrapFive();
 
         \Illuminate\Database\Eloquent\Model::preventLazyLoading(! $this->app->isProduction());

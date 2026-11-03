@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AuditSesi extends Model
@@ -31,9 +34,19 @@ class AuditSesi extends Model
     ];
 
     /**
+     * Get the attributes that should be cast (Laravel 11/12 standard).
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return $this->casts;
+    }
+
+    /**
      * Relationship to User (Auditor).
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
@@ -41,7 +54,7 @@ class AuditSesi extends Model
     /**
      * Relationship to Perusahaan.
      */
-    public function perusahaan()
+    public function perusahaan(): BelongsTo
     {
         return $this->belongsTo(Perusahaan::class, 'perusahaan_id');
     }
@@ -49,7 +62,7 @@ class AuditSesi extends Model
     /**
      * Relationship to AuditDetail.
      */
-    public function auditDetails()
+    public function auditDetails(): HasMany
     {
         return $this->hasMany(AuditDetail::class, 'audit_sesi_id');
     }
@@ -57,7 +70,7 @@ class AuditSesi extends Model
     /**
      * Relationship to AuditTahapAwal (Tahap I).
      */
-    public function tahapAwal()
+    public function tahapAwal(): HasOne
     {
         return $this->hasOne(AuditTahapAwal::class, 'audit_sesi_id');
     }
@@ -559,7 +572,7 @@ class AuditSesi extends Model
      * @param string|int|null $tahunFilter ('semua' atau tahun tertentu)
      * @return array
      */
-    public static function getCompanyAggregatedReport(AuditSesi $sesi, $tahunFilter = null): array
+    public static function getCompanyAggregatedReport(AuditSesi $sesi, string|int|null $tahunFilter = null): array
     {
         $perusahaanId = $sesi->perusahaan_id;
         
