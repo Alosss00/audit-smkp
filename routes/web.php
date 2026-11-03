@@ -5,7 +5,6 @@ use App\Http\Controllers\Admin\AuditSesiAdminController;
 use App\Http\Controllers\Admin\AuditTahapAwalController;
 use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
-use App\Http\Controllers\Admin\MasterTahapAwalController;
 use App\Http\Controllers\Admin\PicaController as AdminPicaController;
 use App\Http\Controllers\Admin\PerusahaanController;
 use App\Http\Controllers\Admin\SubElemenController;
@@ -99,12 +98,6 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::post('/perusahaans/{id}/restore', [PerusahaanController::class, 'restore'])->name('perusahaans.restore');
             Route::delete('/perusahaans/{id}/force-delete', [PerusahaanController::class, 'forceDelete'])->name('perusahaans.force-delete');
             Route::resource('perusahaans', PerusahaanController::class);
-
-            // Master Data Dokumen Tahap Awal Audit (TT-MGT-FRS-026L) per Perusahaan
-            Route::get('/master-tahap-awal', [MasterTahapAwalController::class, 'index'])->name('master-tahap-awal.index');
-            Route::get('/master-tahap-awal/{perusahaanId}', [MasterTahapAwalController::class, 'edit'])->name('master-tahap-awal.edit');
-            Route::put('/master-tahap-awal/{perusahaanId}', [MasterTahapAwalController::class, 'update'])->name('master-tahap-awal.update');
-            Route::post('/master-tahap-awal/{perusahaanId}/reset', [MasterTahapAwalController::class, 'reset'])->name('master-tahap-awal.reset');
 
             // Log Aktivitas User & Audit Trail Perubahan File
             Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');

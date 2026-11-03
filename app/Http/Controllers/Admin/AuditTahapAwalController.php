@@ -82,9 +82,9 @@ class AuditTahapAwalController extends Controller
                     if ($keg !== '') {
                         $result[] = [
                             'kegiatan'   => $keg,
-                            'risiko'     => trim((string) ($r['risiko'] ?? 'Kematian/Fatality/ Permanen disbility')),
-                            'nilai_awal' => trim((string) ($r['nilai_awal'] ?? 'Tinggi')),
-                            'nilai_sisa' => trim((string) ($r['nilai_sisa'] ?? 'Rendah')),
+                            'risiko'     => trim((string) ($r['risiko'] ?? '')),
+                            'nilai_awal' => trim((string) ($r['nilai_awal'] ?? '')),
+                            'nilai_sisa' => trim((string) ($r['nilai_sisa'] ?? '')),
                         ];
                     }
                 }
@@ -102,8 +102,8 @@ class AuditTahapAwalController extends Controller
                     if ($jenis !== '') {
                         $result[] = [
                             'jenis_peralatan' => $jenis,
-                            'pa'              => trim((string) ($r['pa'] ?? '0')),
-                            'ma'              => trim((string) ($r['ma'] ?? '0')),
+                            'pa'              => trim((string) ($r['pa'] ?? '')),
+                            'ma'              => trim((string) ($r['ma'] ?? '')),
                         ];
                     }
                 }
@@ -121,7 +121,7 @@ class AuditTahapAwalController extends Controller
                     if ($ind !== '') {
                         $result[] = [
                             'indikator' => $ind,
-                            'capaian'   => trim((string) ($r['capaian'] ?? '0%')),
+                            'capaian'   => trim((string) ($r['capaian'] ?? '')),
                         ];
                     }
                 }
@@ -135,49 +135,49 @@ class AuditTahapAwalController extends Controller
                 'jenis_kegiatan'   => $cleanList($trendInput['jenis_kegiatan'] ?? []),
                 'jenis_jabatan'    => $cleanList($trendInput['jenis_jabatan'] ?? []),
                 'deviasi_inspeksi' => $cleanList($trendInput['deviasi_inspeksi'] ?? []),
-                'faktor_pak'       => $cleanList($trendInput['faktor_pak'] ?? ['Tidak Ada']),
+                'faktor_pak'       => $cleanList($trendInput['faktor_pak'] ?? []),
             ];
 
             $auditPrevInput = $request->input('data_audit_sebelumnya', []);
             $dataAuditSebelumnya = [
-                'tahun'            => trim((string) ($auditPrevInput['tahun'] ?? ($sesi->tahun_periode - 1))),
-                'nilai_audit'      => trim((string) ($auditPrevInput['nilai_audit'] ?? '-')),
-                'status_kritikal'  => trim((string) ($auditPrevInput['status_kritikal'] ?? 'Tidak ada temuan kritikal')),
-                'status_mayor'     => trim((string) ($auditPrevInput['status_mayor'] ?? 'Tidak ada temuan Mayor')),
-                'status_minor'     => trim((string) ($auditPrevInput['status_minor'] ?? '-')),
+                'tahun'            => trim((string) ($auditPrevInput['tahun'] ?? '')),
+                'nilai_audit'      => trim((string) ($auditPrevInput['nilai_audit'] ?? '')),
+                'status_kritikal'  => trim((string) ($auditPrevInput['status_kritikal'] ?? '')),
+                'status_mayor'     => trim((string) ($auditPrevInput['status_mayor'] ?? '')),
+                'status_minor'     => trim((string) ($auditPrevInput['status_minor'] ?? '')),
                 'catatan_instansi' => $cleanList($auditPrevInput['catatan_instansi'] ?? []),
             ];
 
             $payload = [
-                'no_dokumen_header'       => trim((string) $request->input('no_dokumen_header', 'TT-MGT-FRS-026L')),
-                'no_dokumen_footer'       => trim((string) $request->input('no_dokumen_footer', 'TT-MGT-FRS-026K')),
-                'no_revisi'               => trim((string) $request->input('no_revisi', '01')),
-                'tanggal_terbit'          => $request->input('tanggal_terbit') ?: '2025-05-07',
-                'tanggal_tinjau_ulang'    => $request->input('tanggal_tinjau_ulang') ?: '2028-05-07',
-                'nama_perusahaan_auditi'  => trim((string) $request->input('nama_perusahaan_auditi', $sesi->area_audit)),
-                'jenis_perizinan'         => trim((string) $request->input('jenis_perizinan', '')),
-                'jenis_komoditas'         => trim((string) $request->input('jenis_komoditas', 'Emas DMP')),
-                'alamat_kantor_site'      => trim((string) $request->input('alamat_kantor_site', '')),
-                'alamat_lokasi_tambang'   => trim((string) $request->input('alamat_lokasi_tambang', '')),
-                'alamat_kantor_pusat'     => trim((string) $request->input('alamat_kantor_pusat', '')),
-                'periode_audit_label'     => trim((string) $request->input('periode_audit_label', '')),
+                'no_dokumen_header'       => trim((string) $request->input('no_dokumen_header', '')) ?: null,
+                'no_dokumen_footer'       => trim((string) $request->input('no_dokumen_footer', '')) ?: null,
+                'no_revisi'               => trim((string) $request->input('no_revisi', '')) ?: null,
+                'tanggal_terbit'          => $request->input('tanggal_terbit') ?: null,
+                'tanggal_tinjau_ulang'    => $request->input('tanggal_tinjau_ulang') ?: null,
+                'nama_perusahaan_auditi'  => trim((string) $request->input('nama_perusahaan_auditi', '')) ?: null,
+                'jenis_perizinan'         => trim((string) $request->input('jenis_perizinan', '')) ?: null,
+                'jenis_komoditas'         => trim((string) $request->input('jenis_komoditas', '')) ?: null,
+                'alamat_kantor_site'      => trim((string) $request->input('alamat_kantor_site', '')) ?: null,
+                'alamat_lokasi_tambang'   => trim((string) $request->input('alamat_lokasi_tambang', '')) ?: null,
+                'alamat_kantor_pusat'     => trim((string) $request->input('alamat_kantor_pusat', '')) ?: null,
+                'periode_audit_label'     => trim((string) $request->input('periode_audit_label', '')) ?: null,
                 'kinerja_kp'              => $request->input('kinerja_kp', []),
                 'faktor_penyesuaian'      => $request->input('faktor_penyesuaian', []),
-                'jumlah_pekerja'          => (int) $request->input('jumlah_pekerja', 3086),
-                'kelas_risiko'            => trim((string) $request->input('kelas_risiko', 'Tinggi')),
-                'mandays_awal'            => (float) $request->input('mandays_awal', 25.0),
-                'faktor_penyesuaian_hari' => (float) $request->input('faktor_penyesuaian_hari', 2.5),
-                'total_mandays'           => (float) $request->input('total_mandays', 27.5),
-                'alokasi_tahap_1'         => (float) $request->input('alokasi_tahap_1', 3.0),
-                'alokasi_tahap_2'         => trim((string) $request->input('alokasi_tahap_2', '24,5 Hari ( 4.9 Hari, 5 Auditor)')),
-                'no_surat_tugas'          => trim((string) $request->input('no_surat_tugas', '')),
-                'tanggal_surat_tugas'     => $request->input('tanggal_surat_tugas') ?: '2024-09-25',
+                'jumlah_pekerja'          => $request->filled('jumlah_pekerja') ? (int) $request->input('jumlah_pekerja') : null,
+                'kelas_risiko'            => trim((string) $request->input('kelas_risiko', '')) ?: null,
+                'mandays_awal'            => $request->filled('mandays_awal') ? (float) $request->input('mandays_awal') : null,
+                'faktor_penyesuaian_hari' => $request->filled('faktor_penyesuaian_hari') ? (float) $request->input('faktor_penyesuaian_hari') : null,
+                'total_mandays'           => $request->filled('total_mandays') ? (float) $request->input('total_mandays') : null,
+                'alokasi_tahap_1'         => $request->filled('alokasi_tahap_1') ? (float) $request->input('alokasi_tahap_1') : null,
+                'alokasi_tahap_2'         => trim((string) $request->input('alokasi_tahap_2', '')) ?: null,
+                'no_surat_tugas'          => trim((string) $request->input('no_surat_tugas', '')) ?: null,
+                'tanggal_surat_tugas'     => $request->input('tanggal_surat_tugas') ?: null,
                 'tim_audit_tahap_1'       => $cleanTim($request->input('tim_audit_tahap_1', [])),
                 'kontak_awal'             => $request->input('kontak_awal', []),
                 'kelayakan_audit'         => $request->input('kelayakan_audit', []),
-                'kesimpulan_kelayakan'    => $request->input('kesimpulan_kelayakan', 'layak'),
+                'kesimpulan_kelayakan'    => $request->input('kesimpulan_kelayakan') ?: null,
                 'kecukupan_dokumen'       => $request->input('kecukupan_dokumen', []),
-                'kesimpulan_kecukupan'    => $request->input('kesimpulan_kecukupan', 'dapat_dilanjutkan'),
+                'kesimpulan_kecukupan'    => $request->input('kesimpulan_kecukupan') ?: null,
                 'tim_audit_tahap_2'       => $cleanTim($request->input('tim_audit_tahap_2', [])),
                 'top_risks_present'       => $cleanRisks($request->input('top_risks_present', [])),
                 'top_risks_future'        => $cleanRisks($request->input('top_risks_future', [])),
@@ -187,23 +187,11 @@ class AuditTahapAwalController extends Controller
                 'data_audit_sebelumnya'   => $dataAuditSebelumnya,
                 'harapan_pemangku'        => $cleanList($request->input('harapan_pemangku', [])),
                 'tanggal_berita_acara'    => $request->input('tanggal_berita_acara') ?: null,
-                'ketua_tim_audit'         => trim((string) $request->input('ketua_tim_audit', 'Fiska Polii')),
-                'nama_ktt'                => trim((string) $request->input('nama_ktt', 'Tejo Prihantoro')),
+                'ketua_tim_audit'         => trim((string) $request->input('ketua_tim_audit', '')) ?: null,
+                'nama_ktt'                => trim((string) $request->input('nama_ktt', '')) ?: null,
             ];
 
             $tahapAwal->update($payload);
-
-            // Also sync static profile to Perusahaan master if linked
-            if ($sesi->perusahaan) {
-                $sesi->perusahaan->update([
-                    'jenis_perizinan'       => $payload['jenis_perizinan'],
-                    'jenis_komoditas'       => $payload['jenis_komoditas'],
-                    'alamat_kantor_site'    => $payload['alamat_kantor_site'],
-                    'alamat_lokasi_tambang' => $payload['alamat_lokasi_tambang'],
-                    'alamat_kantor_pusat'   => $payload['alamat_kantor_pusat'],
-                    'nama_ktt_default'      => $payload['nama_ktt'],
-                ]);
-            }
 
             AuditLog::create([
                 'user_id'         => auth()->id(),
@@ -228,7 +216,7 @@ class AuditTahapAwalController extends Controller
     }
 
     /**
-     * Reset Tahap Awal Audit to standard preset data.
+     * Reset Tahap Awal Audit form to empty/blank state.
      */
     public function resetPreset($id)
     {

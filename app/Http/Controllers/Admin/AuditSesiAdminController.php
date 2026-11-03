@@ -98,7 +98,7 @@ class AuditSesiAdminController extends Controller
                 'skor_akhir'      => 0,
             ]);
 
-            \App\Models\AuditTahapAwal::getOrCreateForSesi($sesi);
+            \App\Models\AuditTahapAwal::createEmptyForSesi($sesi);
 
             $subElemens = \App\Models\SubElemen::with('kriterias')->get();
             foreach ($subElemens as $sub) {

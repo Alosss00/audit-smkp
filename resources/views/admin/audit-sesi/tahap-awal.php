@@ -4,18 +4,18 @@ ob_start();
 
 $kinerja = $tahapAwal->kinerja_kp ?? [];
 $faktorPenyesuaian = $tahapAwal->faktor_penyesuaian ?? [];
-$tim1 = $tahapAwal->tim_audit_tahap_1 ?? [];
+$tim1 = !empty($tahapAwal->tim_audit_tahap_1) ? $tahapAwal->tim_audit_tahap_1 : [['nama' => '', 'jabatan' => '', 'no_registrasi' => '']];
 $kontak = $tahapAwal->kontak_awal ?? [];
 $kelayakan = $tahapAwal->kelayakan_audit ?? [];
 $kecukupan = $tahapAwal->kecukupan_dokumen ?? [];
-$tim2 = $tahapAwal->tim_audit_tahap_2 ?? [];
-$risksPresent = $tahapAwal->top_risks_present ?? [];
-$risksFuture = $tahapAwal->top_risks_future ?? [];
+$tim2 = !empty($tahapAwal->tim_audit_tahap_2) ? $tahapAwal->tim_audit_tahap_2 : [['nama' => '', 'jabatan' => '', 'no_registrasi' => '']];
+$risksPresent = !empty($tahapAwal->top_risks_present) ? $tahapAwal->top_risks_present : [['kegiatan' => '', 'risiko' => '', 'nilai_awal' => '', 'nilai_sisa' => '']];
+$risksFuture = !empty($tahapAwal->top_risks_future) ? $tahapAwal->top_risks_future : [['kegiatan' => '', 'risiko' => '', 'nilai_awal' => '', 'nilai_sisa' => '']];
 $trends = $tahapAwal->trend_data ?? [];
-$peralatan = $tahapAwal->unjuk_kerja_peralatan ?? [];
-$klis = $tahapAwal->capaian_kli ?? [];
+$peralatan = !empty($tahapAwal->unjuk_kerja_peralatan) ? $tahapAwal->unjuk_kerja_peralatan : [['jenis_peralatan' => '', 'pa' => '', 'ma' => '']];
+$klis = !empty($tahapAwal->capaian_kli) ? $tahapAwal->capaian_kli : [['indikator' => '', 'capaian' => '']];
 $auditPrev = $tahapAwal->data_audit_sebelumnya ?? [];
-$harapanList = $tahapAwal->harapan_pemangku ?? [];
+$harapanList = !empty($tahapAwal->harapan_pemangku) ? $tahapAwal->harapan_pemangku : [''];
 $thnPeriode = $sesi->tahun_periode ?? ($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y') : date('Y'));
 $thnDepan = ((int) $thnPeriode) + 1;
 $thnSebelumnya = ((int) $thnPeriode) - 1;
@@ -31,10 +31,10 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
             <h2 class="fw-bold text-slate-800 mb-0">
                 <i class="bi bi-journal-bookmark-fill text-primary me-2"></i>Penyusunan Dokumen Tahap Awal Audit (Tahap I)
             </h2>
-            <span class="badge bg-primary rounded-pill px-3 py-2"><?php echo e($tahapAwal->no_dokumen_header ?? 'TT-MGT-FRS-026L'); ?></span>
+            <span class="badge bg-primary rounded-pill px-3 py-2"><?php echo e($tahapAwal->no_dokumen_header ?: 'TT-MGT-FRS-026L'); ?></span>
         </div>
         <p class="text-muted small mb-0 mt-1">
-            Perusahaan Auditi: <strong><?php echo e($tahapAwal->nama_perusahaan_auditi ?? $sesi->area_audit); ?></strong> &bull;
+            Perusahaan Auditi: <strong><?php echo e($tahapAwal->nama_perusahaan_auditi ?: $sesi->area_audit); ?></strong> &bull;
             Periode Audit: <strong class="text-primary">Tahun <?php echo e($thnPeriode); ?></strong>
         </p>
     </div>
@@ -49,11 +49,6 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
         <a href="<?php echo e(route('admin.audit-sesi.rekap', $sesi->id)); ?>" class="btn btn-outline-secondary rounded-3 px-3">
             <i class="bi bi-bar-chart-line me-1"></i> Rekap Sesi
         </a>
-        <?php if ($sesi->perusahaan_id && auth()->user()->hasMasterDataAccess()): ?>
-            <a href="<?php echo e(route('admin.master-tahap-awal.edit', $sesi->perusahaan_id)); ?>" class="btn btn-outline-info text-dark rounded-3 px-3">
-                <i class="bi bi-database-gear me-1"></i> Master Perusahaan Ini
-            </a>
-        <?php endif; ?>
         <form action="<?php echo e(route('admin.audit-sesi.tahap-awal.reset', $sesi->id)); ?>" method="POST" class="d-inline" data-confirm="Reset seluruh data Tahap Awal Audit ke preset standar?">
             <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
             <button type="submit" class="btn btn-outline-warning text-dark rounded-3 px-3" title="Reset ke Data Preset Standar">
@@ -116,33 +111,33 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         </h5>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Nama Perusahaan Auditi</label>
-                            <input type="text" name="nama_perusahaan_auditi" class="form-control" value="<?php echo e($tahapAwal->nama_perusahaan_auditi ?? $sesi->area_audit); ?>">
+                            <input type="text" name="nama_perusahaan_auditi" class="form-control" value="<?php echo e($tahapAwal->nama_perusahaan_auditi ?? ''); ?>">
                         </div>
                         <div class="row g-3 mb-3">
                             <div class="col-md-7">
                                 <label class="form-label small fw-bold">Jenis Perizinan (Pisahkan baris jika > 1)</label>
-                                <textarea name="jenis_perizinan" class="form-control" rows="2"><?php echo e($tahapAwal->jenis_perizinan); ?></textarea>
+                                <textarea name="jenis_perizinan" class="form-control" rows="2"><?php echo e($tahapAwal->jenis_perizinan ?? ''); ?></textarea>
                             </div>
                             <div class="col-md-5">
                                 <label class="form-label small fw-bold">Jenis Komoditas</label>
-                                <input type="text" name="jenis_komoditas" class="form-control" value="<?php echo e($tahapAwal->jenis_komoditas ?? 'Emas DMP'); ?>">
+                                <input type="text" name="jenis_komoditas" class="form-control" value="<?php echo e($tahapAwal->jenis_komoditas ?? ''); ?>">
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Alamat Kantor Site</label>
-                            <textarea name="alamat_kantor_site" class="form-control" rows="2"><?php echo e($tahapAwal->alamat_kantor_site); ?></textarea>
+                            <textarea name="alamat_kantor_site" class="form-control" rows="2"><?php echo e($tahapAwal->alamat_kantor_site ?? ''); ?></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Alamat Lokasi Tambang</label>
-                            <textarea name="alamat_lokasi_tambang" class="form-control" rows="2"><?php echo e($tahapAwal->alamat_lokasi_tambang); ?></textarea>
+                            <textarea name="alamat_lokasi_tambang" class="form-control" rows="2"><?php echo e($tahapAwal->alamat_lokasi_tambang ?? ''); ?></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Alamat Kantor Pusat</label>
-                            <textarea name="alamat_kantor_pusat" class="form-control" rows="3"><?php echo e($tahapAwal->alamat_kantor_pusat); ?></textarea>
+                            <textarea name="alamat_kantor_pusat" class="form-control" rows="3"><?php echo e($tahapAwal->alamat_kantor_pusat ?? ''); ?></textarea>
                         </div>
                         <div>
                             <label class="form-label small fw-bold">Periode Audit</label>
-                            <input type="text" name="periode_audit_label" class="form-control" value="<?php echo e($tahapAwal->periode_audit_label); ?>">
+                            <input type="text" name="periode_audit_label" class="form-control" value="<?php echo e($tahapAwal->periode_audit_label ?? ''); ?>">
                         </div>
                     </div>
                 </div>
@@ -156,43 +151,43 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold">Kecelakaan Cidera Ringan</label>
-                                <input type="text" name="kinerja_kp[cidera_ringan]" class="form-control" value="<?php echo e($kinerja['cidera_ringan'] ?? '0'); ?>">
+                                <input type="text" name="kinerja_kp[cidera_ringan]" class="form-control" value="<?php echo e($kinerja['cidera_ringan'] ?? ''); ?>">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold">Kecelakaan Cidera Berat</label>
-                                <input type="text" name="kinerja_kp[cidera_berat]" class="form-control" value="<?php echo e($kinerja['cidera_berat'] ?? '0'); ?>">
+                                <input type="text" name="kinerja_kp[cidera_berat]" class="form-control" value="<?php echo e($kinerja['cidera_berat'] ?? ''); ?>">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold">Kecelakaan Berakibat Mati</label>
-                                <input type="text" name="kinerja_kp[mati]" class="form-control" value="<?php echo e($kinerja['mati'] ?? '2'); ?>">
+                                <input type="text" name="kinerja_kp[mati]" class="form-control" value="<?php echo e($kinerja['mati'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold"><em>Frequency Rate</em> (FR) Kecelakaan Tambang</label>
-                                <input type="text" name="kinerja_kp[fr]" class="form-control" value="<?php echo e($kinerja['fr'] ?? '0.33'); ?>">
+                                <input type="text" name="kinerja_kp[fr]" class="form-control" value="<?php echo e($kinerja['fr'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold"><em>Severity Rate</em> (SR) Kecelakaan Tambang</label>
-                                <input type="text" name="kinerja_kp[sr]" class="form-control" value="<?php echo e($kinerja['sr'] ?? '1,973.19'); ?>">
+                                <input type="text" name="kinerja_kp[sr]" class="form-control" value="<?php echo e($kinerja['sr'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold">Jumlah Kejadian Berbahaya</label>
-                                <input type="text" name="kinerja_kp[kejadian_berbahaya]" class="form-control" value="<?php echo e($kinerja['kejadian_berbahaya'] ?? '1'); ?>">
+                                <input type="text" name="kinerja_kp[kejadian_berbahaya]" class="form-control" value="<?php echo e($kinerja['kejadian_berbahaya'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold"><em>Absence Severity Rate</em> (ASR)</label>
-                                <input type="text" name="kinerja_kp[asr]" class="form-control" value="<?php echo e($kinerja['asr'] ?? '16.97'); ?>">
+                                <input type="text" name="kinerja_kp[asr]" class="form-control" value="<?php echo e($kinerja['asr'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold"><em>Morbidity Frequency Rate</em> (MFR)</label>
-                                <input type="text" name="kinerja_kp[mfr]" class="form-control" value="<?php echo e($kinerja['mfr'] ?? '16.97'); ?>">
+                                <input type="text" name="kinerja_kp[mfr]" class="form-control" value="<?php echo e($kinerja['mfr'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold">Kejadian Akibat Penyakit Tenaga Kerja</label>
-                                <input type="text" name="kinerja_kp[penyakit_tk]" class="form-control" value="<?php echo e($kinerja['penyakit_tk'] ?? '0'); ?>">
+                                <input type="text" name="kinerja_kp[penyakit_tk]" class="form-control" value="<?php echo e($kinerja['penyakit_tk'] ?? ''); ?>">
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label small fw-semibold">Frekuensi Penyakit Akibat Kerja (PAK)</label>
-                                <input type="text" name="kinerja_kp[frekuensi_pak]" class="form-control" value="<?php echo e($kinerja['frekuensi_pak'] ?? '0'); ?>">
+                                <input type="text" name="kinerja_kp[frekuensi_pak]" class="form-control" value="<?php echo e($kinerja['frekuensi_pak'] ?? ''); ?>">
                             </div>
                         </div>
                     </div>
@@ -216,7 +211,7 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                                 </thead>
                                 <tbody>
                                     <?php foreach($kondisiPenyesuaian as $no => $kondisiText): ?>
-                                        <?php $val = strtolower($faktorPenyesuaian[$no] ?? 'tidak'); ?>
+                                        <?php $val = isset($faktorPenyesuaian[$no]) ? strtolower($faktorPenyesuaian[$no]) : ''; ?>
                                         <tr>
                                             <td class="text-center fw-bold"><?php echo e($no); ?></td>
                                             <td><?php echo e($kondisiText); ?></td>
@@ -228,7 +223,7 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                                             <td class="text-center">
                                                 <input class="form-check-input kondisi-radio" type="radio"
                                                        name="faktor_penyesuaian[<?php echo e($no); ?>]" value="tidak"
-                                                       <?php echo e($val !== 'ya' ? 'checked' : ''); ?>>
+                                                       <?php echo e($val === 'tidak' ? 'checked' : ''); ?>>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -252,38 +247,39 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold">Jumlah Pekerja Auditi</label>
-                                <input type="number" name="jumlah_pekerja" id="inpJumlahPekerja" class="form-control" value="<?php echo e($tahapAwal->jumlah_pekerja ?? 3086); ?>">
+                                <input type="number" name="jumlah_pekerja" id="inpJumlahPekerja" class="form-control" value="<?php echo e($tahapAwal->jumlah_pekerja ?? ''); ?>">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold">Kelas Risiko</label>
                                 <select name="kelas_risiko" id="inpKelasRisiko" class="form-select">
+                                    <option value="" <?php echo e(empty($tahapAwal->kelas_risiko) ? 'selected' : ''); ?>>-- Pilih Kelas Risiko --</option>
                                     <?php foreach(['Tinggi', 'Sedang', 'Rendah'] as $kr): ?>
-                                        <option value="<?php echo e($kr); ?>" <?php echo e(($tahapAwal->kelas_risiko ?? 'Tinggi') === $kr ? 'selected' : ''); ?>><?php echo e($kr); ?></option>
+                                        <option value="<?php echo e($kr); ?>" <?php echo e(($tahapAwal->kelas_risiko ?? '') === $kr ? 'selected' : ''); ?>><?php echo e($kr); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-bold">Mandays (Hari)</label>
-                                <input type="number" step="0.1" name="mandays_awal" id="inpMandaysAwal" class="form-control" value="<?php echo e($tahapAwal->mandays_awal ?? 25); ?>">
+                                <input type="number" step="0.1" name="mandays_awal" id="inpMandaysAwal" class="form-control" value="<?php echo e($tahapAwal->mandays_awal ?? ''); ?>">
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-bold">Faktor Penyesuaian (Hari)</label>
-                                <input type="number" step="0.1" name="faktor_penyesuaian_hari" id="inpFaktorHari" class="form-control" value="<?php echo e($tahapAwal->faktor_penyesuaian_hari ?? 2.5); ?>">
+                                <input type="number" step="0.1" name="faktor_penyesuaian_hari" id="inpFaktorHari" class="form-control" value="<?php echo e($tahapAwal->faktor_penyesuaian_hari ?? ''); ?>">
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-bold">Total Mandays (Hari)</label>
-                                <input type="number" step="0.1" name="total_mandays" id="inpTotalMandays" class="form-control bg-light fw-bold" value="<?php echo e($tahapAwal->total_mandays ?? 27.5); ?>">
+                                <input type="number" step="0.1" name="total_mandays" id="inpTotalMandays" class="form-control bg-light fw-bold" value="<?php echo e($tahapAwal->total_mandays ?? ''); ?>">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Alokasi Mandays Tahap I (Maks. 10% Total)</label>
                                 <div class="input-group">
-                                    <input type="number" step="0.1" name="alokasi_tahap_1" id="inpAlokasiTahap1" class="form-control" value="<?php echo e($tahapAwal->alokasi_tahap_1 ?? 3); ?>">
+                                    <input type="number" step="0.1" name="alokasi_tahap_1" id="inpAlokasiTahap1" class="form-control" value="<?php echo e($tahapAwal->alokasi_tahap_1 ?? ''); ?>">
                                     <span class="input-group-text">Hari</span>
                                 </div>
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label small fw-bold">Alokasi Mandays Tahap II (Min. 90% Total & Rincian Auditor)</label>
-                                <input type="text" name="alokasi_tahap_2" id="inpAlokasiTahap2" class="form-control" value="<?php echo e($tahapAwal->alokasi_tahap_2 ?? '24,5 Hari ( 4.9 Hari, 5 Auditor)'); ?>">
+                                <input type="text" name="alokasi_tahap_2" id="inpAlokasiTahap2" class="form-control" value="<?php echo e($tahapAwal->alokasi_tahap_2 ?? ''); ?>">
                             </div>
                         </div>
                     </div>
@@ -311,11 +307,11 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold">Nomor Surat Pengangkatan Tim Audit (SK KTT)</label>
-                                <input type="text" name="no_surat_tugas" class="form-control" value="<?php echo e($tahapAwal->no_surat_tugas); ?>">
+                                <input type="text" name="no_surat_tugas" class="form-control" value="<?php echo e($tahapAwal->no_surat_tugas ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold">Tanggal Surat Pengangkatan</label>
-                                <input type="date" name="tanggal_surat_tugas" class="form-control" value="<?php echo e($tahapAwal->tanggal_surat_tugas ? $tahapAwal->tanggal_surat_tugas->format('Y-m-d') : '2024-09-25'); ?>">
+                                <input type="date" name="tanggal_surat_tugas" class="form-control" value="<?php echo e($tahapAwal->tanggal_surat_tugas ? $tahapAwal->tanggal_surat_tugas->format('Y-m-d') : ''); ?>">
                             </div>
                         </div>
 
@@ -337,8 +333,9 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                                             <td><input type="text" name="tim_audit_tahap_1[<?php echo e($idx); ?>][nama]" class="form-control form-control-sm" value="<?php echo e($anggota['nama'] ?? ''); ?>"></td>
                                             <td>
                                                 <select name="tim_audit_tahap_1[<?php echo e($idx); ?>][jabatan]" class="form-select form-select-sm">
+                                                    <option value="" <?php echo e(empty($anggota['jabatan']) ? 'selected' : ''); ?>>-- Pilih Jabatan --</option>
                                                     <option value="Ketua Tim Audit" <?php echo e(($anggota['jabatan'] ?? '') === 'Ketua Tim Audit' ? 'selected' : ''); ?>>Ketua Tim Audit</option>
-                                                    <option value="Auditor" <?php echo e(($anggota['jabatan'] ?? 'Auditor') === 'Auditor' ? 'selected' : ''); ?>>Auditor</option>
+                                                    <option value="Auditor" <?php echo e(($anggota['jabatan'] ?? '') === 'Auditor' ? 'selected' : ''); ?>>Auditor</option>
                                                 </select>
                                             </td>
                                             <td><input type="text" name="tim_audit_tahap_1[<?php echo e($idx); ?>][no_registrasi]" class="form-control form-control-sm font-monospace" value="<?php echo e($anggota['no_registrasi'] ?? ''); ?>"></td>
@@ -366,15 +363,15 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-bold">Media</label>
-                                <input type="text" name="kontak_awal[media]" class="form-control" value="<?php echo e($kontak['media'] ?? 'Meeting'); ?>">
+                                <input type="text" name="kontak_awal[media]" class="form-control" value="<?php echo e($kontak['media'] ?? ''); ?>">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold">Perwakilan Auditi</label>
-                                <input type="text" name="kontak_awal[perwakilan_auditi]" class="form-control" value="<?php echo e($kontak['perwakilan_auditi'] ?? 'Tejo Prihantoro'); ?>">
+                                <input type="text" name="kontak_awal[perwakilan_auditi]" class="form-control" value="<?php echo e($kontak['perwakilan_auditi'] ?? ''); ?>">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold">Jabatan Perwakilan Auditi</label>
-                                <input type="text" name="kontak_awal[jabatan_perwakilan]" class="form-control" value="<?php echo e($kontak['jabatan_perwakilan'] ?? 'Kepala Teknik Tambang'); ?>">
+                                <input type="text" name="kontak_awal[jabatan_perwakilan]" class="form-control" value="<?php echo e($kontak['jabatan_perwakilan'] ?? ''); ?>">
                             </div>
                         </div>
                     </div>
@@ -402,7 +399,7 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                                             <td class="small"><?php echo e($indText); ?></td>
                                             <td>
                                                 <input type="text" name="kelayakan_audit[<?php echo e($no); ?>]" class="form-control form-control-sm text-center fw-semibold"
-                                                       value="<?php echo e($kelayakan[$no] ?? 'Tersedia dan Layak'); ?>" list="listOpsiKelayakan">
+                                                       value="<?php echo e($kelayakan[$no] ?? ''); ?>" list="listOpsiKelayakan">
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -419,7 +416,8 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
                             <span class="small fw-bold">Kesimpulan Kelayakan Audit:</span>
                             <select name="kesimpulan_kelayakan" class="form-select form-select-sm w-auto fw-bold">
-                                <option value="layak" <?php echo e(($tahapAwal->kesimpulan_kelayakan ?? 'layak') === 'layak' ? 'selected' : ''); ?>>Layak untuk dilaksanakan</option>
+                                <option value="" <?php echo e(empty($tahapAwal->kesimpulan_kelayakan) ? 'selected' : ''); ?>>-- Pilih Kesimpulan --</option>
+                                <option value="layak" <?php echo e(($tahapAwal->kesimpulan_kelayakan ?? '') === 'layak' ? 'selected' : ''); ?>>Layak untuk dilaksanakan</option>
                                 <option value="tidak_layak" <?php echo e(($tahapAwal->kesimpulan_kelayakan ?? '') === 'tidak_layak' ? 'selected' : ''); ?>>Tidak Layak untuk dilaksanakan</option>
                             </select>
                         </div>
@@ -448,8 +446,9 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                                             <td class="small fw-semibold"><?php echo e($elText); ?></td>
                                             <td>
                                                 <select name="kecukupan_dokumen[<?php echo e($no); ?>]" class="form-select form-select-sm fw-semibold">
+                                                    <option value="" <?php echo e(empty($kecukupan[$no]) ? 'selected' : ''); ?>>-- Pilih --</option>
                                                     <?php foreach(['Baik', 'Cukup', 'Kurang'] as $opt): ?>
-                                                        <option value="<?php echo e($opt); ?>" <?php echo e(($kecukupan[$no] ?? 'Baik') === $opt ? 'selected' : ''); ?>><?php echo e($opt); ?></option>
+                                                        <option value="<?php echo e($opt); ?>" <?php echo e(($kecukupan[$no] ?? '') === $opt ? 'selected' : ''); ?>><?php echo e($opt); ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
                                             </td>
@@ -461,7 +460,8 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
                             <span class="small fw-bold">Kesimpulan Evaluasi Dokumentasi:</span>
                             <select name="kesimpulan_kecukupan" class="form-select form-select-sm w-auto fw-bold">
-                                <option value="dapat_dilanjutkan" <?php echo e(($tahapAwal->kesimpulan_kecukupan ?? 'dapat_dilanjutkan') === 'dapat_dilanjutkan' ? 'selected' : ''); ?>>Dapat dilanjutkan*) ke tahap berikutnya</option>
+                                <option value="" <?php echo e(empty($tahapAwal->kesimpulan_kecukupan) ? 'selected' : ''); ?>>-- Pilih Kesimpulan --</option>
+                                <option value="dapat_dilanjutkan" <?php echo e(($tahapAwal->kesimpulan_kecukupan ?? '') === 'dapat_dilanjutkan' ? 'selected' : ''); ?>>Dapat dilanjutkan*) ke tahap berikutnya</option>
                                 <option value="tidak_dapat_dilanjutkan" <?php echo e(($tahapAwal->kesimpulan_kecukupan ?? '') === 'tidak_dapat_dilanjutkan' ? 'selected' : ''); ?>>Belum dapat dilanjutkan</option>
                             </select>
                         </div>
@@ -510,8 +510,9 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                                             <td><input type="text" name="tim_audit_tahap_2[<?php echo e($idx); ?>][nama]" class="form-control form-control-sm" value="<?php echo e($anggota['nama'] ?? ''); ?>"></td>
                                             <td>
                                                 <select name="tim_audit_tahap_2[<?php echo e($idx); ?>][jabatan]" class="form-select form-select-sm">
+                                                    <option value="" <?php echo e(empty($anggota['jabatan']) ? 'selected' : ''); ?>>-- Pilih Jabatan --</option>
                                                     <option value="Ketua Tim Audit" <?php echo e(($anggota['jabatan'] ?? '') === 'Ketua Tim Audit' ? 'selected' : ''); ?>>Ketua Tim Audit</option>
-                                                    <option value="Auditor" <?php echo e(($anggota['jabatan'] ?? 'Auditor') === 'Auditor' ? 'selected' : ''); ?>>Auditor</option>
+                                                    <option value="Auditor" <?php echo e(($anggota['jabatan'] ?? '') === 'Auditor' ? 'selected' : ''); ?>>Auditor</option>
                                                 </select>
                                             </td>
                                             <td><input type="text" name="tim_audit_tahap_2[<?php echo e($idx); ?>][no_registrasi]" class="form-control form-control-sm font-monospace" value="<?php echo e($anggota['no_registrasi'] ?? ''); ?>"></td>
@@ -738,23 +739,23 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Tahun Audit Sebelumnya</label>
-                                <input type="text" name="data_audit_sebelumnya[tahun]" class="form-control" value="<?php echo e($auditPrev['tahun'] ?? $thnSebelumnya); ?>">
+                                <input type="text" name="data_audit_sebelumnya[tahun]" class="form-control" value="<?php echo e($auditPrev['tahun'] ?? ''); ?>">
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label small fw-bold">1. Capaian Nilai Audit</label>
-                                <input type="text" name="data_audit_sebelumnya[nilai_audit]" class="form-control fw-bold" value="<?php echo e($auditPrev['nilai_audit'] ?? '79.50 %'); ?>">
+                                <input type="text" name="data_audit_sebelumnya[nilai_audit]" class="form-control fw-bold" value="<?php echo e($auditPrev['nilai_audit'] ?? ''); ?>">
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label small fw-bold">2. Status Penyelesaian Tindak Lanjut Ketidaksesuaian Kategori Kritikal</label>
-                                <input type="text" name="data_audit_sebelumnya[status_kritikal]" class="form-control" value="<?php echo e($auditPrev['status_kritikal'] ?? 'Tidak ada temuan kritikal'); ?>">
+                                <input type="text" name="data_audit_sebelumnya[status_kritikal]" class="form-control" value="<?php echo e($auditPrev['status_kritikal'] ?? ''); ?>">
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label small fw-bold">3. Status Penyelesaian Tindak Lanjut Ketidaksesuaian Kategori Mayor</label>
-                                <input type="text" name="data_audit_sebelumnya[status_mayor]" class="form-control" value="<?php echo e($auditPrev['status_mayor'] ?? 'Tidak ada temuan Mayor'); ?>">
+                                <input type="text" name="data_audit_sebelumnya[status_mayor]" class="form-control" value="<?php echo e($auditPrev['status_mayor'] ?? ''); ?>">
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label small fw-bold">4. Status Penyelesaian Tindak Lanjut Ketidaksesuaian Kategori Minor</label>
-                                <input type="text" name="data_audit_sebelumnya[status_minor]" class="form-control" value="<?php echo e($auditPrev['status_minor'] ?? '98% temuan sudah ditindaklanjuti'); ?>">
+                                <input type="text" name="data_audit_sebelumnya[status_minor]" class="form-control" value="<?php echo e($auditPrev['status_minor'] ?? ''); ?>">
                             </div>
                             <div class="col-md-12">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -764,7 +765,7 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                                     </button>
                                 </div>
                                 <div id="wrapCatatanInstansi" class="d-flex flex-column gap-2">
-                                    <?php foreach(($auditPrev['catatan_instansi'] ?? ['']) as $cInst): ?>
+                                    <?php foreach((!empty($auditPrev['catatan_instansi']) ? $auditPrev['catatan_instansi'] : ['']) as $cInst): ?>
                                         <div class="input-group input-group-sm">
                                             <input type="text" name="data_audit_sebelumnya[catatan_instansi][]" class="form-control" value="<?php echo e($cInst); ?>">
                                             <button type="button" class="btn btn-outline-danger btn-remove-item"><i class="bi bi-x-lg"></i></button>
@@ -825,15 +826,15 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         </h5>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Tanggal Pembuatan Berita Acara Tahap Awal</label>
-                            <input type="date" name="tanggal_berita_acara" class="form-control" value="<?php echo e($tahapAwal->tanggal_berita_acara ? $tahapAwal->tanggal_berita_acara->format('Y-m-d') : $thnDepan . '-01-04'); ?>">
+                            <input type="date" name="tanggal_berita_acara" class="form-control" value="<?php echo e($tahapAwal->tanggal_berita_acara ? $tahapAwal->tanggal_berita_acara->format('Y-m-d') : ''); ?>">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Nama Ketua Tim Audit (Penandatangan 1)</label>
-                            <input type="text" name="ketua_tim_audit" class="form-control" value="<?php echo e($tahapAwal->ketua_tim_audit ?? 'Fiska Polii'); ?>">
+                            <input type="text" name="ketua_tim_audit" class="form-control" value="<?php echo e($tahapAwal->ketua_tim_audit ?? ''); ?>">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Nama Kepala Teknik Tambang / KTT (Penandatangan 2)</label>
-                            <input type="text" name="nama_ktt" class="form-control" value="<?php echo e($tahapAwal->nama_ktt ?? 'Tejo Prihantoro'); ?>">
+                            <input type="text" name="nama_ktt" class="form-control" value="<?php echo e($tahapAwal->nama_ktt ?? ''); ?>">
                         </div>
                     </div>
                 </div>
@@ -847,23 +848,23 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold">No. Dokumen (Header)</label>
-                                <input type="text" name="no_dokumen_header" class="form-control font-monospace" value="<?php echo e($tahapAwal->no_dokumen_header ?? 'TT-MGT-FRS-026L'); ?>">
+                                <input type="text" name="no_dokumen_header" class="form-control font-monospace" value="<?php echo e($tahapAwal->no_dokumen_header ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold">No. Dokumen (Footer)</label>
-                                <input type="text" name="no_dokumen_footer" class="form-control font-monospace" value="<?php echo e($tahapAwal->no_dokumen_footer ?? 'TT-MGT-FRS-026K'); ?>">
+                                <input type="text" name="no_dokumen_footer" class="form-control font-monospace" value="<?php echo e($tahapAwal->no_dokumen_footer ?? ''); ?>">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">No. Revisi</label>
-                                <input type="text" name="no_revisi" class="form-control" value="<?php echo e($tahapAwal->no_revisi ?? '01'); ?>">
+                                <input type="text" name="no_revisi" class="form-control" value="<?php echo e($tahapAwal->no_revisi ?? ''); ?>">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Tanggal Terbit</label>
-                                <input type="date" name="tanggal_terbit" class="form-control" value="<?php echo e($tahapAwal->tanggal_terbit ? $tahapAwal->tanggal_terbit->format('Y-m-d') : '2025-05-07'); ?>">
+                                <input type="date" name="tanggal_terbit" class="form-control" value="<?php echo e($tahapAwal->tanggal_terbit ? $tahapAwal->tanggal_terbit->format('Y-m-d') : ''); ?>">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Tanggal Tinjau Ulang</label>
-                                <input type="date" name="tanggal_tinjau_ulang" class="form-control" value="<?php echo e($tahapAwal->tanggal_tinjau_ulang ? $tahapAwal->tanggal_tinjau_ulang->format('Y-m-d') : '2028-05-07'); ?>">
+                                <input type="date" name="tanggal_tinjau_ulang" class="form-control" value="<?php echo e($tahapAwal->tanggal_tinjau_ulang ? $tahapAwal->tanggal_tinjau_ulang->format('Y-m-d') : ''); ?>">
                             </div>
                         </div>
                     </div>
@@ -960,8 +961,9 @@ document.addEventListener('DOMContentLoaded', function () {
             <td><input type="text" name="tim_audit_tahap_1[${idx}][nama]" class="form-control form-control-sm"></td>
             <td>
                 <select name="tim_audit_tahap_1[${idx}][jabatan]" class="form-select form-select-sm">
+                    <option value="" selected>-- Pilih Jabatan --</option>
                     <option value="Ketua Tim Audit">Ketua Tim Audit</option>
-                    <option value="Auditor" selected>Auditor</option>
+                    <option value="Auditor">Auditor</option>
                 </select>
             </td>
             <td><input type="text" name="tim_audit_tahap_1[${idx}][no_registrasi]" class="form-control form-control-sm font-monospace"></td>
@@ -973,7 +975,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Add Tim 2
     let tim2Counter = <?php echo count($tim2) + 10; ?>;
-    function appendTim2Row(nama = '', jabatan = 'Auditor', reg = '') {
+    function appendTim2Row(nama = '', jabatan = '', reg = '') {
         const tbody = document.querySelector('#tableTim2 tbody');
         const idx = tim2Counter++;
         const tr = document.createElement('tr');
@@ -982,8 +984,9 @@ document.addEventListener('DOMContentLoaded', function () {
             <td><input type="text" name="tim_audit_tahap_2[${idx}][nama]" class="form-control form-control-sm" value="${nama}"></td>
             <td>
                 <select name="tim_audit_tahap_2[${idx}][jabatan]" class="form-select form-select-sm">
+                    <option value="" ${!jabatan ? 'selected' : ''}>-- Pilih Jabatan --</option>
                     <option value="Ketua Tim Audit" ${jabatan === 'Ketua Tim Audit' ? 'selected' : ''}>Ketua Tim Audit</option>
-                    <option value="Auditor" ${jabatan !== 'Ketua Tim Audit' ? 'selected' : ''}>Auditor</option>
+                    <option value="Auditor" ${jabatan === 'Auditor' ? 'selected' : ''}>Auditor</option>
                 </select>
             </td>
             <td><input type="text" name="tim_audit_tahap_2[${idx}][no_registrasi]" class="form-control form-control-sm font-monospace" value="${reg}"></td>
@@ -1006,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const select = tr1.querySelector('select');
             const nama = inputs[0] ? inputs[0].value : '';
             const reg = inputs[1] ? inputs[1].value : '';
-            const jab = select ? select.value : 'Auditor';
+            const jab = select ? select.value : '';
             appendTim2Row(nama, jab, reg);
         });
     });
@@ -1021,9 +1024,9 @@ document.addEventListener('DOMContentLoaded', function () {
         tr.innerHTML = `
             <td class="text-center fw-bold row-num"></td>
             <td><textarea name="${fieldPrefix}[${idx}][kegiatan]" class="form-control form-control-sm" rows="2"></textarea></td>
-            <td><input type="text" name="${fieldPrefix}[${idx}][risiko]" class="form-control form-control-sm" value="Kematian/Fatality/ Permanen disbility"></td>
-            <td><input type="text" name="${fieldPrefix}[${idx}][nilai_awal]" class="form-control form-control-sm text-center" value="Tinggi"></td>
-            <td><input type="text" name="${fieldPrefix}[${idx}][nilai_sisa]" class="form-control form-control-sm text-center" value="Rendah"></td>
+            <td><input type="text" name="${fieldPrefix}[${idx}][risiko]" class="form-control form-control-sm" value=""></td>
+            <td><input type="text" name="${fieldPrefix}[${idx}][nilai_awal]" class="form-control form-control-sm text-center" value=""></td>
+            <td><input type="text" name="${fieldPrefix}[${idx}][nilai_sisa]" class="form-control form-control-sm text-center" value=""></td>
             <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
         `;
         tbody.appendChild(tr);
@@ -1059,8 +1062,8 @@ document.addEventListener('DOMContentLoaded', function () {
         tr.innerHTML = `
             <td class="text-center fw-bold row-num"></td>
             <td><input type="text" name="unjuk_kerja_peralatan[${idx}][jenis_peralatan]" class="form-control form-control-sm"></td>
-            <td><input type="text" name="unjuk_kerja_peralatan[${idx}][pa]" class="form-control form-control-sm text-center" value="90"></td>
-            <td><input type="text" name="unjuk_kerja_peralatan[${idx}][ma]" class="form-control form-control-sm text-center" value="87"></td>
+            <td><input type="text" name="unjuk_kerja_peralatan[${idx}][pa]" class="form-control form-control-sm text-center" value=""></td>
+            <td><input type="text" name="unjuk_kerja_peralatan[${idx}][ma]" class="form-control form-control-sm text-center" value=""></td>
             <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
         `;
         table.querySelector('tbody').appendChild(tr);
@@ -1076,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tr.innerHTML = `
             <td class="text-center fw-bold row-num"></td>
             <td><input type="text" name="capaian_kli[${idx}][indikator]" class="form-control form-control-sm"></td>
-            <td><input type="text" name="capaian_kli[${idx}][capaian]" class="form-control form-control-sm text-center" value="100%"></td>
+            <td><input type="text" name="capaian_kli[${idx}][capaian]" class="form-control form-control-sm text-center" value=""></td>
             <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
         `;
         table.querySelector('tbody').appendChild(tr);

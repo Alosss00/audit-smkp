@@ -232,277 +232,149 @@ ob_start();
             <div class="card card-custom border-0 bg-white mb-4">
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
                     <div>
-                        <h4 class="fw-bold text-slate-800 mb-1">2.1 Tabel Hasil Penilaian Audit SMKP</h4>
+                        <h4 class="fw-bold text-slate-800 mb-1">
+                            <i class="bi bi-diagram-3-fill me-2 text-primary"></i>2.1 Tabel Hasil Penilaian Audit SMKP (Format Kepdirjen 185)
+                        </h4>
                         <p class="text-muted small mb-0">Rincian terstruktur per Elemen, Sub-Elemen, dan Kriteria Penilaian Kepdirjen Minerba 185.K/37.04/DJB/2019.</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btnExpandAll">
-                            <i class="bi bi-arrows-expand me-1"></i> Buka Semua Elemen
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btnCollapseAll">
-                            <i class="bi bi-arrows-collapse me-1"></i> Tutup Semua
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="toggleAllHierarkiBtn">
+                            <i class="bi bi-arrows-collapse me-1"></i> Buka / Tutup Semua Rincian
                         </button>
                     </div>
                 </div>
 
                 <div class="card-body p-4">
-                    <div class="accordion" id="accordionElemen">
-                        <?php foreach($hierarki as $idx => $elem): ?>
-                            <?php
-                                $elemPercent = $elem['persentase'];
-                                $badgeClass = $elemPercent >= 85 ? 'bg-success' : ($elemPercent >= 70 ? 'bg-warning text-dark' : 'bg-danger');
-                            ?>
-                            <div class="accordion-item border rounded-3 mb-3 overflow-hidden shadow-sm">
-                                <h2 class="accordion-header" id="heading-<?php echo e($elem['elemen_id']); ?>">
-                                    <button class="accordion-button <?php echo e($idx > 0 ? 'collapsed' : ''); ?> bg-light text-slate-800 fw-bold py-3 px-4" 
-                                            type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<?php echo e($elem['elemen_id']); ?>" 
-                                            aria-expanded="<?php echo e($idx === 0 ? 'true' : 'false'); ?>" aria-controls="collapse-<?php echo e($elem['elemen_id']); ?>">
-                                        <div class="d-flex flex-wrap align-items-center justify-content-between w-100 me-3 gap-2">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="badge bg-dark rounded-pill px-3 py-2">Elemen <?php echo e($elem['kode_elemen']); ?></span>
-                                                <span class="fs-6 text-slate-900"><?php echo e($elem['nama_elemen']); ?></span>
-                                            </div>
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="text-end small">
-                                                    <span class="text-muted">Bobot:</span> <strong><?php echo e($elem['bobot']); ?>%</strong>
-                                                    <span class="text-muted ms-2">Skor:</span> <strong><?php echo e($elem['nilai_aktual']); ?> / <?php echo e($elem['nilai_maks_efektif']); ?></strong>
-                                                </div>
-                                                <span class="badge <?php echo e($badgeClass); ?> rounded-pill px-3 py-2 fs-6">
-                                                    <?php echo e(number_format($elemPercent, 2)); ?>%
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </button>
-                                </h2>
-                                <div id="collapse-<?php echo e($elem['elemen_id']); ?>" 
-                                     class="accordion-collapse collapse <?php echo e($idx === 0 ? 'show' : ''); ?>" 
-                                     aria-labelledby="heading-<?php echo e($elem['elemen_id']); ?>" 
-                                     data-bs-parent="#accordionElemen">
-                                    <div class="accordion-body p-0">
-                                        <div class="table-responsive">
-                                            <table class="table table-hover align-middle mb-0 matrix-tree-table">
-                                                <thead class="table-light text-slate-700 small text-uppercase">
-                                                    <tr>
-                                                        <th style="width: 120px;" class="ps-4">Kode</th>
-                                                        <th>Deskripsi Standar / Kriteria</th>
-                                                        <th style="width: 140px;" class="text-center">Skor / Nilai</th>
-                                                        <th style="width: 110px;" class="text-center">Pencapaian</th>
-                                                        <th style="width: 250px;">Catatan Temuan / Bukti</th>
-                                                        <th style="width: 130px;" class="text-center pe-4">PICA / Lampiran</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php foreach($elem['sub_elemens'] as $sub): ?>
-                                                        <?php
-                                                            $subPercent = $sub['persentase'];
-                                                            $subBadge = $subPercent >= 85 ? 'bg-success' : ($subPercent >= 70 ? 'bg-warning text-dark' : 'bg-danger');
-                                                            $isDirect = !empty($sub['is_direct']);
-                                                        ?>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-kepdirjen-185 align-middle mb-0" id="tablePenilaianKepdirjen185">
+                            <thead class="table-light align-middle text-uppercase fw-bold text-center">
+                                <!-- Baris Header 1 -->
+                                <tr>
+                                    <th rowspan="2" colspan="3" class="align-middle text-center bg-white text-dark fw-bold" style="width: 38%;">KRITERIA</th>
+                                    <th rowspan="2" class="th-vertical bg-white text-dark" style="width: 48px;"><div>Nilai Elemen %</div></th>
+                                    <th rowspan="2" class="th-vertical bg-white text-dark" style="width: 48px;"><div>Nilai Sub Elemen</div></th>
+                                    <th rowspan="2" class="th-vertical bg-white text-dark" style="width: 48px;"><div>Nilai Sub sub Elemen</div></th>
+                                    <th colspan="4" class="text-center align-middle bg-white text-dark fw-bold">Nilai Audit</th>
+                                    <th rowspan="2" class="align-middle text-center bg-white text-dark fw-bold" style="width: 28%; min-width: 220px;">KETERANGAN</th>
+                                </tr>
+                                <!-- Baris Header 2 -->
+                                <tr>
+                                    <th class="th-vertical bg-blue-header" style="width: 48px;"><div>Nilai Sub Elemen</div></th>
+                                    <th class="th-vertical bg-white text-dark" style="width: 48px;"><div>Nilai sub sub elemen</div></th>
+                                    <th class="th-vertical bg-green-header" style="width: 48px;"><div>Total Nilai Elemen</div></th>
+                                    <th class="th-vertical bg-white text-dark" style="width: 55px;"><div>Presentase Nilai Elemen</div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach($hierarki as $el): ?>
+                                    <!-- Level 1: Baris Elemen Induk -->
+                                    <tr class="bg-elemen-induk border-top border-2 border-secondary" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target=".el-collapse-<?php echo e($el['elemen_id']); ?>">
+                                        <td colspan="3" class="text-start">
+                                            <i class="bi bi-chevron-down toggle-icon me-1 text-primary"></i>
+                                            ELEMEN <?php echo e($el['kode_elemen']); ?> <?php echo e(strtoupper($el['nama_elemen'])); ?>
 
-                                                        <?php if($isDirect): ?>
-                                                            <?php
-                                                                $kri = $sub['direct_detail'] ?? ($sub['kriterias'][0] ?? null);
-                                                                $isNa = !empty($kri['is_na']);
-                                                                $kriNilai = $kri['nilai_aktual'] ?? ($kri['nilai'] ?? 0);
-                                                                $kriMaks = $kri['nilai_maksimal'] ?? 4;
-                                                            ?>
-                                                            <!-- Sub-Elemen Penilaian Langsung (1 Baris) -->
-                                                            <tr class="<?php echo e($isNa ? 'text-muted bg-light bg-opacity-50' : ''); ?>">
-                                                                <td class="ps-4 text-nowrap">
-                                                                    <span class="text-primary fw-semibold">
-                                                                        <i class="bi bi-folder2 me-1"></i><?php echo e($sub['kode_sub_elemen']); ?>
+                                        </td>
+                                        <td class="text-center"><?php echo e(number_format($el['bobot'], 2)); ?>%</td>
+                                        <td class="text-center"><?php echo e(number_format($el['total_nilai_maks_efektif'], 0)); ?></td>
+                                        <td class="text-center text-muted">-</td>
+                                        <td class="text-center text-muted bg-blue-input" style="opacity: 0.6;">-</td>
+                                        <td class="text-center text-muted">-</td>
+                                        <td class="bg-green-total text-center"><?php echo e(number_format($el['total_nilai_aktual'], 2)); ?></td>
+                                        <td class="text-center fw-bold"><?php echo e(number_format($el['persentase'], 2)); ?>%</td>
+                                        <td class="text-center small"></td>
+                                    </tr>
 
-                                                                    </span>
-                                                                </td>
-                                                                <td>
-                                                                    <div class="fw-semibold text-slate-800"><?php echo e($sub['nama_sub_elemen']); ?></div>
-                                                                </td>
-                                                                <td class="text-center">
-                                                                    <?php if($isNa): ?>
-                                                                        <span class="badge bg-secondary rounded-pill px-2 py-1">N/A</span>
-                                                                    <?php else: ?>
-                                                                        <span class="fw-bold <?php echo e($kriNilai == $kriMaks ? 'text-success' : ($kriNilai == 0 ? 'text-danger' : 'text-primary')); ?>">
-                                                                            <?php echo e($kriNilai); ?>
+                                    <!-- Level 2: Baris Sub-Elemen -->
+                                    <?php foreach($el['sub_elemens'] as $sub): ?>
+                                        <?php if(!empty($sub['is_direct'])): ?>
+                                            <!-- Sub-Elemen Penilaian Langsung (Cukup 1 Baris, Tanpa Baris Kriteria Tambahan) -->
+                                            <tr class="collapse show el-collapse-<?php echo e($el['elemen_id']); ?> bg-sub-elemen">
+                                                <td class="text-center font-monospace fw-bold" style="width: 65px;"><?php echo e($sub['kode_sub']); ?></td>
+                                                <td colspan="2" class="fw-semibold text-slate-800">
+                                                    <div><?php echo e($sub['nama_sub']); ?></div>
+                                                </td>
+                                                <td class="text-center text-muted">-</td>
+                                                <!-- Cetak Nilai Maksimal di kolom Nilai Sub Elemen (kolom ke-5) -->
+                                                <td class="text-center font-monospace fw-bold"><?php echo e(number_format($sub['total_nilai_maks_efektif'], 0)); ?></td>
+                                                <td class="text-center text-muted">-</td>
+                                                <!-- Cetak Nilai Hasil Audit di kolom Nilai Sub Elemen (kolom ke-7, biru) -->
+                                                <td class="bg-blue-input font-monospace">
+                                                    <?php if(!empty($sub['direct_detail']['is_na'])): ?>
+                                                        <span class="badge bg-secondary">N/A</span>
+                                                    <?php else: ?>
+                                                        <span class="<?php echo e($sub['total_nilai_aktual'] < $sub['total_nilai_maks_efektif'] ? 'text-warning' : 'text-white'); ?> fw-bold">
+                                                            <?php echo e(number_format($sub['total_nilai_aktual'], 2)); ?>
 
-                                                                        </span>
-                                                                        <span class="text-muted">/ <?php echo e($kriMaks); ?></span>
-                                                                    <?php endif; ?>
-                                                                </td>
-                                                                <td class="text-center">
-                                                                    <?php if($isNa): ?>
-                                                                        <span class="text-muted small">-</span>
-                                                                    <?php else: ?>
-                                                                        <span class="badge <?php echo e($subBadge); ?> rounded-pill px-2 py-1">
-                                                                            <?php echo e(number_format($subPercent, 1)); ?>%
-                                                                        </span>
-                                                                    <?php endif; ?>
-                                                                </td>
-                                                                <td>
-                                                                    <?php if(!empty($kri['catatan'])): ?>
-                                                                        <div class="small text-slate-700" style="max-width: 320px; word-break: break-word;">
-                                                                            <?php echo nl2br(e($kri['catatan'])); ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="text-center text-muted">-</td>
+                                                <td class="text-center text-muted">-</td>
+                                                <td class="text-center text-muted">-</td>
+                                                <td class="text-center small text-secondary fw-semibold">
+                                                    <?php echo e(!empty($sub['direct_detail']['is_na']) ? 'N/A' : ($sub['direct_detail']['catatan'] ?? '')); ?>
 
-                                                                        </div>
-                                                                    <?php else: ?>
-                                                                        <span class="text-muted small fst-italic">-</span>
-                                                                    <?php endif; ?>
-                                                                </td>
-                                                                <td class="text-center pe-4">
-                                                                    <div class="d-flex flex-column align-items-center gap-1">
-                                                                        <?php if(!empty($kri['has_pica'])): ?>
-                                                                            <?php
-                                                                                $kat = $kri['pica_kategori'] ?? 'minor';
-                                                                                $picaBadge = $kat === 'kritikal' ? 'bg-danger' : ($kat === 'mayor' ? 'bg-warning text-dark' : 'bg-info text-dark');
-                                                                            ?>
-                                                                            <span class="badge <?php echo e($picaBadge); ?> rounded-pill px-2 py-1 small" title="Temuan PICA">
-                                                                                <i class="bi bi-exclamation-triangle-fill me-1"></i> PICA <?php echo e(ucfirst($kat)); ?>
+                                                </td>
+                                            </tr>
+                                        <?php else: ?>
+                                            <!-- Sub-Elemen dengan Beberapa Sub-sub Elemen / Kriteria -->
+                                            <tr class="collapse show el-collapse-<?php echo e($el['elemen_id']); ?> bg-sub-elemen" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target=".sub-collapse-<?php echo e($sub['sub_elemen_id']); ?>">
+                                                <td class="text-center font-monospace fw-bold" style="width: 65px;">
+                                                    <i class="bi bi-chevron-down toggle-icon me-1 text-secondary small"></i><?php echo e($sub['kode_sub']); ?>
 
-                                                                            </span>
-                                                                        <?php endif; ?>
+                                                </td>
+                                                <td colspan="2" class="fw-semibold text-slate-800"><?php echo e($sub['nama_sub']); ?></td>
+                                                <td class="text-center text-muted">-</td>
+                                                <!-- Nilai Maksimal Total Sub-Elemen -->
+                                                <td class="text-center font-monospace fw-bold"><?php echo e(number_format($sub['total_nilai_maks_efektif'], 0)); ?></td>
+                                                <td class="text-center text-muted">-</td>
+                                                <!-- Nilai Aktual Total Sub-Elemen (biru) -->
+                                                <td class="bg-blue-input font-monospace"><?php echo e(number_format($sub['total_nilai_aktual'], 2)); ?></td>
+                                                <td class="text-center text-muted">-</td>
+                                                <td class="text-center text-muted">-</td>
+                                                <td class="text-center text-muted">-</td>
+                                                <td class="text-center small text-secondary fw-semibold"></td>
+                                            </tr>
 
-                                                                        <?php
-                                                                            $lUrls = !empty($kri['lampiran_urls']) 
-                                                                                ? $kri['lampiran_urls'] 
-                                                                                : (!empty($kri['lampiran_url']) 
-                                                                                    ? [$kri['lampiran_url']] 
-                                                                                    : (!empty($kri['lampiran']) 
-                                                                                        ? (is_array($kri['lampiran']) ? $kri['lampiran'] : (json_decode($kri['lampiran'], true) ?: [$kri['lampiran']])) 
-                                                                                        : []));
-                                                                        ?>
-                                                                        <?php foreach($lUrls as $lPath): ?>
-                                                                            <?php
-                                                                                $url = str_starts_with($lPath, 'http') || str_starts_with($lPath, '/storage') ? $lPath : Storage::url($lPath);
-                                                                            ?>
-                                                                            <a href="<?php echo e($url); ?>" target="_blank" class="badge bg-light text-primary border text-decoration-none px-2 py-1 small">
-                                                                                <i class="bi bi-paperclip me-1"></i> Bukti Lampiran
-                                                                            </a>
-                                                                        <?php endforeach; ?>
-
-                                                                        <?php if(empty($kri['has_pica']) && empty($lUrls)): ?>
-                                                                            <span class="text-muted small">-</span>
-                                                                        <?php endif; ?>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
+                                            <!-- Level 3: Baris Sub-sub Elemen / Kriteria Penilaian -->
+                                            <?php foreach($sub['details'] as $d): ?>
+                                                <tr class="collapse show el-collapse-<?php echo e($el['elemen_id']); ?> sub-collapse-<?php echo e($sub['sub_elemen_id']); ?> bg-white">
+                                                    <td style="width: 65px;"></td>
+                                                    <td class="text-center font-monospace small text-secondary" style="width: 75px;"><?php echo e($d['kode_kriteria']); ?></td>
+                                                    <td class="small text-slate-700 ps-3">
+                                                        <div><?php echo e($d['deskripsi']); ?></div>
+                                                    </td>
+                                                    <td class="text-center text-muted">-</td>
+                                                    <td class="text-center text-muted">-</td>
+                                                    <!-- Nilai Maksimal Kriteria -->
+                                                    <td class="text-center font-monospace small text-muted"><?php echo e(number_format($d['nilai_maksimal'], 0)); ?></td>
+                                                    <td class="text-center text-muted bg-blue-input" style="opacity: 0.2;">-</td>
+                                                    <!-- Nilai Hasil Audit Kriteria -->
+                                                    <td class="text-center font-monospace fw-bold">
+                                                        <?php if($d['is_na']): ?>
+                                                            <span class="badge bg-secondary">N/A</span>
                                                         <?php else: ?>
-                                                            <!-- Sub-Elemen dengan Beberapa Kriteria (Header Baris Sub-Elemen) -->
-                                                            <tr class="table-secondary fw-semibold bg-slate-100">
-                                                                <td class="ps-4 text-primary">
-                                                                    <i class="bi bi-folder2-open me-1"></i> <?php echo e($sub['kode_sub_elemen']); ?>
-
-                                                                </td>
-                                                                <td class="text-slate-900">
-                                                                    <?php echo e($sub['nama_sub_elemen']); ?>
-
-                                                                </td>
-                                                                <td class="text-center">
-                                                                    <span class="fw-bold"><?php echo e($sub['nilai_aktual']); ?></span> 
-                                                                    <span class="text-muted">/ <?php echo e($sub['nilai_maks_efektif']); ?></span>
-                                                                </td>
-                                                                <td class="text-center">
-                                                                    <span class="badge <?php echo e($subBadge); ?> rounded-pill px-2 py-1">
-                                                                        <?php echo e(number_format($subPercent, 1)); ?>%
-                                                                    </span>
-                                                                </td>
-                                                                <td colspan="2" class="text-muted small pe-4">
-                                                                    Bobot Sub-Elemen: <?php echo e($sub['bobot']); ?>%
-                                                                </td>
-                                                            </tr>
-
-                                                            <!-- Criteria Child Rows -->
-                                                            <?php foreach($sub['kriterias'] as $kri): ?>
-                                                                <?php
-                                                                    $isNa = !empty($kri['is_na']);
-                                                                    $kriNilai = $kri['nilai_aktual'] ?? ($kri['nilai'] ?? 0);
-                                                                    $kriMaks = $kri['nilai_maksimal'] ?? 4;
-                                                                ?>
-                                                                <tr class="<?php echo e($isNa ? 'text-muted bg-light bg-opacity-50' : ''); ?>">
-                                                                    <td class="ps-4 text-nowrap">
-                                                                        <span class="badge bg-light text-dark border px-2 py-1 ms-2"><?php echo e($kri['kode_kriteria']); ?></span>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div class="fw-normal text-slate-800"><?php echo e($kri['nama_kriteria']); ?></div>
-                                                                    </td>
-                                                                    <td class="text-center">
-                                                                        <?php if($isNa): ?>
-                                                                            <span class="badge bg-secondary rounded-pill px-2 py-1">N/A</span>
-                                                                        <?php else: ?>
-                                                                            <span class="fw-bold <?php echo e($kriNilai == $kriMaks ? 'text-success' : ($kriNilai == 0 ? 'text-danger' : 'text-primary')); ?>">
-                                                                                <?php echo e($kriNilai); ?>
-
-                                                                            </span>
-                                                                            <span class="text-muted">/ <?php echo e($kriMaks); ?></span>
-                                                                        <?php endif; ?>
-                                                                    </td>
-                                                                    <td class="text-center">
-                                                                        <?php if($isNa): ?>
-                                                                            <span class="text-muted small">-</span>
-                                                                        <?php else: ?>
-                                                                            <?php
-                                                                                $kriPct = $kriMaks > 0 ? ($kriNilai / $kriMaks) * 100 : 0;
-                                                                            ?>
-                                                                            <span class="badge <?php echo e($kriPct == 100 ? 'bg-success bg-opacity-10 text-success' : ($kriPct == 0 ? 'bg-danger bg-opacity-10 text-danger' : 'bg-warning bg-opacity-10 text-warning')); ?> rounded-pill px-2">
-                                                                                <?php echo e(number_format($kriPct, 0)); ?>%
-                                                                            </span>
-                                                                        <?php endif; ?>
-                                                                    </td>
-                                                                    <td>
-                                                                        <?php if(!empty($kri['catatan'])): ?>
-                                                                            <div class="small text-slate-700" style="max-width: 320px; word-break: break-word;">
-                                                                                <?php echo nl2br(e($kri['catatan'])); ?>
-
-                                                                            </div>
-                                                                        <?php else: ?>
-                                                                            <span class="text-muted small fst-italic">-</span>
-                                                                        <?php endif; ?>
-                                                                    </td>
-                                                                    <td class="text-center pe-4">
-                                                                        <div class="d-flex flex-column align-items-center gap-1">
-                                                                            <?php if(!empty($kri['has_pica'])): ?>
-                                                                                <?php
-                                                                                    $kat = $kri['pica_kategori'] ?? 'minor';
-                                                                                    $picaBadge = $kat === 'kritikal' ? 'bg-danger' : ($kat === 'mayor' ? 'bg-warning text-dark' : 'bg-info text-dark');
-                                                                                ?>
-                                                                                <span class="badge <?php echo e($picaBadge); ?> rounded-pill px-2 py-1 small" title="Temuan PICA">
-                                                                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> PICA <?php echo e(ucfirst($kat)); ?>
-
-                                                                                </span>
-                                                                            <?php endif; ?>
-
-                                                                            <?php
-                                                                                $lUrls = !empty($kri['lampiran_urls']) 
-                                                                                    ? $kri['lampiran_urls'] 
-                                                                                    : (!empty($kri['lampiran_url']) 
-                                                                                        ? [$kri['lampiran_url']] 
-                                                                                        : (!empty($kri['lampiran']) 
-                                                                                            ? (is_array($kri['lampiran']) ? $kri['lampiran'] : (json_decode($kri['lampiran'], true) ?: [$kri['lampiran']])) 
-                                                                                            : []));
-                                                                            ?>
-                                                                            <?php foreach($lUrls as $lPath): ?>
-                                                                                <?php
-                                                                                    $url = str_starts_with($lPath, 'http') || str_starts_with($lPath, '/storage') ? $lPath : Storage::url($lPath);
-                                                                                ?>
-                                                                                <a href="<?php echo e($url); ?>" target="_blank" class="badge bg-light text-primary border text-decoration-none px-2 py-1 small">
-                                                                                    <i class="bi bi-paperclip me-1"></i> Bukti Lampiran
-                                                                                </a>
-                                                                            <?php endforeach; ?>
-
-                                                                            <?php if(empty($kri['has_pica']) && empty($lUrls)): ?>
-                                                                                <span class="text-muted small">-</span>
-                                                                            <?php endif; ?>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            <?php endforeach; ?>
+                                                            <span class="<?php echo e($d['nilai'] < $d['nilai_maksimal'] ? 'text-danger' : 'text-success'); ?>"><?php echo e(number_format($d['nilai'], 0)); ?></span>
                                                         <?php endif; ?>
-                                                    <?php endforeach; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
+                                                    </td>
+                                                    <td class="text-center text-muted">-</td>
+                                                    <td class="text-center text-muted">-</td>
+                                                    <td class="text-center small text-muted"><?php echo e($d['is_na'] ? 'N/A' : ($d['catatan'] ?? '')); ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php endforeach; ?>
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr class="fw-bold fs-6">
+                                    <td colspan="8" class="text-end text-uppercase">Total Pencapaian Keseluruhan:</td>
+                                    <td class="bg-green-total text-center fs-5 text-success"><?php echo e(number_format($skorAkhir, 2)); ?>%</td>
+                                    <td class="text-center text-primary fs-5"><?php echo e(number_format(array_sum(array_column($rekapElemen, 'persentase')) / max(count($rekapElemen), 1), 2)); ?>%</td>
+                                    <td class="text-center"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -950,29 +822,23 @@ ob_start();
 <!-- Accordion Toggle Helper Script with CSP Nonce -->
 <script nonce="<?php echo e($cspNonce ?? ''); ?>">
     document.addEventListener('DOMContentLoaded', function() {
-        function toggleAllAccordions(open) {
-            const accordionItems = document.querySelectorAll('#accordionElemen .accordion-collapse');
-            accordionItems.forEach(item => {
-                const bsCollapse = bootstrap.Collapse.getOrCreateInstance(item, { toggle: false });
-                if (open) {
-                    bsCollapse.show();
-                } else {
-                    bsCollapse.hide();
-                }
-            });
-        }
+        const toggleBtn = document.getElementById('toggleAllHierarkiBtn');
+        let isExpanded = true;
 
-        const btnExpand = document.getElementById('btnExpandAll');
-        if (btnExpand) {
-            btnExpand.addEventListener('click', function() {
-                toggleAllAccordions(true);
-            });
-        }
-
-        const btnCollapse = document.getElementById('btnCollapseAll');
-        if (btnCollapse) {
-            btnCollapse.addEventListener('click', function() {
-                toggleAllAccordions(false);
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                const collapses = document.querySelectorAll('#tablePenilaianKepdirjen185 .collapse');
+                collapses.forEach(el => {
+                    if (isExpanded) {
+                        el.classList.remove('show');
+                    } else {
+                        el.classList.add('show');
+                    }
+                });
+                isExpanded = !isExpanded;
+                toggleBtn.innerHTML = isExpanded 
+                    ? '<i class="bi bi-arrows-collapse me-1"></i> Tutup Semua Rincian' 
+                    : '<i class="bi bi-arrows-expand me-1"></i> Buka Semua Rincian';
             });
         }
 
@@ -1230,6 +1096,71 @@ ob_start();
 </script>
 
 <style>
+    .table-kepdirjen-185 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 0.825rem;
+        border-color: #a6a6a6 !important;
+    }
+    
+    .table-kepdirjen-185 th, 
+    .table-kepdirjen-185 td {
+        border: 1px solid #a6a6a6 !important;
+        vertical-align: middle;
+    }
+    
+    .th-vertical {
+        white-space: nowrap;
+        height: 150px;
+        padding: 8px 4px !important;
+        text-align: center;
+        vertical-align: bottom !important;
+    }
+    
+    .th-vertical > div,
+    .th-vertical span.text-vertical {
+        writing-mode: vertical-rl;
+        transform: scale(-1, -1);
+        display: inline-block;
+        white-space: nowrap;
+        margin: 0 auto;
+        font-weight: 700;
+        font-size: 0.78rem;
+    }
+
+    /* Cell Background Color System */
+    .bg-elemen-induk {
+        background-color: #d9d9d9 !important;
+        font-weight: 700;
+    }
+
+    .bg-sub-elemen {
+        background-color: #f2f2f2 !important;
+        font-weight: 600;
+    }
+
+    .bg-blue-input {
+        background-color: #5b9bd5 !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .bg-blue-header {
+        background-color: #5b9bd5 !important;
+        color: #ffffff !important;
+    }
+
+    .bg-green-total {
+        background-color: #e2efda !important;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .bg-green-header {
+        background-color: #c6e0b4 !important;
+        color: #000000 !important;
+    }
+
     .matrix-tree-table {
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 0.85rem;

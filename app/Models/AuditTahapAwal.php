@@ -135,7 +135,70 @@ class AuditTahapAwal extends Model
     }
 
     /**
-     * Build default/preset attributes for a given AuditSesi (matching Tahap Awal Audit_PT MSM-2025.pdf or company MasterTahapAwal).
+     * Build empty attributes for a newly created AuditSesi so all form fields start blank.
+     */
+    public static function buildEmptyAttributes(AuditSesi $sesi): array
+    {
+        return [
+            'audit_sesi_id'           => $sesi->id,
+            'no_dokumen_header'       => null,
+            'no_dokumen_footer'       => null,
+            'no_revisi'               => null,
+            'tanggal_terbit'          => null,
+            'tanggal_tinjau_ulang'    => null,
+            'nama_perusahaan_auditi'  => null,
+            'jenis_perizinan'         => null,
+            'jenis_komoditas'         => null,
+            'alamat_kantor_site'      => null,
+            'alamat_lokasi_tambang'   => null,
+            'alamat_kantor_pusat'     => null,
+            'periode_audit_label'     => null,
+            'kinerja_kp'              => [],
+            'faktor_penyesuaian'      => [],
+            'jumlah_pekerja'          => null,
+            'kelas_risiko'            => null,
+            'mandays_awal'            => null,
+            'faktor_penyesuaian_hari' => null,
+            'total_mandays'           => null,
+            'alokasi_tahap_1'         => null,
+            'alokasi_tahap_2'         => null,
+            'no_surat_tugas'          => null,
+            'tanggal_surat_tugas'     => null,
+            'tim_audit_tahap_1'       => [],
+            'kontak_awal'             => [],
+            'kelayakan_audit'         => [],
+            'kesimpulan_kelayakan'    => null,
+            'kecukupan_dokumen'       => [],
+            'kesimpulan_kecukupan'    => null,
+            'tim_audit_tahap_2'       => [],
+            'top_risks_present'       => [],
+            'top_risks_future'        => [],
+            'trend_data'              => [],
+            'unjuk_kerja_peralatan'   => [],
+            'capaian_kli'             => [],
+            'data_audit_sebelumnya'   => [],
+            'harapan_pemangku'        => [],
+            'tanggal_berita_acara'    => null,
+            'ketua_tim_audit'         => null,
+            'nama_ktt'                => null,
+        ];
+    }
+
+    /**
+     * Create an empty AuditTahapAwal record specifically when a new AuditSesi is created.
+     */
+    public static function createEmptyForSesi(AuditSesi $sesi): self
+    {
+        self::ensureTableExists();
+
+        return self::updateOrCreate(
+            ['audit_sesi_id' => $sesi->id],
+            self::buildEmptyAttributes($sesi)
+        );
+    }
+
+    /**
+     * Build default/preset attributes for existing AuditSesi records (matching Tahap Awal Audit_PT MSM-2025.pdf).
      */
     public static function buildDefaultAttributes(AuditSesi $sesi): array
     {
@@ -149,62 +212,9 @@ class AuditTahapAwal extends Model
         $tahunSebelumnya = $tahunPeriode - 1;
         $tahunDepan = $tahunPeriode + 1;
 
-        // If company has MasterTahapAwal configured, use it as the base preset for this company
-        if ($perusahaan) {
-            $master = MasterTahapAwal::getOrCreateForPerusahaan($perusahaan);
-            if ($master) {
-                return [
-                    'audit_sesi_id'           => $sesi->id,
-                    'no_dokumen_header'       => $master->no_dokumen_header ?: 'TT-MGT-FRS-026L',
-                    'no_dokumen_footer'       => $master->no_dokumen_footer ?: 'TT-MGT-FRS-026K',
-                    'no_revisi'               => $master->no_revisi ?: '01',
-                    'tanggal_terbit'          => $master->tanggal_terbit ? $master->tanggal_terbit->format('Y-m-d') : '2025-05-07',
-                    'tanggal_tinjau_ulang'    => $master->tanggal_tinjau_ulang ? $master->tanggal_tinjau_ulang->format('Y-m-d') : '2028-05-07',
-                    'nama_perusahaan_auditi'  => $master->nama_perusahaan_auditi ?: $namaPerusahaan,
-                    'jenis_perizinan'         => $master->jenis_perizinan,
-                    'jenis_komoditas'         => $master->jenis_komoditas,
-                    'alamat_kantor_site'      => $master->alamat_kantor_site,
-                    'alamat_lokasi_tambang'   => $master->alamat_lokasi_tambang,
-                    'alamat_kantor_pusat'     => $master->alamat_kantor_pusat,
-                    'periode_audit_label'     => $master->is_customized && $master->periode_audit_label
-                        ? $master->periode_audit_label
-                        : "1 Januari {$tahunPeriode} s/d 31 Desember {$tahunPeriode}",
-                    'kinerja_kp'              => $master->kinerja_kp ?? [],
-                    'faktor_penyesuaian'      => $master->faktor_penyesuaian ?? [],
-                    'jumlah_pekerja'          => $master->jumlah_pekerja ?? 3086,
-                    'kelas_risiko'            => $master->kelas_risiko ?: 'Tinggi',
-                    'mandays_awal'            => $master->mandays_awal ?? 25.0,
-                    'faktor_penyesuaian_hari' => $master->faktor_penyesuaian_hari ?? 2.5,
-                    'total_mandays'           => $master->total_mandays ?? 27.5,
-                    'alokasi_tahap_1'         => $master->alokasi_tahap_1 ?? 3.0,
-                    'alokasi_tahap_2'         => $master->alokasi_tahap_2 ?: '24,5 Hari ( 4.9 Hari, 5 Auditor)',
-                    'no_surat_tugas'          => $master->no_surat_tugas,
-                    'tanggal_surat_tugas'     => $master->tanggal_surat_tugas ? $master->tanggal_surat_tugas->format('Y-m-d') : '2024-09-25',
-                    'tim_audit_tahap_1'       => $master->tim_audit_tahap_1 ?? [],
-                    'kontak_awal'             => $master->kontak_awal ?? [],
-                    'kelayakan_audit'         => $master->kelayakan_audit ?? [],
-                    'kesimpulan_kelayakan'    => $master->kesimpulan_kelayakan ?: 'layak',
-                    'kecukupan_dokumen'       => $master->kecukupan_dokumen ?? [],
-                    'kesimpulan_kecukupan'    => $master->kesimpulan_kecukupan ?: 'dapat_dilanjutkan',
-                    'tim_audit_tahap_2'       => $master->tim_audit_tahap_2 ?? [],
-                    'top_risks_present'       => $master->top_risks_present ?? [],
-                    'top_risks_future'        => $master->top_risks_future ?? [],
-                    'trend_data'              => $master->trend_data ?? [],
-                    'unjuk_kerja_peralatan'   => $master->unjuk_kerja_peralatan ?? [],
-                    'capaian_kli'             => $master->capaian_kli ?? [],
-                    'data_audit_sebelumnya'   => $master->data_audit_sebelumnya ?? [],
-                    'harapan_pemangku'        => $master->harapan_pemangku ?? [],
-                    'tanggal_berita_acara'    => $master->tanggal_berita_acara ? $master->tanggal_berita_acara->format('Y-m-d') : "{$tahunDepan}-01-04",
-                    'ketua_tim_audit'         => $master->ketua_tim_audit ?: 'Fiska Polii',
-                    'nama_ktt'                => $master->nama_ktt ?: 'Tejo Prihantoro',
-                ];
-            }
-        }
-
         $isTtn = str_contains(strtolower($namaPerusahaan), 'tondano') || str_contains(strtolower($namaPerusahaan), 'ttn');
         $kodeSingkat = $isTtn ? 'TTN' : 'MSM';
 
-        // Try to sync previous year's AuditSesi if available
         $prevSesi = AuditSesi::where('id', '!=', $sesi->id)
             ->where(function ($q) use ($sesi) {
                 if ($sesi->perusahaan_id) {
@@ -539,7 +549,9 @@ class AuditTahapAwal extends Model
     }
 
     /**
-     * Get or initialize AuditTahapAwal for an AuditSesi (auto-creating table if migration hasn't run yet).
+     * Get or initialize AuditTahapAwal for an AuditSesi:
+     * - Existing old sessions that don't have a record yet get the standard preset.
+     * - Newly created sessions (initialized via createEmptyForSesi) stay blank until filled by user.
      */
     public static function getOrCreateForSesi(AuditSesi $sesi): self
     {
@@ -547,9 +559,14 @@ class AuditTahapAwal extends Model
 
         $record = self::where('audit_sesi_id', $sesi->id)->first();
         if (!$record) {
-            $defaults = self::buildDefaultAttributes($sesi);
-            $record = self::create($defaults);
-        } elseif ($record->jumlah_pekerja === null && empty($record->no_dokumen_header)) {
+            $record = self::create(self::buildDefaultAttributes($sesi));
+        } elseif (
+            $sesi->created_at
+            && $sesi->created_at->lt(\Carbon\Carbon::parse('2026-11-03 10:05:00'))
+            && $record->jumlah_pekerja === null
+            && empty($record->nama_perusahaan_auditi)
+        ) {
+            // Restore preset if an older session was accidentally cleared
             $record->update(self::buildDefaultAttributes($sesi));
             $record->refresh();
         }
