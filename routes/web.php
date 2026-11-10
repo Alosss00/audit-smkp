@@ -38,6 +38,9 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
     Route::post('/session/keep-alive', [AuthController::class, 'keepAlive'])->name('session.keep-alive');
     Route::post('/session/auto-logout', [AuthController::class, 'autoLogout'])->name('session.auto-logout');
 
+    // Secure Authenticated Media & Attachment Delivery
+    Route::get('/attachments/{type}/{id}/{filename?}', [\App\Http\Controllers\AttachmentController::class, 'show'])->name('attachments.show');
+
     // Administrator & Auditor SMKP Routes (Dashboard, Penilaian & Monitoring)
     Route::middleware('role:admin,auditor_smkp')->prefix('admin')->as('admin.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'admin'])->name('dashboard');

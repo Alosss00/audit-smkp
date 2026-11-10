@@ -53,19 +53,25 @@ class AuditDetail extends Model
             return array_values(array_filter($decoded, fn($c) => is_string($c) && trim($c) !== ''));
         }
 
-        // If string contains lines like "1. Item\n2. Item"
-        $lines = preg_split('/\r\n|\r|\n/', (string) $this->catatan);
-        $cleanList = [];
-        foreach ($lines as $line) {
-            $trimmed = trim($line);
-            if ($trimmed !== '') {
-                // Strip leading "1. ", "2. ", "- " if present for individual editing
-                $cleaned = preg_replace('/^(\d+[\.\)]|\-|\*)\s*/', '', $trimmed);
-                $cleanList[] = !empty($cleaned) ? $cleaned : $trimmed;
+        $catatanStr = (string) $this->catatan;
+
+        // If explicitly formatted with numbered findings e.g. "1. Item\n2. Item"
+        if (preg_match('/^\s*1[\.\)]\s+/m', $catatanStr) && preg_match('/\r?\n\s*2[\.\)]\s+/m', $catatanStr)) {
+            $splitParts = preg_split('/\r?\n(?=\s*\d+[\.\)]\s+)/', $catatanStr);
+            $cleanList = [];
+            foreach ($splitParts as $part) {
+                $trimmed = trim($part);
+                if ($trimmed !== '') {
+                    $cleaned = preg_replace('/^\d+[\.\)]\s*/', '', $trimmed);
+                    $cleanList[] = !empty($cleaned) ? $cleaned : $trimmed;
+                }
+            }
+            if (!empty($cleanList)) {
+                return $cleanList;
             }
         }
 
-        return !empty($cleanList) ? $cleanList : [$this->catatan];
+        return [$catatanStr];
     }
 
     /**
@@ -94,7 +100,7 @@ class AuditDetail extends Model
         foreach ($this->lampiran_array as $path) {
             $urls[] = [
                 'path' => $path,
-                'url'  => asset('storage/' . $path),
+                'url'  => route('attachments.show', ['type' => 'lampiran', 'id' => $this->id, 'filename' => basename($path)]),
                 'name' => basename($path),
             ];
         }

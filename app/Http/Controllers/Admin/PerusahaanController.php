@@ -4,16 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Perusahaan;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PerusahaanController extends Controller
 {
     /**
      * Display a listing of perusahaans.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $query = Perusahaan::query();
+        $query = Perusahaan::with('auditSesis')->withCount('auditSesis');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -28,7 +31,7 @@ class PerusahaanController extends Controller
         }
 
         $perusahaans = $query->orderBy('nama_perusahaan')->get();
-        $trashedPerusahaans = Perusahaan::onlyTrashed()->latest('deleted_at')->get();
+        $trashedPerusahaans = Perusahaan::onlyTrashed()->with('auditSesis')->withCount('auditSesis')->latest('deleted_at')->get();
 
         return view('admin.perusahaans.index', compact('perusahaans', 'trashedPerusahaans'));
     }
@@ -36,14 +39,17 @@ class PerusahaanController extends Controller
     /**
      * Store a newly created perusahaan.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'nama_perusahaan' => 'required|string|max:255|unique:perusahaans,nama_perusahaan',
+            'nama_perusahaan' => ['required', 'string', 'max:255', Rule::unique('perusahaans', 'nama_perusahaan')->whereNull('deleted_at')],
             'kode_perusahaan' => 'nullable|string|max:50',
             'kategori'        => 'required|in:Pemegang IUP,Kontraktor,Subkontraktor,Lainnya',
         ], [
-            'nama_perusahaan.unique' => 'Nama perusahaan ini sudah terdaftar dalam sistem.',
+            'nama_perusahaan.required' => 'Nama perusahaan wajib diisi.',
+            'nama_perusahaan.unique'   => 'Nama perusahaan ini sudah terdaftar dalam sistem.',
+            'kategori.required'        => 'Kategori perusahaan wajib dipilih.',
+            'kategori.in'              => 'Kategori perusahaan tidak valid.',
         ]);
 
         $perusahaan = Perusahaan::create([
@@ -69,15 +75,20 @@ class PerusahaanController extends Controller
     /**
      * Update the specified perusahaan.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): RedirectResponse
     {
         $perusahaan = Perusahaan::findOrFail($id);
         $oldData = $perusahaan->toArray();
 
         $request->validate([
-            'nama_perusahaan' => 'required|string|max:255|unique:perusahaans,nama_perusahaan,' . $perusahaan->id,
+            'nama_perusahaan' => ['required', 'string', 'max:255', Rule::unique('perusahaans', 'nama_perusahaan')->ignore($perusahaan->id)->whereNull('deleted_at')],
             'kode_perusahaan' => 'nullable|string|max:50',
             'kategori'        => 'required|in:Pemegang IUP,Kontraktor,Subkontraktor,Lainnya',
+        ], [
+            'nama_perusahaan.required' => 'Nama perusahaan wajib diisi.',
+            'nama_perusahaan.unique'   => 'Nama perusahaan ini sudah terdaftar dalam sistem.',
+            'kategori.required'        => 'Kategori perusahaan wajib dipilih.',
+            'kategori.in'              => 'Kategori perusahaan tidak valid.',
         ]);
 
         $perusahaan->update([
@@ -103,7 +114,7 @@ class PerusahaanController extends Controller
     /**
      * Toggle active status.
      */
-    public function toggleStatus($id)
+    public function toggleStatus(int|string $id): RedirectResponse
     {
         $perusahaan = Perusahaan::findOrFail($id);
         $perusahaan->is_active = !$perusahaan->is_active;
@@ -127,7 +138,7 @@ class PerusahaanController extends Controller
     /**
      * Remove the specified perusahaan (Soft Delete).
      */
-    public function destroy($id)
+    public function destroy(int|string $id): RedirectResponse
     {
         $perusahaan = Perusahaan::findOrFail($id);
         $name = $perusahaan->nama_perusahaan;
@@ -150,7 +161,7 @@ class PerusahaanController extends Controller
     /**
      * Restore soft-deleted perusahaan.
      */
-    public function restore($id)
+    public function restore(int|string $id): RedirectResponse
     {
         $perusahaan = Perusahaan::onlyTrashed()->findOrFail($id);
         $name = $perusahaan->nama_perusahaan;
@@ -172,7 +183,7 @@ class PerusahaanController extends Controller
     /**
      * Permanently delete perusahaan.
      */
-    public function forceDelete($id)
+    public function forceDelete(int|string $id): RedirectResponse
     {
         $perusahaan = Perusahaan::onlyTrashed()->findOrFail($id);
         $name = $perusahaan->nama_perusahaan;

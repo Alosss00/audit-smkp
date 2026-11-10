@@ -191,7 +191,7 @@ ob_start();
                     <h5 class="fw-bold mb-1 text-slate-800">
                         <i class="bi bi-bar-chart-steps me-2 text-info"></i>Perbandingan Pencapaian Nilai Audit per Elemen Antar Tahun Periode
                     </h5>
-                    <p class="text-muted small mb-0">Grafik komparasi batch (grouped bar & garis kurva tren) nilai audit per Elemen SMKP (I - VII) dari tahun ke tahun.</p>
+                    <p class="text-muted small mb-0">Grafik komparasi batch nilai audit per Elemen SMKP (I - VII) yang dikelompokkan per elemen dengan perbandingan antar tahun periode sesi.</p>
                 </div>
                 <div class="d-flex flex-wrap align-items-center gap-3">
                     <div class="d-flex align-items-center gap-2">
@@ -226,7 +226,7 @@ ob_start();
                     </div>
                 </div>
             </div>
-            <div style="height: 420px; position: relative;">
+            <div style="height: 440px; position: relative;">
                 <canvas id="multiYearGroupedBarChart"></canvas>
             </div>
         </div>
@@ -479,8 +479,8 @@ ob_start();
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Bar Chart Average Compliance per Elemen & Multi-Year Trend Line Chart
         const ctxBar = document.getElementById('elementBarChart').getContext('2d');
-        const elementFullNames = <?php echo json_encode($elementFullNames); ?>;
-        const trendData = <?php echo json_encode($elementTrendData ?? []); ?>;
+        const elementFullNames = <?php echo json_encode($elementFullNames, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        const trendData = <?php echo json_encode($elementTrendData ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 
         const barLabels = elementFullNames.map(name => {
             const parts = name.split(': ');
@@ -659,7 +659,7 @@ ob_start();
         });
 
         // 3. Accumulated Radar Chart
-        const accumulatedData = <?php echo json_encode($accumulatedChartData ?? []); ?>;
+        const accumulatedData = <?php echo json_encode($accumulatedChartData ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
         if (accumulatedData && accumulatedData.elementFullNames) {
             function wrapText(str, maxLength) {
                 let res = [];
@@ -889,7 +889,7 @@ ob_start();
         // 5a. Multi-Year Final Score Comparison Chart per Perusahaan
         const ctxFinalScore = document.getElementById('finalScoreMultiYearChart');
         if (ctxFinalScore) {
-            const finalScoreData = <?php echo json_encode($finalScoreTrendData ?? ['years' => [], 'companies' => [], 'overallAverage' => []]); ?>;
+            const finalScoreData = <?php echo json_encode($finalScoreTrendData ?? ['years' => [], 'companies' => [], 'overallAverage' => []], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
             const fsYears = finalScoreData.years || [];
             const fsCompanies = finalScoreData.companies || {};
             const fsOverall = finalScoreData.overallAverage || [];
@@ -993,7 +993,7 @@ ob_start();
                 }
             };
 
-            const globalSelectedCompany = <?php echo json_encode((string)$selectedPerusahaan); ?>;
+            const globalSelectedCompany = <?php echo json_encode((string)$selectedPerusahaan, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
             const initialFsCompany = (globalSelectedCompany && globalSelectedCompany !== 'semua') ? globalSelectedCompany : 'all';
 
             const finalScoreChartInstance = new Chart(ctxFinalScore.getContext('2d'), {
@@ -1062,131 +1062,99 @@ ob_start();
             });
         }
 
-        // 5b. Multi-Year Grouped Bar Chart per Elemen (Batch Grafik per Tahun Periode)
+        // 5b. Multi-Year Grouped Bar Chart per Elemen (Dikelompokkan per Elemen dengan Keterangan Tahun di Bawah Tiap Batang)
         const ctxMultiYear = document.getElementById('multiYearGroupedBarChart');
         if (ctxMultiYear) {
-            const trendYears = <?php echo json_encode($elementTrendData['years'] ?? []); ?>;
-            const trendElements = <?php echo json_encode($elementTrendData['elements'] ?? []); ?>;
+            const trendYears = <?php echo json_encode($elementTrendData['years'] ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+            const trendElements = <?php echo json_encode($elementTrendData['elements'] ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 
-            const elementPalette = [
-                '#4f46e5', // Elemen I - Indigo/Blue
-                '#ef4444', // Elemen II - Red/Orange
-                '#10b981', // Elemen III - Emerald Green
-                '#8b5cf6', // Elemen IV - Purple
-                '#f59e0b', // Elemen V - Amber
-                '#06b6d4', // Elemen VI - Cyan
-                '#ec4899'  // Elemen VII - Pink
+            // Palette warna khusus untuk tiap tahun sesi
+            const yearPalette = [
+                { bg: '#0284c7', border: '#0369a1' }, // Biru Langit (Tahun 1)
+                { bg: '#f59e0b', border: '#d97706' }, // Amber / Kuning Emas (Tahun 2)
+                { bg: '#10b981', border: '#059669' }, // Emerald / Hijau (Tahun 3)
+                { bg: '#8b5cf6', border: '#7c3aed' }, // Ungu (Tahun 4)
+                { bg: '#ec4899', border: '#db2777' }, // Pink (Tahun 5)
+                { bg: '#06b6d4', border: '#0891b2' }, // Cyan (Tahun 6)
+                { bg: '#ef4444', border: '#dc2626' }  // Merah (Tahun 7)
             ];
 
-            const yearLabels = trendYears.map(y => 'Tahun ' + y);
-
-            function getOverallAveragePerYear(companyType = 'all') {
-                const yearsCount = trendYears.length;
-                const totals = new Array(yearsCount).fill(0);
-                const counts = new Array(yearsCount).fill(0);
-
-                Object.values(trendElements).forEach(el => {
-                    let scoreArr = el.scores || [];
-                    if (companyType === 'msm') scoreArr = el.msmScores || [];
-                    else if (companyType === 'ttn') scoreArr = el.ttnScores || [];
-                    else if (companyType !== 'all' && el.scoresByCompany && el.scoresByCompany[companyType]) {
-                        scoreArr = el.scoresByCompany[companyType] || [];
-                    }
-
-                    scoreArr.forEach((sc, i) => {
-                        if (sc !== null && sc !== undefined) {
-                            totals[i] += Number(sc);
-                            counts[i] += 1;
-                        }
-                    });
-                });
-
-                return totals.map((tot, i) => counts[i] > 0 ? Math.round((tot / counts[i]) * 100) / 100 : 0);
-            }
-
-            function buildGroupedDatasets(companyType = 'all', elementFilter = 'all') {
-                const datasets = [];
-                let idx = 0;
-
-                Object.values(trendElements).forEach(el => {
-                    const matchesFilter = elementFilter === 'all' 
+            // Helper untuk membuat label kategori X-axis (Dikelompokkan per Elemen)
+            function getElementLabels(elementFilter = 'all') {
+                const visibleElements = Object.values(trendElements).filter(el => {
+                    return elementFilter === 'all' 
                         || String(el.id) === String(elementFilter) 
                         || String(el.kode) === String(elementFilter);
-
-                    if (!matchesFilter) {
-                        idx++;
-                        return;
-                    }
-
-                    let scoreArr = el.scores || [];
-                    if (companyType === 'msm') {
-                        scoreArr = el.msmScores || [];
-                    } else if (companyType === 'ttn') {
-                        scoreArr = el.ttnScores || [];
-                    } else if (companyType !== 'all' && el.scoresByCompany && el.scoresByCompany[companyType]) {
-                        scoreArr = el.scoresByCompany[companyType] || [];
-                    }
-
-                    const color = elementPalette[idx % elementPalette.length];
-
-                    // 1. Bar Dataset
-                    datasets.push({
-                        type: 'bar',
-                        label: 'Elemen ' + el.kode + ': ' + el.nama,
-                        shortLabel: 'Elemen ' + el.kode,
-                        data: scoreArr,
-                        backgroundColor: color,
-                        borderColor: color,
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        barPercentage: elementFilter === 'all' ? 0.85 : 0.45,
-                        categoryPercentage: 0.75,
-                        order: 2
-                    });
-
-                    // 2. Element-Specific Line Curve (when filtered to a specific element)
-                    if (elementFilter !== 'all') {
-                        datasets.push({
-                            type: 'line',
-                            label: 'Tren Naik-Turun Elemen ' + el.kode,
-                            data: scoreArr,
-                            borderColor: color,
-                            backgroundColor: color,
-                            borderWidth: 3.5,
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: 7,
-                            pointHoverRadius: 10,
-                            pointBackgroundColor: '#ffffff',
-                            pointBorderColor: color,
-                            pointBorderWidth: 3,
-                            order: 1
-                        });
-                    }
-
-                    idx++;
                 });
 
-                return datasets;
+                return visibleElements.map(el => {
+                    return ['Elemen ' + el.kode, el.nama];
+                });
             }
 
+            // Helper untuk membuat datasets (Tiap dataset adalah 1 Tahun Sesi)
+            function buildGroupedDatasets(companyType = 'all', elementFilter = 'all') {
+                const visibleElements = Object.values(trendElements).filter(el => {
+                    return elementFilter === 'all' 
+                        || String(el.id) === String(elementFilter) 
+                        || String(el.kode) === String(elementFilter);
+                });
+
+                const isSingleElement = visibleElements.length === 1;
+
+                return trendYears.map((yr, yrIdx) => {
+                    const scores = visibleElements.map(el => {
+                        let scoreArr = el.scores || [];
+                        if (companyType === 'msm') {
+                            scoreArr = el.msmScores || [];
+                        } else if (companyType === 'ttn') {
+                            scoreArr = el.ttnScores || [];
+                        } else if (companyType !== 'all' && el.scoresByCompany && el.scoresByCompany[companyType]) {
+                            scoreArr = el.scoresByCompany[companyType] || [];
+                        }
+                        return (scoreArr[yrIdx] !== undefined && scoreArr[yrIdx] !== null) ? Number(scoreArr[yrIdx]) : 0;
+                    });
+
+                    const colorObj = yearPalette[yrIdx % yearPalette.length];
+
+                    return {
+                        type: 'bar',
+                        label: 'Tahun ' + yr,
+                        year: yr,
+                        data: scores,
+                        backgroundColor: colorObj.bg,
+                        borderColor: colorObj.border,
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        barPercentage: isSingleElement ? 0.45 : 0.88,
+                        categoryPercentage: isSingleElement ? 0.6 : 0.82,
+                        order: 2
+                    };
+                });
+            }
+
+            // Plugin khusus: Tampilkan Nilai di atas batang & Keterangan Tahun di bawah tiap batang
             const groupedMultiYearBarTextPlugin = {
                 id: 'groupedMultiYearBarTextPlugin',
                 afterDatasetsDraw(chart) {
                     const { ctx } = chart;
+                    const yScale = chart.scales.y;
+
                     chart.data.datasets.forEach((dataset, datasetIndex) => {
-                        // Skip line curve datasets so numbers are only drawn once per bar
                         if (dataset.type === 'line') return;
 
                         const meta = chart.getDatasetMeta(datasetIndex);
                         if (!meta || meta.hidden) return;
 
+                        const yr = dataset.year || (trendYears[datasetIndex] ?? '');
+
                         meta.data.forEach((bar, index) => {
                             const value = dataset.data[index];
+
+                            // 1. Gambar nilai persentase di atas puncak batang grafik
                             if (value !== undefined && value !== null && value > 0) {
                                 ctx.save();
                                 const isWide = bar.width >= 24;
-                                
                                 if (isWide) {
                                     ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
                                     ctx.textAlign = 'center';
@@ -1204,6 +1172,18 @@ ob_start();
                                 }
                                 ctx.restore();
                             }
+
+                            // 2. Gambar keterangan tahun sesi di bawah tiap batang grafik
+                            if (yr) {
+                                ctx.save();
+                                const textYear = bar.width >= 56 ? ('Tahun ' + yr) : String(yr);
+                                ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'top';
+                                ctx.fillStyle = '#475569';
+                                ctx.fillText(textYear, bar.x, yScale.bottom + 6);
+                                ctx.restore();
+                            }
                         });
                     });
                 }
@@ -1215,7 +1195,7 @@ ob_start();
             const multiYearChartInstance = new Chart(ctxMultiYear.getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: yearLabels,
+                    labels: getElementLabels(initialMultiYearElement),
                     datasets: buildGroupedDatasets(initialMultiYearCompany, initialMultiYearElement)
                 },
                 options: {
@@ -1225,7 +1205,8 @@ ob_start();
                         x: {
                             grid: { display: false },
                             ticks: {
-                                font: { size: 13, weight: 'bold', family: "'Plus Jakarta Sans', sans-serif" },
+                                padding: 26, // Memberi ruang untuk keterangan tahun di bawah tiap batang sebelum label elemen
+                                font: { size: 12, weight: 'bold', family: "'Plus Jakarta Sans', sans-serif" },
                                 color: '#1e293b'
                             }
                         },
@@ -1254,20 +1235,23 @@ ob_start();
                                 boxHeight: 12,
                                 padding: 14,
                                 usePointStyle: true,
-                                font: { size: 11, weight: '600', family: "'Plus Jakarta Sans', sans-serif" },
-                                filter: function(legendItem) {
-                                    return !legendItem.text.startsWith('Tren Naik-Turun');
-                                }
+                                font: { size: 11, weight: '600', family: "'Plus Jakarta Sans', sans-serif" }
                             }
                         },
                         tooltip: {
                             callbacks: {
                                 title: function(items) {
-                                    return items[0].label;
+                                    const elLabel = items[0].label;
+                                    return Array.isArray(elLabel) ? elLabel.join(' - ') : elLabel;
                                 },
                                 label: function(context) {
                                     const dataset = context.dataset;
-                                    return ` ${dataset.label}: ${context.raw}%`;
+                                    const val = context.raw;
+                                    let rating = '';
+                                    if (val >= 85) rating = ' (Memuaskan)';
+                                    else if (val >= 70) rating = ' (Baik)';
+                                    else if (val > 0) rating = ' (Kurang)';
+                                    return ` ${dataset.label}: ${val}%${rating}`;
                                 }
                             }
                         }
@@ -1282,6 +1266,7 @@ ob_start();
             function updateMultiYearChart() {
                 const compVal = companyFilterEl ? companyFilterEl.value : 'all';
                 const elemVal = elementFilterEl ? elementFilterEl.value : 'all';
+                multiYearChartInstance.data.labels = getElementLabels(elemVal);
                 multiYearChartInstance.data.datasets = buildGroupedDatasets(compVal, elemVal);
                 multiYearChartInstance.update();
             }
@@ -1297,7 +1282,7 @@ ob_start();
         // 5c. Multi-Period PICA Status Breakdown per Tahun Periode Audit
         const ctxPicaStatus = document.getElementById('picaStatusMultiPeriodChart');
         if (ctxPicaStatus) {
-            const picaData = <?php echo json_encode($picaStatusTrendData ?? []); ?>;
+            const picaData = <?php echo json_encode($picaStatusTrendData ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
             const isSingleCompany = <?php echo ($selectedPerusahaan && $selectedPerusahaan !== 'semua') ? 'true' : 'false'; ?>;
 
             const picaLabels = picaData.map(item => 'Tahun ' + item.tahun);

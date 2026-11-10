@@ -219,9 +219,8 @@ ob_start();
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
-                                <td class="text-center small text-secondary fw-semibold">
+                                <td class="<?php echo !empty($sub['direct_detail']['is_na']) ? 'text-center' : 'text-start'; ?> small text-secondary fw-semibold" style="white-space: pre-line; word-break: break-word;">
                                     <?php echo e(!empty($sub['direct_detail']['is_na']) ? 'N/A' : ($sub['direct_detail']['catatan'] ?? '')); ?>
-
                                 </td>
                             </tr>
                         <?php else: ?>
@@ -263,7 +262,7 @@ ob_start();
                                     </td>
                                     <td class="text-center text-muted">-</td>
                                     <td class="text-center text-muted">-</td>
-                                    <td class="text-center small text-muted"><?php echo e($d['is_na'] ? 'N/A' : ($d['catatan'] ?? '')); ?></td>
+                                    <td class="<?php echo !empty($d['is_na']) ? 'text-center' : 'text-start'; ?> small text-muted" style="white-space: pre-line; word-break: break-word;"><?php echo e($d['is_na'] ? 'N/A' : ($d['catatan'] ?? '')); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>

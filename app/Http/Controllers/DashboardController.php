@@ -8,15 +8,14 @@ use App\Models\Elemen;
 use App\Models\Kriteria;
 use App\Models\SubElemen;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\View\View;
 
 class DashboardController extends Controller
 {
     /**
      * Admin Dashboard with visual chart analytics & area audit score comparison.
      */
-    public function admin()
+    public function admin(): View
     {
         $availablePerusahaans = \App\Models\Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
         $availableYears = AuditSesi::whereNotNull('tahun_periode')
@@ -29,18 +28,22 @@ class DashboardController extends Controller
 
         $selectedPerusahaan = 'semua';
         $perusahaanFilterInt = null;
-        if (!empty($rawPerusahaan) && $rawPerusahaan !== 'semua') {
+        if (! empty($rawPerusahaan) && $rawPerusahaan !== 'semua') {
             if (is_numeric($rawPerusahaan)) {
-                $perusahaanFilterInt = (int)$rawPerusahaan;
+                $perusahaanFilterInt = (int) $rawPerusahaan;
                 $selectedPerusahaan = $perusahaanFilterInt;
             } else {
                 $str = strtolower($rawPerusahaan);
                 if (str_contains($str, 'msm') || str_contains($str, 'meares')) {
-                    $pModel = $availablePerusahaans->first(function($p) { return str_contains(strtolower($p->nama_perusahaan), 'meares'); });
+                    $pModel = $availablePerusahaans->first(function ($p) {
+                        return str_contains(strtolower($p->nama_perusahaan), 'meares');
+                    });
                     $perusahaanFilterInt = $pModel ? $pModel->id : 1;
                     $selectedPerusahaan = $perusahaanFilterInt;
                 } elseif (str_contains($str, 'ttn') || str_contains($str, 'tondano')) {
-                    $pModel = $availablePerusahaans->first(function($p) { return str_contains(strtolower($p->nama_perusahaan), 'tondano'); });
+                    $pModel = $availablePerusahaans->first(function ($p) {
+                        return str_contains(strtolower($p->nama_perusahaan), 'tondano');
+                    });
                     $perusahaanFilterInt = $pModel ? $pModel->id : 2;
                     $selectedPerusahaan = $perusahaanFilterInt;
                 }
@@ -49,16 +52,16 @@ class DashboardController extends Controller
 
         $selectedTahun = 'semua';
         $tahunFilterInt = null;
-        if (!empty($rawTahun) && $rawTahun !== 'semua') {
+        if (! empty($rawTahun) && $rawTahun !== 'semua') {
             if (is_numeric($rawTahun)) {
-                $tahunFilterInt = (int)$rawTahun;
+                $tahunFilterInt = (int) $rawTahun;
                 $selectedTahun = $tahunFilterInt;
             }
         }
 
         // Global PICA Stats Summary (Agregasi berbasis Sub-Elemen per Sesi Audit)
         $allPicas = \App\Models\Pica::select(['id', 'audit_detail_id', 'status', 'tenggat_waktu', 'kategori_temuan'])
-            ->whereHas('auditDetail.auditSesi', function($q) use ($perusahaanFilterInt, $tahunFilterInt) {
+            ->whereHas('auditDetail.auditSesi', function ($q) use ($perusahaanFilterInt, $tahunFilterInt) {
                 if ($perusahaanFilterInt) {
                     $q->where('perusahaan_id', $perusahaanFilterInt);
                 }
@@ -67,12 +70,13 @@ class DashboardController extends Controller
                 }
             })->with([
                 'auditDetail:id,audit_sesi_id,kriteria_id',
-                'auditDetail.kriteria:id,sub_elemen_id'
+                'auditDetail.kriteria:id,sub_elemen_id',
             ])->get();
-        
-        $groupedSubTemuan = $allPicas->groupBy(function($p) {
+
+        $groupedSubTemuan = $allPicas->groupBy(function ($p) {
             $sesiId = $p->auditDetail->audit_sesi_id ?? 0;
             $subId = $p->auditDetail->kriteria->sub_elemen_id ?? 0;
+
             return "{$sesiId}_{$subId}";
         });
 
@@ -101,24 +105,24 @@ class DashboardController extends Controller
         }
 
         $stats = [
-            'total_elemens'      => Elemen::count(),
-            'total_sub_elemens'  => SubElemen::count(),
-            'total_kriterias'    => Kriteria::count(),
-            'total_users'        => User::count(),
-            'total_audits'       => (clone $baseAuditQuery)->count(),
-            'audits_selesai'     => (clone $baseAuditQuery)->where('status', 'selesai')->count(),
-            'audits_berjalan'    => (clone $baseAuditQuery)->where('status', 'berjalan')->count(),
-            'total_pica'         => $subTotal,
-            'open_pica'          => $subOpen,
-            'in_progress_pica'   => $subInProgress,
-            'closed_pica'        => $subClosed,
-            'total_pica_kriteria'      => $allPicas->count(),
-            'open_pica_kriteria'       => $allPicas->where('status', 'open')->count(),
-            'in_progress_pica_kriteria'=> $allPicas->where('status', 'in_progress')->count(),
-            'closed_pica_kriteria'     => $allPicas->where('status', 'closed')->count(),
-            'kritikal_pica'      => $allPicas->where('kategori_temuan', 'kritikal')->count(),
-            'mayor_pica'         => $allPicas->where('kategori_temuan', 'mayor')->count(),
-            'minor_pica'         => $allPicas->where('kategori_temuan', 'minor')->count(),
+            'total_elemens' => Elemen::count(),
+            'total_sub_elemens' => SubElemen::count(),
+            'total_kriterias' => Kriteria::count(),
+            'total_users' => User::count(),
+            'total_audits' => (clone $baseAuditQuery)->count(),
+            'audits_selesai' => (clone $baseAuditQuery)->where('status', 'selesai')->count(),
+            'audits_berjalan' => (clone $baseAuditQuery)->where('status', 'berjalan')->count(),
+            'total_pica' => $subTotal,
+            'open_pica' => $subOpen,
+            'in_progress_pica' => $subInProgress,
+            'closed_pica' => $subClosed,
+            'total_pica_kriteria' => $allPicas->count(),
+            'open_pica_kriteria' => $allPicas->where('status', 'open')->count(),
+            'in_progress_pica_kriteria' => $allPicas->where('status', 'in_progress')->count(),
+            'closed_pica_kriteria' => $allPicas->where('status', 'closed')->count(),
+            'kritikal_pica' => $allPicas->where('kategori_temuan', 'kritikal')->count(),
+            'mayor_pica' => $allPicas->where('kategori_temuan', 'mayor')->count(),
+            'minor_pica' => $allPicas->where('kategori_temuan', 'minor')->count(),
         ];
 
         $elemens = Elemen::orderBy('kode_elemen')->get();
@@ -133,12 +137,13 @@ class DashboardController extends Controller
         $elementFullNames = [];
 
         foreach ($elemens as $el) {
-            $elementLabels[] = 'Elemen ' . $el->kode_elemen;
-            $elementFullNames[] = 'Elemen ' . $el->kode_elemen . ': ' . $el->nama_elemen;
+            $elementLabels[] = 'Elemen '.$el->kode_elemen;
+            $elementFullNames[] = 'Elemen '.$el->kode_elemen.': '.$el->nama_elemen;
 
             if ($totalSessionsCount === 0) {
                 $elementScores[] = 0;
                 $elementColors[] = 'rgba(148, 163, 184, 0.75)';
+
                 continue;
             }
 
@@ -155,7 +160,7 @@ class DashboardController extends Controller
                 $sessionAktual = 0;
                 $sessionMaks = 0;
                 foreach ($details as $d) {
-                    if (!$d->is_na) {
+                    if (! $d->is_na) {
                         $sessionAktual += (float) $d->nilai;
                         $sessionMaks += (float) ($d->kriteria->nilai_maksimal ?? 4);
                     }
@@ -189,7 +194,7 @@ class DashboardController extends Controller
             ->toArray();
 
         if (empty($trendYears)) {
-            $trendYears = [(int)date('Y')];
+            $trendYears = [(int) date('Y')];
         }
 
         // Load all trend sessions so multi-year analytics and PICA breakdown can calculate dynamically
@@ -197,7 +202,7 @@ class DashboardController extends Controller
 
         $elementTrendData = [
             'years' => $trendYears,
-            'elements' => []
+            'elements' => [],
         ];
 
         foreach ($elemens as $el) {
@@ -212,7 +217,7 @@ class DashboardController extends Controller
 
             foreach ($trendYears as $yr) {
                 $yearSessions = $allTrendSessions->where('tahun_periode', $yr);
-                
+
                 $totalAktual = 0;
                 $totalMaks = 0;
                 $msmAktual = 0;
@@ -242,7 +247,7 @@ class DashboardController extends Controller
                     $sessionAktual = 0;
                     $sessionMaks = 0;
                     foreach ($details as $d) {
-                        if (!$d->is_na) {
+                        if (! $d->is_na) {
                             $sessionAktual += (float) $d->nilai;
                             $sessionMaks += (float) ($d->kriteria->nilai_maksimal ?? 4);
                         }
@@ -298,20 +303,21 @@ class DashboardController extends Controller
         $finalScoreTrendData = [
             'years' => $trendYears,
             'companies' => [],
-            'overallAverage' => []
+            'overallAverage' => [],
         ];
 
         foreach ($availablePerusahaans as $p) {
             $scores = [];
             foreach ($trendYears as $yr) {
-                $sessions = $allTrendSessions->filter(function($s) use ($p, $yr) {
-                    $matchesCompany = $s->perusahaan_id == $p->id || 
+                $sessions = $allTrendSessions->filter(function ($s) use ($p, $yr) {
+                    $matchesCompany = $s->perusahaan_id == $p->id ||
                         (empty($s->perusahaan_id) && str_contains(strtolower($s->area_audit), strtolower($p->nama_perusahaan)));
+
                     return $matchesCompany && $s->tahun_periode == $yr;
                 });
 
                 if ($sessions->count() > 0) {
-                    $avgScore = $sessions->avg(function($s) {
+                    $avgScore = $sessions->avg(function ($s) {
                         return (float) ($s->skor_akhir ?? $s->hitungSkorAkhir());
                     });
                     $scores[] = round($avgScore, 2);
@@ -324,7 +330,7 @@ class DashboardController extends Controller
                 'id' => $p->id,
                 'nama' => $p->nama_perusahaan,
                 'kode' => $p->kode_perusahaan ?? $p->nama_perusahaan,
-                'scores' => $scores
+                'scores' => $scores,
             ];
         }
 
@@ -345,7 +351,7 @@ class DashboardController extends Controller
         foreach ($picaYears as $yr) {
             $yearSessions = $allTrendSessions->where('tahun_periode', $yr);
             if ($perusahaanFilterInt) {
-                $yearSessions = $yearSessions->filter(function($s) use ($perusahaanFilterInt) {
+                $yearSessions = $yearSessions->filter(function ($s) use ($perusahaanFilterInt) {
                     return $s->perusahaan_id == $perusahaanFilterInt;
                 });
             }
@@ -361,9 +367,9 @@ class DashboardController extends Controller
 
             foreach ($yearSessions as $sesi) {
                 $pName = $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit;
-                $detailsWithPica = $sesi->auditDetails->filter(fn($d) => $d->pica !== null);
+                $detailsWithPica = $sesi->auditDetails->filter(fn ($d) => $d->pica !== null);
 
-                $subGroups = $detailsWithPica->groupBy(fn($d) => $d->kriteria->sub_elemen_id ?? 0);
+                $subGroups = $detailsWithPica->groupBy(fn ($d) => $d->kriteria->sub_elemen_id ?? 0);
                 $subOpen = 0;
                 $subInProg = 0;
                 $subClosed = 0;
@@ -437,16 +443,16 @@ class DashboardController extends Controller
     /**
      * Auditor (Auditee / PIC Area) Dashboard scoped to user's assigned area.
      */
-    public function auditor()
+    public function auditor(): View
     {
         $userArea = auth()->user()->area;
-        if (empty($userArea) && !auth()->user()->isAdmin()) {
+        if (empty($userArea) && ! auth()->user()->isAdmin()) {
             abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
         }
 
         // Base AuditSesi query filtered by user's assigned area
         $auditQuery = AuditSesi::query();
-        if (!empty($userArea)) {
+        if (! empty($userArea)) {
             $auditQuery->where('area_audit', $userArea);
         }
 
@@ -456,17 +462,18 @@ class DashboardController extends Controller
         // PICA Stats Summary for Auditor (Agregasi berbasis Sub-Elemen per Sesi Audit)
         $basePicas = \App\Models\Pica::select(['id', 'audit_detail_id', 'status', 'tenggat_waktu', 'kategori_temuan'])
             ->whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-                if (!empty($userArea)) {
+                if (! empty($userArea)) {
                     $q->where('area_audit', $userArea);
                 }
             })->with([
                 'auditDetail:id,audit_sesi_id,kriteria_id',
-                'auditDetail.kriteria:id,sub_elemen_id'
+                'auditDetail.kriteria:id,sub_elemen_id',
             ])->get();
 
-        $groupedSubTemuan = $basePicas->groupBy(function($p) {
+        $groupedSubTemuan = $basePicas->groupBy(function ($p) {
             $sesiId = $p->auditDetail->audit_sesi_id ?? 0;
             $subId = $p->auditDetail->kriteria->sub_elemen_id ?? 0;
+
             return "{$sesiId}_{$subId}";
         });
 
@@ -486,18 +493,18 @@ class DashboardController extends Controller
         }
 
         $stats = [
-            'total_sesi'               => (clone $auditQuery)->count(),
-            'total_pica'               => $subTotal,
-            'open_pica'                => $subOpen,
-            'in_progress'              => $subInProgress,
-            'closed_pica'              => $subClosed,
-            'total_pica_kriteria'      => $basePicas->count(),
-            'open_pica_kriteria'       => $basePicas->where('status', 'open')->count(),
-            'in_progress_pica_kriteria'=> $basePicas->where('status', 'in_progress')->count(),
-            'closed_pica_kriteria'     => $basePicas->where('status', 'closed')->count(),
-            'kritikal_pica'            => $basePicas->where('kategori_temuan', 'kritikal')->count(),
-            'mayor_pica'               => $basePicas->where('kategori_temuan', 'mayor')->count(),
-            'minor_pica'               => $basePicas->where('kategori_temuan', 'minor')->count(),
+            'total_sesi' => (clone $auditQuery)->count(),
+            'total_pica' => $subTotal,
+            'open_pica' => $subOpen,
+            'in_progress' => $subInProgress,
+            'closed_pica' => $subClosed,
+            'total_pica_kriteria' => $basePicas->count(),
+            'open_pica_kriteria' => $basePicas->where('status', 'open')->count(),
+            'in_progress_pica_kriteria' => $basePicas->where('status', 'in_progress')->count(),
+            'closed_pica_kriteria' => $basePicas->where('status', 'closed')->count(),
+            'kritikal_pica' => $basePicas->where('kategori_temuan', 'kritikal')->count(),
+            'mayor_pica' => $basePicas->where('kategori_temuan', 'mayor')->count(),
+            'minor_pica' => $basePicas->where('kategori_temuan', 'minor')->count(),
         ];
 
         $areaLabels = [];
@@ -528,29 +535,29 @@ class DashboardController extends Controller
         $findingsPerElemen = [];
         $totalAllFindings = 0;
         foreach ($elemens as $el) {
-            $findingLabels[] = 'Elemen ' . $el->kode_elemen;
+            $findingLabels[] = 'Elemen '.$el->kode_elemen;
 
             // Total non-NA criteria assessed across sessions in user's area for this element (Basis 100% elemen)
             $totalAssessedInElement = AuditDetail::whereHas('auditSesi', function ($q) use ($userArea) {
-                if (!empty($userArea)) {
+                if (! empty($userArea)) {
                     $q->where('area_audit', $userArea);
                 }
             })
-            ->whereHas('kriteria.subElemen', function ($q) use ($el) {
-                $q->where('elemen_id', $el->id);
-            })->where('is_na', false)->count();
+                ->whereHas('kriteria.subElemen', function ($q) use ($el) {
+                    $q->where('elemen_id', $el->id);
+                })->where('is_na', false)->count();
 
             $count = AuditDetail::whereHas('auditSesi', function ($q) use ($userArea) {
-                if (!empty($userArea)) {
+                if (! empty($userArea)) {
                     $q->where('area_audit', $userArea);
                 }
             })
-            ->whereHas('kriteria.subElemen', function ($q) use ($el) {
-                $q->where('elemen_id', $el->id);
-            })
-            ->where('is_na', false)
-            ->whereRaw('nilai < (SELECT nilai_maksimal FROM kriterias WHERE kriterias.id = audit_details.kriteria_id)')
-            ->count();
+                ->whereHas('kriteria.subElemen', function ($q) use ($el) {
+                    $q->where('elemen_id', $el->id);
+                })
+                ->where('is_na', false)
+                ->whereRaw('nilai < (SELECT nilai_maksimal FROM kriterias WHERE kriterias.id = audit_details.kriteria_id)')
+                ->count();
 
             $pct = $totalAssessedInElement > 0 ? round(($count / $totalAssessedInElement) * 100, 1) : 0;
 
@@ -560,11 +567,11 @@ class DashboardController extends Controller
             $totalAllFindings += $count;
 
             $findingsPerElemen[] = [
-                'kode_elemen'    => $el->kode_elemen,
-                'nama_elemen'    => $el->nama_elemen,
+                'kode_elemen' => $el->kode_elemen,
+                'nama_elemen' => $el->nama_elemen,
                 'total_findings' => $count,
                 'total_assessed' => $totalAssessedInElement,
-                'percentage'     => $pct,
+                'percentage' => $pct,
             ];
         }
 

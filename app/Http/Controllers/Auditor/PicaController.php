@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AuditSesi;
 use App\Models\Pica;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,7 +16,7 @@ class PicaController extends Controller
     /**
      * Display a listing of PICA items for the user's area.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $userArea = auth()->user()->area;
         if (empty($userArea)) {
@@ -22,7 +24,12 @@ class PicaController extends Controller
         }
 
         $query = AuditSesi::whereHas('auditDetails.pica')
-            ->where('area_audit', $userArea)
+            ->where(function ($q) use ($userArea) {
+                $q->where('area_audit', $userArea)
+                  ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
+                      $qp->where('nama_perusahaan', $userArea);
+                  });
+            })
             ->with([
                 'user',
                 'perusahaan',
@@ -96,7 +103,7 @@ class PicaController extends Controller
     /**
      * Show edit form for Auditee/PIC area to fill root cause and upload proof.
      */
-    public function edit($id)
+    public function edit(int|string $id): View
     {
         $userArea = auth()->user()->area;
         if (empty($userArea)) {
@@ -120,7 +127,7 @@ class PicaController extends Controller
      * Update PICA record by Auditee/PIC Area.
      * Field-level authorization: STRICTLY strip status, tenggat_waktu, catatan_verifikasi_auditor!
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): RedirectResponse
     {
         $userArea = auth()->user()->area;
         if (empty($userArea)) {
@@ -128,7 +135,10 @@ class PicaController extends Controller
         }
 
         $pica = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-            $q->where('area_audit', $userArea);
+            $q->where('area_audit', $userArea)
+              ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
+                  $qp->where('nama_perusahaan', $userArea);
+              });
         })->findOrFail($id);
 
         $request->validate([

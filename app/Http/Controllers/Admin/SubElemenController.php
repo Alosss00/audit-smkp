@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Elemen;
 use App\Models\SubElemen;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,7 +15,7 @@ class SubElemenController extends Controller
     /**
      * Display a listing of sub-elemens (active & trashed).
      */
-    public function index()
+    public function index(): View
     {
         $elemens = Elemen::with(['subElemens.kriterias'])->orderBy('kode_elemen')->get();
         $subElemens = SubElemen::with(['elemen', 'kriterias'])->withCount('kriterias')->orderBy('kode_sub')->get();
@@ -26,7 +28,7 @@ class SubElemenController extends Controller
     /**
      * Store a newly created sub-elemen in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'elemen_id' => 'required|exists:elemens,id',
@@ -65,11 +67,21 @@ class SubElemenController extends Controller
             ->first();
 
         if ($trashed) {
+            $oldData = $trashed->toArray();
             $data = $request->only(['elemen_id', 'kode_sub', 'nama_sub', 'nilai_maksimal']);
             $data['is_na'] = $request->has('is_na') ? true : false;
             $trashed->restore();
             $trashed->update($data);
             $trashed->syncDefaultKriteria();
+
+            \App\Models\AuditLog::create([
+                'user_id'         => auth()->id(),
+                'modul'           => 'Master Sub-Elemen',
+                'tindakan'        => "Mengaktifkan kembali & memperbarui Sub-Elemen: {$trashed->kode_sub} - {$trashed->nama_sub}",
+                'data_lama'       => $oldData,
+                'data_baru'       => $trashed->fresh()->toArray(),
+                'waktu_perubahan' => now(),
+            ]);
 
             return redirect()->route('admin.sub-elemens.index')
                 ->with('success', 'Master Sub-Elemen berhasil diaktifkan kembali dan diperbarui!');
@@ -80,6 +92,15 @@ class SubElemenController extends Controller
         $subElemen = SubElemen::create($data);
         $subElemen->syncDefaultKriteria();
 
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Sub-Elemen',
+            'tindakan'        => "Menambahkan Master Sub-Elemen baru: {$subElemen->kode_sub} - {$subElemen->nama_sub}",
+            'data_lama'       => null,
+            'data_baru'       => $subElemen->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
         return redirect()->route('admin.sub-elemens.index')
             ->with('success', 'Master Sub-Elemen baru berhasil ditambahkan!');
     }
@@ -87,9 +108,10 @@ class SubElemenController extends Controller
     /**
      * Update the specified sub-elemen in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): RedirectResponse
     {
         $subElemen = SubElemen::findOrFail($id);
+        $oldData = $subElemen->toArray();
 
         $request->validate([
             'elemen_id' => 'required|exists:elemens,id',
@@ -128,6 +150,15 @@ class SubElemenController extends Controller
         $subElemen->syncDefaultKriteria();
         $subElemen->syncNilaiMaksimalFromKriterias();
 
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Sub-Elemen',
+            'tindakan'        => "Memperbarui Master Sub-Elemen: {$subElemen->kode_sub} - {$subElemen->nama_sub}",
+            'data_lama'       => $oldData,
+            'data_baru'       => $subElemen->fresh()->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
         return redirect()->route('admin.sub-elemens.index')
             ->with('success', 'Master Sub-Elemen berhasil diperbarui!');
     }
@@ -135,10 +166,11 @@ class SubElemenController extends Controller
     /**
      * Toggle N/A (Not Applicable) status for a Sub-Elemen and all its child Kriterias.
      */
-    public function toggleNa($id)
+    public function toggleNa(int|string $id): RedirectResponse
     {
         $subElemen = SubElemen::findOrFail($id);
-        $newNaState = !$subElemen->is_na;
+        $oldNaState = (bool) $subElemen->is_na;
+        $newNaState = !$oldNaState;
 
         $subElemen->update(['is_na' => $newNaState]);
 
@@ -148,6 +180,15 @@ class SubElemenController extends Controller
 
         $statusText = $newNaState ? 'di-set N/A (Not Applicable)' : 'diaktifkan kembali (Aktif)';
 
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Sub-Elemen',
+            'tindakan'        => "Mengubah status N/A Sub-Elemen {$subElemen->kode_sub} ({$subElemen->nama_sub}): {$statusText}",
+            'data_lama'       => ['is_na' => $oldNaState],
+            'data_baru'       => ['is_na' => $newNaState],
+            'waktu_perubahan' => now(),
+        ]);
+
         return redirect()->back()
             ->with('success', "Sub-Elemen {$subElemen->kode_sub} beserta seluruh Sub-sub Elemen di bawahnya berhasil {$statusText}!");
     }
@@ -155,7 +196,7 @@ class SubElemenController extends Controller
     /**
      * Remove the specified sub-elemen from storage (Soft Delete).
      */
-    public function destroy($id)
+    public function destroy(int|string $id): RedirectResponse
     {
         $subElemen = SubElemen::findOrFail($id);
         $subData = $subElemen->toArray();
@@ -177,7 +218,7 @@ class SubElemenController extends Controller
     /**
      * Restore soft-deleted sub-elemen.
      */
-    public function restore($id)
+    public function restore(int|string $id): RedirectResponse
     {
         $subElemen = SubElemen::onlyTrashed()->findOrFail($id);
         $subElemen->restore();
@@ -198,7 +239,7 @@ class SubElemenController extends Controller
     /**
      * Permanently delete sub-elemen.
      */
-    public function forceDelete($id)
+    public function forceDelete(int|string $id): RedirectResponse
     {
         $subElemen = SubElemen::onlyTrashed()->findOrFail($id);
         $subData = $subElemen->toArray();

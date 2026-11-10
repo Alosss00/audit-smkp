@@ -7,15 +7,17 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditSesi;
 use App\Models\Perusahaan;
 use App\Models\Pica;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditSesiController extends Controller
 {
     /**
      * Display a listing of audit sessions scoped to the auditor/auditee's area.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $userArea = auth()->user()->area;
         if (empty($userArea)) {
@@ -23,7 +25,12 @@ class AuditSesiController extends Controller
         }
 
         $query = AuditSesi::with(['user', 'perusahaan'])
-            ->where('area_audit', 'like', '%' . $userArea . '%')
+            ->where(function ($q) use ($userArea) {
+                $q->where('area_audit', $userArea)
+                  ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
+                      $qp->where('nama_perusahaan', $userArea);
+                  });
+            })
             ->latest();
 
         if ($request->filled('status')) {
@@ -48,7 +55,7 @@ class AuditSesiController extends Controller
     /**
      * Display audit summary rekap (read-only) for auditor/auditee.
      */
-    public function rekap($id)
+    public function rekap(int|string $id): View
     {
         $sesi      = $this->findAuditorSession($id);
         $rekap     = $sesi->getRekapPerElemen();
@@ -61,7 +68,7 @@ class AuditSesiController extends Controller
     /**
      * Display printable report view according to Kepdirjen 185.
      */
-    public function cetak($id)
+    public function cetak(int|string $id): View
     {
         $sesi      = $this->findAuditorSession($id);
         $rekap     = $sesi->getRekapPerElemen();
@@ -74,7 +81,7 @@ class AuditSesiController extends Controller
     /**
      * Display printable nonconformity report (Formulir Rencana Tindak Lanjut Ketidaksesuaian / PICA).
      */
-    public function cetakKetidaksesuaian($id)
+    public function cetakKetidaksesuaian(int|string $id): View
     {
         $sesi = $this->findAuditorSession($id);
         $tahunFilter = request('tahun_periode');
@@ -115,7 +122,7 @@ class AuditSesiController extends Controller
     /**
      * Export audit session rekap & criteria matrix to official Excel (.xlsx) file.
      */
-    public function exportExcel($id)
+    public function exportExcel(int|string $id): StreamedResponse
     {
         $sesi = $this->findAuditorSession($id);
         $safeArea = preg_replace('/[^A-Za-z0-9_\-]/', '_', $sesi->area_audit);
@@ -127,7 +134,7 @@ class AuditSesiController extends Controller
     /**
      * Display comprehensive audit detail report (Tree Matrix, Best Practices, PICA findings) for Auditor.
      */
-    public function laporanDetail($id)
+    public function laporanDetail(int|string $id): View
     {
         $sesi           = $this->findAuditorSession($id);
         $tahunFilter    = request('tahun_periode', $sesi->tahun_periode);
@@ -142,10 +149,16 @@ class AuditSesiController extends Controller
         $selectedYear   = $companyReport['selectedYear'];
         $isReadOnly     = true;
 
-        $chartData      = AuditSesi::getAccumulatedChartData();
+        $tahunFilterInt = (!empty($selectedYear) && $selectedYear !== 'semua' && is_numeric($selectedYear)) ? (int)$selectedYear : null;
+        $chartData      = AuditSesi::getAccumulatedChartData($tahunFilterInt);
         $userArea       = auth()->user()->area;
         $semuaSesi      = AuditSesi::with('perusahaan')
-            ->where('area_audit', 'like', '%' . $userArea . '%')
+            ->where(function ($q) use ($userArea) {
+                $q->where('area_audit', $userArea)
+                  ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
+                      $qp->where('nama_perusahaan', $userArea);
+                  });
+            })
             ->orderBy('tahun_periode', 'desc')
             ->latest()
             ->get();
@@ -159,7 +172,7 @@ class AuditSesiController extends Controller
     /**
      * Display printable full comprehensive report (Tabel Penilaian Audit + Tabel Praktik Terbaik + Tabel PICA) for Auditor.
      */
-    public function cetakLengkap($id)
+    public function cetakLengkap(int|string $id): View
     {
         $sesi           = $this->findAuditorSession($id);
         $tahunFilter    = request('tahun_periode', $sesi->tahun_periode);
@@ -186,7 +199,7 @@ class AuditSesiController extends Controller
     /**
      * Helper to find audit session scoped to auditor's area.
      */
-    private function findAuditorSession($id)
+    private function findAuditorSession(int|string $id): AuditSesi
     {
         $userArea = auth()->user()->area;
         if (empty($userArea)) {
@@ -194,7 +207,12 @@ class AuditSesiController extends Controller
         }
 
         return AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen', 'auditDetails.pica'])
-            ->where('area_audit', 'like', '%' . $userArea . '%')
+            ->where(function ($q) use ($userArea) {
+                $q->where('area_audit', $userArea)
+                  ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
+                      $qp->where('nama_perusahaan', $userArea);
+                  });
+            })
             ->findOrFail($id);
     }
 }

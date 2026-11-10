@@ -7,6 +7,8 @@ use App\Models\AuditLog;
 use App\Models\LoginLog;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class LoginLogController extends Controller
@@ -14,7 +16,7 @@ class LoginLogController extends Controller
     /**
      * Display a listing of login logs with stats & filtering.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = LoginLog::with('user')->latest('login_at');
 
@@ -95,7 +97,7 @@ class LoginLogController extends Controller
     /**
      * Purge old login records to optimize storage.
      */
-    public function cleanup(Request $request)
+    public function cleanup(Request $request): RedirectResponse
     {
         $request->validate([
             'days' => 'required|string|in:30,60,90,180,all_failed',

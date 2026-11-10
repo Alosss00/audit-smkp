@@ -13,13 +13,15 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        $defaultPassword = Hash::make(env('SEEDER_DEFAULT_PASSWORD', 'password'));
+
         // 1. Administrator (Akses Penuh Master Data, User Management, & Penilaian)
         User::updateOrCreate(
             ['username' => 'admin'],
             [
                 'name'      => 'Administrator SMKP',
                 'email'     => 'admin@smkp.id',
-                'password'  => Hash::make('password'),
+                'password'  => $defaultPassword,
                 'role'      => 'admin',
                 'is_active' => true,
             ]
@@ -31,7 +33,7 @@ class UserSeeder extends Seeder
             [
                 'name'      => 'Auditor SMKP Minerba',
                 'email'     => 'auditor.smkp@smkp.id',
-                'password'  => Hash::make('password'),
+                'password'  => $defaultPassword,
                 'role'      => 'auditor_smkp',
                 'is_active' => true,
             ]
@@ -43,7 +45,7 @@ class UserSeeder extends Seeder
             [
                 'name'      => 'Auditor Perusahaan (PT MSM)',
                 'email'     => 'auditor.msm@smkp.id',
-                'password'  => Hash::make('password'),
+                'password'  => $defaultPassword,
                 'role'      => 'auditor',
                 'area'      => 'PT Meares Soputan Mining',
                 'is_active' => true,

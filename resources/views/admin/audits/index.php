@@ -125,7 +125,6 @@ ob_start();
                         <th>Pelaksanaan Audit</th>
                         <th>Auditor Pelaksana</th>
                         <th>Status</th>
-                        <th class="text-center">Progres Audit</th>
                         <th class="text-center">Nilai Audit</th>
                         <th class="text-end">Aksi</th>
                     </tr>
@@ -153,16 +152,9 @@ ob_start();
                                 </div>
                             </td>
                             <td>
-                                <?php
-                                    $thnPelaksanaan = $sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y') : date('Y');
-                                ?>
-                                <div class="d-flex flex-column">
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 rounded-pill small fw-semibold w-fit mb-1">
-                                        <i class="bi bi-calendar-event me-1"></i>Tahun <?php echo e($thnPelaksanaan); ?>
-                                    </span>
-                                    <span class="small text-slate-800" style="font-size: 0.78rem;">
-                                        <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?>
-                                    </span>
+                                <div class="d-flex align-items-center text-slate-800 small">
+                                    <i class="bi bi-calendar-event text-muted me-1"></i>
+                                    <span><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> &ndash; <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></span>
                                 </div>
                             </td>
                             <td>
@@ -179,21 +171,6 @@ ob_start();
                                 <?php else: ?>
                                     <span class="badge bg-success">Selesai</span>
                                 <?php endif; ?>
-                            </td>
-                            <td class="text-center">
-                                <?php
-                                    $progress = $sesi->hitungProgressPenilaian();
-                                    $progBarClass = $progress == 100 ? 'bg-success' : ($progress >= 50 ? 'bg-warning' : 'bg-danger');
-                                    $progTextClass = $progress == 100 ? 'text-success' : ($progress >= 50 ? 'text-warning' : 'text-danger');
-                                ?>
-                                <div class="d-flex align-items-center justify-content-center gap-2 mx-auto" style="max-width: 130px;">
-                                    <div class="progress flex-grow-1" style="height: 6px;">
-                                        <div class="progress-bar <?php echo e($progBarClass); ?>" role="progressbar" style="width: <?php echo e($progress); ?>%"></div>
-                                    </div>
-                                    <span class="small fw-bold <?php echo e($progTextClass); ?>">
-                                        <?php echo e(number_format($progress, 1)); ?>%
-                                    </span>
-                                </div>
                             </td>
                             <td class="text-center">
                                 <?php

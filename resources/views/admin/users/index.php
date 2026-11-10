@@ -228,7 +228,7 @@ ob_start();
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Password Baru (Biarkan kosong jika tidak diubah)</label>
-                            <input type="password" name="password" class="form-control" placeholder="Minimal 6 karakter">
+                            <input type="password" name="password" class="form-control" placeholder="Minimal 8 karakter">
                         </div>
                     </div>
                     <div class="modal-footer border-top">
@@ -286,7 +286,7 @@ ob_start();
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Password</label>
-                        <input type="password" name="password" class="form-control" placeholder="Minimal 6 karakter" required>
+                        <input type="password" name="password" class="form-control" placeholder="Minimal 8 karakter" required>
                     </div>
                 </div>
                 <div class="modal-footer border-top">

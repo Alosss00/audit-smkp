@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AuditSesi;
 use App\Models\AuditTahapAwal;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +16,7 @@ class AuditTahapAwalController extends Controller
     /**
      * Show the multi-tab form for editing Berita Acara Tahap Awal Audit (TT-MGT-FRS-026L).
      */
-    public function edit($id)
+    public function edit(int|string $id): View
     {
         $sesi = AuditSesi::with(['user', 'perusahaan'])->findOrFail($id);
         $tahapAwal = AuditTahapAwal::getOrCreateForSesi($sesi);
@@ -35,7 +37,7 @@ class AuditTahapAwalController extends Controller
     /**
      * Update Berita Acara Tahap Awal Audit (TT-MGT-FRS-026L).
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): RedirectResponse
     {
         $sesi = AuditSesi::with('perusahaan')->findOrFail($id);
         $tahapAwal = AuditTahapAwal::getOrCreateForSesi($sesi);
@@ -218,7 +220,7 @@ class AuditTahapAwalController extends Controller
     /**
      * Reset Tahap Awal Audit form to empty/blank state.
      */
-    public function resetPreset($id)
+    public function resetPreset(int|string $id): RedirectResponse
     {
         $sesi = AuditSesi::with('perusahaan')->findOrFail($id);
         AuditTahapAwal::ensureTableExists();
@@ -245,9 +247,23 @@ class AuditTahapAwalController extends Controller
     /**
      * Render printable 17-page A4 Portrait official document (TT-MGT-FRS-026L).
      */
-    public function cetak($id)
+    public function cetak(int|string $id): View
     {
-        $sesi = AuditSesi::with(['user', 'perusahaan'])->findOrFail($id);
+        $query = AuditSesi::with(['user', 'perusahaan']);
+
+        // Enforce area ownership when accessed by Auditee (role: auditor)
+        if (auth()->check() && auth()->user()->role === 'auditor') {
+            $userArea = auth()->user()->area;
+            if (empty($userArea)) {
+                abort(403, 'Akun Anda belum ditugaskan ke area kerja manapun. Hubungi Administrator.');
+            }
+            $query->where(function ($q) use ($userArea) {
+                $q->where('area_audit', $userArea)
+                  ->orWhere('area_audit', 'like', '%' . $userArea . '%');
+            });
+        }
+
+        $sesi = $query->findOrFail($id);
         $tahapAwal = AuditTahapAwal::getOrCreateForSesi($sesi);
 
         $kondisiPenyesuaian = AuditTahapAwal::getDaftarKondisiPenyesuaian();

@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\LoginLog;
 use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,7 +16,7 @@ class AuthController extends Controller
     /**
      * Show login form.
      */
-    public function showLoginForm()
+    public function showLoginForm(): View|RedirectResponse
     {
         if (Auth::check()) {
             $user = Auth::user();
@@ -29,14 +32,16 @@ class AuthController extends Controller
     /**
      * Handle login authentication.
      */
-    public function login(Request $request)
+    public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+            'username' => 'required|string|max:100',
+            'password' => 'required|string|max:255',
         ], [
             'username.required' => 'Username wajib diisi.',
+            'username.max'      => 'Username tidak boleh lebih dari 100 karakter.',
             'password.required' => 'Password wajib diisi.',
+            'password.max'      => 'Password tidak boleh lebih dari 255 karakter.',
         ]);
 
         $remember = $request->has('remember');
@@ -130,14 +135,19 @@ class AuthController extends Controller
             'login_at'   => now(),
         ]);
 
-        AuditLog::create([
-            'user_id'         => $targetUser?->id ?? 1, // Fallback to admin/system if unknown
-            'modul'           => 'Autentikasi',
-            'tindakan'        => "Percobaan login gagal untuk username '{$request->username}' dari IP " . $request->ip(),
-            'data_lama'       => null,
-            'data_baru'       => ['username' => $request->username, 'ip' => $request->ip(), 'user_agent' => substr($request->userAgent() ?? '', 0, 150)],
-            'waktu_perubahan' => now(),
-        ]);
+        $fallbackUserId = $targetUser?->id ?? User::where('role', 'admin')->value('id') ?? User::value('id');
+        if ($fallbackUserId) {
+            AuditLog::create([
+                'user_id'         => $fallbackUserId,
+                'modul'           => 'Autentikasi',
+                'tindakan'        => $targetUser
+                    ? "Percobaan login gagal untuk akun '{$targetUser->username}' dari IP " . $request->ip()
+                    : "[Sistem/Anonim] Percobaan login gagal untuk username tidak terdaftar '{$request->username}' dari IP " . $request->ip(),
+                'data_lama'       => null,
+                'data_baru'       => ['username' => $request->username, 'ip' => $request->ip(), 'user_agent' => substr($request->userAgent() ?? '', 0, 150)],
+                'waktu_perubahan' => now(),
+            ]);
+        }
 
         return back()->withErrors([
             'username' => 'Username atau password yang Anda masukkan salah.',
@@ -147,7 +157,7 @@ class AuthController extends Controller
     /**
      * Handle logout.
      */
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
         if (Auth::check()) {
             $user = Auth::user();
@@ -194,7 +204,7 @@ class AuthController extends Controller
     /**
      * Keep session alive ping from client interaction.
      */
-    public function keepAlive(Request $request)
+    public function keepAlive(Request $request): JsonResponse
     {
         if (Auth::check()) {
             $request->session()->put('last_activity_time', time());
@@ -213,7 +223,7 @@ class AuthController extends Controller
     /**
      * Auto-logout triggered when user inactivity timer expires on client-side.
      */
-    public function autoLogout(Request $request)
+    public function autoLogout(Request $request): JsonResponse|RedirectResponse
     {
         $timeoutMinutes = (int) config('session.idle_timeout', 15);
 

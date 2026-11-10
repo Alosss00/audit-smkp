@@ -19,6 +19,35 @@ class AutoLogoutIdleUser
     {
         if (Auth::check()) {
             $user = Auth::user();
+
+            // Immediately terminate session if user account has been deactivated by Admin
+            if (!$user->is_active) {
+                $currentLogId = $request->session()->get('current_login_log_id');
+                if ($currentLogId) {
+                    LoginLog::where('id', $currentLogId)->update([
+                        'logout_at'  => now(),
+                        'status'     => 'logout',
+                        'keterangan' => 'Sesi dihentikan otomatis karena akun dinonaktifkan oleh Administrator',
+                    ]);
+                }
+
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'session_timeout' => true,
+                        'message'         => 'Akun Anda telah dinonaktifkan oleh Administrator.',
+                        'redirect'        => route('login'),
+                    ], 401);
+                }
+
+                return redirect()->route('login')->withErrors([
+                    'username' => 'Akun Anda telah dinonaktifkan oleh Administrator.',
+                ]);
+            }
+
             $timeoutMinutes = (int) config('session.idle_timeout', 15);
             $timeoutSeconds = $timeoutMinutes * 60;
 

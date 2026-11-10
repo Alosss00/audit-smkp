@@ -50,7 +50,7 @@ class Pica extends Model
     public function getBuktiPerbaikanUrlAttribute(): ?string
     {
         if ($this->bukti_perbaikan) {
-            return asset('storage/' . $this->bukti_perbaikan);
+            return route('attachments.show', ['type' => 'pica', 'id' => $this->id]);
         }
         return null;
     }

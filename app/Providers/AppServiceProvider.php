@@ -30,8 +30,8 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Database\Eloquent\Model::preventLazyLoading(! $this->app->isProduction());
 
         RateLimiter::for('login', function (Request $request) {
-            $username = (string) $request->input('username');
-            return Limit::perMinute(15)->by($username . '|' . $request->ip());
+            $username = strtolower(trim((string) $request->input('username')));
+            return Limit::perMinute(5)->by($username . '|' . $request->ip());
         });
     }
 }

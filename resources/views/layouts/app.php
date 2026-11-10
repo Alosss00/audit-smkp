@@ -1,3 +1,6 @@
+<?php
+$cspNonce = $cspNonce ?? request()->attributes->get('cspNonce') ?? view()->shared('cspNonce', '');
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -25,7 +28,10 @@
             const s = document.createElement('script');
             s.src = src;
             const nonce = "<?php echo e($cspNonce ?? ''); ?>";
-            if (nonce) s.setAttribute('nonce', nonce);
+            if (nonce) {
+                s.nonce = nonce;
+                s.setAttribute('nonce', nonce);
+            }
             document.head.appendChild(s);
         }
     </script>

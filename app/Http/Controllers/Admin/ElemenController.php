@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Elemen;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ElemenController extends Controller
@@ -11,7 +13,7 @@ class ElemenController extends Controller
     /**
      * Display a listing of elemens (active & trashed).
      */
-    public function index()
+    public function index(): View
     {
         $elemens = Elemen::withCount(['subElemens'])->with(['subElemens'])->orderBy('kode_elemen')->get();
         $trashedElemens = Elemen::onlyTrashed()->withCount(['subElemens'])->with(['subElemens'])->orderBy('kode_elemen')->get();
@@ -24,7 +26,7 @@ class ElemenController extends Controller
     /**
      * Display detailed hierarchy of an elemen.
      */
-    public function show($id)
+    public function show(int|string $id): View
     {
         $elemen = Elemen::withTrashed()
             ->with(['subElemens.kriterias'])
@@ -36,7 +38,7 @@ class ElemenController extends Controller
     /**
      * Store a newly created elemen in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'kode_elemen' => 'required|string|unique:elemens,kode_elemen',
@@ -52,7 +54,16 @@ class ElemenController extends Controller
             'total_nilai_sub_elemen.min' => 'Total Nilai Sub-Elemen minimal 0.',
         ]);
 
-        Elemen::create($request->only(['kode_elemen', 'nama_elemen', 'bobot', 'total_nilai_sub_elemen']));
+        $elemen = Elemen::create($request->only(['kode_elemen', 'nama_elemen', 'bobot', 'total_nilai_sub_elemen']));
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Elemen',
+            'tindakan'        => "Menambahkan Master Elemen baru: {$elemen->kode_elemen} - {$elemen->nama_elemen}",
+            'data_lama'       => null,
+            'data_baru'       => $elemen->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
 
         return redirect()->route('admin.elemens.index')
             ->with('success', 'Master Elemen baru berhasil ditambahkan!');
@@ -61,9 +72,10 @@ class ElemenController extends Controller
     /**
      * Update the specified elemen in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): RedirectResponse
     {
         $elemen = Elemen::withTrashed()->findOrFail($id);
+        $oldData = $elemen->toArray();
 
         $request->validate([
             'kode_elemen' => 'required|string|unique:elemens,kode_elemen,' . $elemen->id,
@@ -77,6 +89,15 @@ class ElemenController extends Controller
 
         $elemen->update($request->only(['kode_elemen', 'nama_elemen', 'bobot', 'total_nilai_sub_elemen']));
 
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Master Elemen',
+            'tindakan'        => "Memperbarui Master Elemen: {$elemen->kode_elemen} - {$elemen->nama_elemen}",
+            'data_lama'       => $oldData,
+            'data_baru'       => $elemen->fresh()->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
         return redirect()->route('admin.elemens.index')
             ->with('success', 'Master Elemen berhasil diperbarui!');
     }
@@ -84,7 +105,7 @@ class ElemenController extends Controller
     /**
      * Soft delete the specified elemen from storage.
      */
-    public function destroy($id)
+    public function destroy(int|string $id): RedirectResponse
     {
         $elemen = Elemen::findOrFail($id);
         $elemenData = $elemen->toArray();
@@ -106,7 +127,7 @@ class ElemenController extends Controller
     /**
      * Restore soft-deleted elemen.
      */
-    public function restore($id)
+    public function restore(int|string $id): RedirectResponse
     {
         $elemen = Elemen::onlyTrashed()->findOrFail($id);
         $elemen->restore();
@@ -127,7 +148,7 @@ class ElemenController extends Controller
     /**
      * Permanently delete elemen.
      */
-    public function forceDelete($id)
+    public function forceDelete(int|string $id): RedirectResponse
     {
         $elemen = Elemen::onlyTrashed()->findOrFail($id);
         $elemenData = $elemen->toArray();

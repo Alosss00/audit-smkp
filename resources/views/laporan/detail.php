@@ -311,9 +311,8 @@ ob_start();
                                                 <td class="text-center text-muted">-</td>
                                                 <td class="text-center text-muted">-</td>
                                                 <td class="text-center text-muted">-</td>
-                                                <td class="text-center small text-secondary fw-semibold">
+                                                <td class="<?php echo !empty($sub['direct_detail']['is_na']) ? 'text-center' : 'text-start'; ?> small text-secondary fw-semibold" style="white-space: pre-line; word-break: break-word;">
                                                     <?php echo e(!empty($sub['direct_detail']['is_na']) ? 'N/A' : ($sub['direct_detail']['catatan'] ?? '')); ?>
-
                                                 </td>
                                             </tr>
                                         <?php else: ?>
@@ -359,7 +358,7 @@ ob_start();
                                                     </td>
                                                     <td class="text-center text-muted">-</td>
                                                     <td class="text-center text-muted">-</td>
-                                                    <td class="text-center small text-muted"><?php echo e($d['is_na'] ? 'N/A' : ($d['catatan'] ?? '')); ?></td>
+                                                    <td class="<?php echo !empty($d['is_na']) ? 'text-center' : 'text-start'; ?> small text-muted" style="white-space: pre-line; word-break: break-word;"><?php echo e($d['is_na'] ? 'N/A' : ($d['catatan'] ?? '')); ?></td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
@@ -398,7 +397,53 @@ ob_start();
                 </div>
 
                 <div class="card-body p-4">
-                    <!-- Row 1: Radar Chart Akumulasi & Top Elemen Temuan Akumulasi -->
+                    <!-- Row 1: Bar Chart Pencapaian Nilai per Elemen & Doughnut Chart Status -->
+                    <div class="row g-4 mb-4">
+                        <!-- Bar Chart Percentage per Elemen -->
+                        <div class="col-lg-8">
+                            <div class="card card-custom p-4 h-100 border-start border-4 border-primary">
+                                <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+                                    <div>
+                                        <h5 class="fw-bold mb-1 text-slate-800" id="elementChartTitle">
+                                            <i class="bi bi-bar-chart-fill me-2 text-primary"></i>Pencapaian Nilai Audit per Elemen
+                                        </h5>
+                                        <p class="text-muted small mb-0" id="elementChartSubtitle">Grafik persentase pencapaian nilai per elemen SMKP (Elemen I - VII).</p>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <select id="elementScoreDataSource" class="form-select form-select-sm rounded-pill border-slate-300 fw-semibold shadow-none" style="min-width: 200px;">
+                                            <option value="session">🏢 Evaluasi Perusahaan Ini</option>
+                                            <option value="accumulated">🌐 Akumulasi Gabungan</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="height: 380px;">
+                                    <canvas id="elementBarChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Doughnut Chart Status -->
+                        <div class="col-lg-4">
+                            <div class="card card-custom p-4 h-100 border-start border-4 border-info">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                    <h5 class="fw-bold mb-0 text-slate-800" id="doughnutChartTitle">
+                                        <i class="bi bi-pie-chart-fill me-2 text-info"></i>Status Sesi Audit
+                                    </h5>
+                                    <div class="btn-group btn-group-sm rounded-pill p-1 bg-light border">
+                                        <button type="button" class="btn btn-sm btn-white active rounded-pill fw-semibold px-2 py-0 doughnut-filter-btn" data-mode="sesi" title="Distribusi Sesi Audit">Sesi</button>
+                                        <button type="button" class="btn btn-sm btn-transparent rounded-pill fw-semibold px-2 py-0 doughnut-filter-btn" data-mode="pica" title="Distribusi Status PICA">PICA</button>
+                                        <button type="button" class="btn btn-sm btn-transparent rounded-pill fw-semibold px-2 py-0 doughnut-filter-btn" data-mode="kategori" title="Kategori Temuan">Kategori</button>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-3" id="doughnutChartSubtitle">Distribusi status sesi audit internal yang terdaftar.</p>
+                                <div style="height: 340px; position: relative;">
+                                    <canvas id="statusDoughnutChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Radar Chart Akumulasi & Top Elemen Temuan Akumulasi -->
                     <div class="row g-4 mb-4">
                         <!-- Radar Chart Akumulasi -->
                         <div class="col-lg-6">
@@ -453,7 +498,7 @@ ob_start();
                         </div>
                     </div>
 
-                    <!-- Row 2: Horizontal Bar Chart Findings Akumulasi (Swapped to Bottom Full Width) -->
+                    <!-- Row 3: Horizontal Bar Chart Findings Akumulasi (Bottom Full Width) -->
                     <div class="row g-4">
                         <div class="col-12">
                             <div class="card card-custom p-4 border-start border-4 border-danger">
@@ -631,7 +676,7 @@ ob_start();
                                                                         <?php if(is_array($item['catatan'])): ?>
                                                                             <ul class="ps-3 mb-0 text-slate-700 small">
                                                                                 <?php foreach($item['catatan'] as $ct): ?>
-                                                                                    <li><i class="bi bi-check-circle-fill text-success me-1"></i><?php echo e($ct); ?></li>
+                                                                                    <li style="white-space: pre-line;"><i class="bi bi-check-circle-fill text-success me-1"></i><?php echo e($ct); ?></li>
                                                                                 <?php endforeach; ?>
                                                                             </ul>
                                                                         <?php elseif(!empty($item['catatan'])): ?>
@@ -852,8 +897,17 @@ ob_start();
             });
         }
 
+        // Auto-activate tab from URL Hash (e.g. #section-grafik)
+        if (window.location.hash) {
+            const hashTabEl = document.querySelector(`a[href="${window.location.hash}"]`);
+            if (hashTabEl && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                const bTab = new bootstrap.Tab(hashTabEl);
+                bTab.show();
+            }
+        }
+
         // Consolidated Charts Initialization
-        const chartData = <?php echo json_encode($chartData ?? []); ?>;
+        const chartData = <?php echo json_encode($chartData ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
         
         if (chartData && chartData.elementFullNames) {
             function wrapText(str, maxLength) {
@@ -885,6 +939,278 @@ ob_start();
                 lines.push('(' + (accumulatedScores[i] || 0) + '%)');
                 return lines;
             });
+
+            // 0a. Bar Chart Pencapaian Nilai per Elemen (from Dashboard)
+            const ctxBar = document.getElementById('elementBarChart');
+            let elementBarChartInstance = null;
+
+            const sessionScores = <?php echo json_encode(array_values(array_map(fn($el) => round((float)($el['persentase'] ?? 0), 2), $rekapElemen ?? [])), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+            const elementFullNames = <?php echo json_encode(array_values(array_map(fn($el) => 'Elemen ' . ($el['kode_elemen'] ?? '') . ': ' . ($el['nama_elemen'] ?? ''), $rekapElemen ?? [])), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+            const elementFullNamesData = elementFullNames.length > 0 ? elementFullNames : (chartData.elementFullNames || []);
+
+            const barLabels = elementFullNamesData.map(name => {
+                const parts = name.split(': ');
+                return [parts[0], parts[1] || ''];
+            });
+
+            function getElementColors(scores) {
+                return scores.map(s => {
+                    const val = Number(s);
+                    if (val >= 80) return 'rgba(34, 197, 94, 0.75)'; // Green (>= 80%)
+                    if (val >= 70) return 'rgba(234, 179, 8, 0.75)';  // Yellow (70-79%)
+                    return 'rgba(239, 68, 68, 0.75)';                 // Red (< 70%)
+                });
+            }
+
+            const initialScores = sessionScores.length > 0 ? sessionScores : accumulatedScores;
+
+            const barTextPlugin = {
+                id: 'barTextPlugin',
+                afterDatasetsDraw(chart, args, pluginOptions) {
+                    const { ctx, data } = chart;
+                    if (!chart.getDatasetMeta(0) || !chart.getDatasetMeta(0).data) return;
+                    chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                        const value = data.datasets[0].data[index];
+                        ctx.save();
+                        ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        let yPos = bar.y + 15;
+                        ctx.fillStyle = '#ffffff'; 
+                        
+                        if (bar.height < 25) {
+                            yPos = bar.y - 12;
+                            ctx.fillStyle = '#1e293b';
+                        }
+                        
+                        ctx.fillText(value + '%', bar.x, yPos);
+                        ctx.restore();
+                    });
+                }
+            };
+
+            if (ctxBar) {
+                elementBarChartInstance = new Chart(ctxBar.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: barLabels,
+                        datasets: [{
+                            label: 'Pencapaian (%)',
+                            data: initialScores,
+                            backgroundColor: getElementColors(initialScores),
+                            borderColor: 'rgba(15, 23, 42, 0.1)',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    stepSize: 10,
+                                    callback: function(value) { return value + '%'; }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        const index = context[0].dataIndex;
+                                        return elementFullNamesData[index] || context[0].label;
+                                    },
+                                    label: function(context) {
+                                        return 'Pencapaian: ' + context.raw + '%';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [barTextPlugin]
+                });
+
+                const sourceSelector = document.getElementById('elementScoreDataSource');
+                if (sourceSelector) {
+                    sourceSelector.addEventListener('change', function() {
+                        const isSession = this.value === 'session';
+                        const targetScores = isSession ? sessionScores : accumulatedScores;
+                        elementBarChartInstance.data.datasets[0].data = targetScores;
+                        elementBarChartInstance.data.datasets[0].backgroundColor = getElementColors(targetScores);
+                        elementBarChartInstance.update();
+                    });
+                }
+            }
+
+            // 0b. Doughnut Chart Status (from Dashboard with Sesi, PICA & Kategori modes)
+            const ctxDoughnut = document.getElementById('statusDoughnutChart');
+            let statusDoughnutChartInstance = null;
+
+            if (ctxDoughnut) {
+                const countBerjalan = <?php echo (int)($semuaSesi ? $semuaSesi->where('status', 'berjalan')->count() : 0); ?>;
+                const countSelesai = <?php echo (int)($semuaSesi ? $semuaSesi->where('status', 'selesai')->count() : 0); ?>;
+                const countDraft = <?php echo (int)($semuaSesi ? $semuaSesi->where('status', 'draft')->count() : 0); ?>;
+
+                const countOpen = <?php echo (int)($temuanKategori['open_count'] ?? 0); ?>;
+                const countInProg = <?php echo (int)($temuanKategori['in_progress_count'] ?? 0); ?>;
+                const countClosed = <?php echo (int)($temuanKategori['closed_count'] ?? 0); ?>;
+
+                const countKritikal = <?php echo (int)($temuanKategori['kritikal_count'] ?? 0); ?>;
+                const countMayor = <?php echo (int)($temuanKategori['mayor_count'] ?? 0); ?>;
+                const countMinor = <?php echo (int)($temuanKategori['minor_count'] ?? 0); ?>;
+
+                const doughnutTextPlugin = {
+                    id: 'doughnutTextPlugin',
+                    afterDatasetsDraw(chart) {
+                        const { ctx, data } = chart;
+                        const meta = chart.getDatasetMeta(0);
+                        if (!meta || !meta.data) return;
+
+                        const total = data.datasets[0].data.reduce((a, b) => a + Number(b), 0);
+
+                        meta.data.forEach((element, index) => {
+                            const value = data.datasets[0].data[index];
+                            if (value > 0) {
+                                const { x, y } = element.getCenterPoint();
+                                ctx.save();
+                                ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+                                ctx.fillStyle = '#ffffff';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(value, x, y);
+                                ctx.restore();
+                            }
+                        });
+
+                        if (chart.chartArea) {
+                            const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+                            ctx.fillStyle = '#0f172a';
+                            ctx.fillText(total, centerX, centerY - 8);
+                            ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+                            ctx.fillStyle = '#64748b';
+                            const label = chart.options.centerLabel || 'Total Sesi';
+                            ctx.fillText(label, centerX, centerY + 12);
+                            ctx.restore();
+                        }
+                    }
+                };
+
+                const doughnutModes = {
+                    sesi: {
+                        title: '<i class="bi bi-pie-chart-fill me-2 text-info"></i>Status Sesi Audit',
+                        subtitle: 'Distribusi status sesi audit internal yang terdaftar.',
+                        centerLabel: 'Total Sesi',
+                        labels: [
+                            'Berjalan (' + countBerjalan + ')',
+                            'Selesai (' + countSelesai + ')',
+                            'Draft (' + countDraft + ')'
+                        ],
+                        data: [countBerjalan, countSelesai, countDraft],
+                        colors: ['#f59e0b', '#10b981', '#64748b']
+                    },
+                    pica: {
+                        title: '<i class="bi bi-exclamation-octagon-fill me-2 text-danger"></i>Status Tindak Lanjut PICA',
+                        subtitle: 'Distribusi status penyelesaian temuan sub-elemen PICA.',
+                        centerLabel: 'Total PICA',
+                        labels: [
+                            'Open (' + countOpen + ')',
+                            'In Progress (' + countInProg + ')',
+                            'Closed (' + countClosed + ')'
+                        ],
+                        data: [countOpen, countInProg, countClosed],
+                        colors: ['#ef4444', '#f59e0b', '#10b981']
+                    },
+                    kategori: {
+                        title: '<i class="bi bi-tags-fill me-2 text-warning"></i>Kategori Temuan Sub-Elemen',
+                        subtitle: 'Tingkat keparahan temuan ketidaksesuaian sub-elemen.',
+                        centerLabel: 'Total Temuan',
+                        labels: [
+                            'Kritikal (' + countKritikal + ')',
+                            'Mayor (' + countMayor + ')',
+                            'Minor (' + countMinor + ')'
+                        ],
+                        data: [countKritikal, countMayor, countMinor],
+                        colors: ['#dc2626', '#ea580c', '#0284c7']
+                    }
+                };
+
+                statusDoughnutChartInstance = new Chart(ctxDoughnut.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: doughnutModes.sesi.labels,
+                        datasets: [{
+                            data: doughnutModes.sesi.data,
+                            backgroundColor: doughnutModes.sesi.colors,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        centerLabel: doughnutModes.sesi.centerLabel,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 12,
+                                    usePointStyle: true,
+                                    font: {
+                                        size: 11,
+                                        weight: '600',
+                                        family: "'Plus Jakarta Sans', sans-serif"
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.raw || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                        const rawLabel = context.label ? context.label.split(' (')[0] : '';
+                                        return ` ${rawLabel}: ${val} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [doughnutTextPlugin]
+                });
+
+                document.querySelectorAll('.doughnut-filter-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.doughnut-filter-btn').forEach(b => {
+                            b.classList.remove('active', 'btn-white');
+                            b.classList.add('btn-transparent');
+                        });
+                        this.classList.add('active', 'btn-white');
+                        this.classList.remove('btn-transparent');
+
+                        const mode = this.getAttribute('data-mode');
+                        const cfg = doughnutModes[mode] || doughnutModes.sesi;
+
+                        document.getElementById('doughnutChartTitle').innerHTML = cfg.title;
+                        document.getElementById('doughnutChartSubtitle').textContent = cfg.subtitle;
+
+                        statusDoughnutChartInstance.options.centerLabel = cfg.centerLabel;
+                        statusDoughnutChartInstance.data.labels = cfg.labels;
+                        statusDoughnutChartInstance.data.datasets[0].data = cfg.data;
+                        statusDoughnutChartInstance.data.datasets[0].backgroundColor = cfg.colors;
+                        statusDoughnutChartInstance.update();
+                    });
+                });
+            }
 
             // 1. Radar Chart Akumulasi
             const ctxRadar = document.getElementById('accumulatedRadarChart');
@@ -1087,6 +1413,8 @@ ob_start();
             const tabGrafikEl = document.getElementById('tab-grafik');
             if (tabGrafikEl) {
                 tabGrafikEl.addEventListener('shown.bs.tab', function() {
+                    if (elementBarChartInstance) elementBarChartInstance.resize();
+                    if (statusDoughnutChartInstance) statusDoughnutChartInstance.resize();
                     if (accumulatedRadarChart) accumulatedRadarChart.resize();
                     if (accumulatedFindingsChart) accumulatedFindingsChart.resize();
                 });

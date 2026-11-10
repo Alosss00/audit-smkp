@@ -87,18 +87,9 @@ ob_start();
                                 </div>
                             </td>
                             <td>
-                                <?php
-                                    $thnPelaksanaan = $sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y') : date('Y');
-                                ?>
-                                <div class="d-flex flex-column">
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2.5 py-1 rounded-pill small fw-semibold w-fit mb-1">
-                                        <i class="bi bi-calendar-event me-1"></i>Tahun <?php echo e($thnPelaksanaan); ?>
-
-                                    </span>
-                                    <span class="text-slate-800 fw-medium small" style="font-size: 0.78rem;">
-                                        <?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> - <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?>
-
-                                    </span>
+                                <div class="d-flex align-items-center text-slate-800 small">
+                                    <i class="bi bi-calendar-event text-muted me-1"></i>
+                                    <span><?php echo e($sesi->tanggal_mulai->format('d M Y')); ?> &ndash; <?php echo e($sesi->tanggal_selesai->format('d M Y')); ?></span>
                                 </div>
                             </td>
                             <td>

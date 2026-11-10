@@ -10,6 +10,9 @@ use App\Models\Kriteria;
 use App\Models\Perusahaan;
 use App\Models\SubElemen;
 use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -18,7 +21,7 @@ class RestorePointController extends Controller
     /**
      * Display listing of all soft-deleted application records (Recycle Bin / Pusat Pemulihan Data).
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         // 1. Aggregate All Soft-Deleted Data Across Application Modules
         $deletedList = collect();
@@ -146,7 +149,7 @@ class RestorePointController extends Controller
     /**
      * Restore a specific soft-deleted item.
      */
-    public function restoreItem(Request $request, $type, $id)
+    public function restoreItem(Request $request, string $type, int|string $id): RedirectResponse
     {
         $model = $this->resolveModel($type, $id, true);
         if (!$model) {
@@ -172,33 +175,42 @@ class RestorePointController extends Controller
     /**
      * Permanently force delete a specific soft-deleted item.
      */
-    public function forceDeleteItem(Request $request, $type, $id)
+    public function forceDeleteItem(Request $request, string $type, int|string $id): RedirectResponse
     {
         $model = $this->resolveModel($type, $id, true);
         if (!$model) {
             return back()->with('error', 'Data terhapus tidak ditemukan.');
         }
 
+        if ($type === 'user' && (int) $model->id === (int) auth()->id()) {
+            return back()->with('error', 'Anda tidak dapat menghapus permanen akun Anda sendiri.');
+        }
+
         $title = $this->getModelTitle($type, $model);
-        $model->forceDelete();
 
-        AuditLog::create([
-            'user_id'         => auth()->id(),
-            'modul'           => 'Pusat Pemulihan Data',
-            'tindakan'        => "Menghapus PERMANEN data ({$type}): {$title}",
-            'data_lama'       => ['type' => $type, 'id' => $id, 'title' => $title],
-            'data_baru'       => null,
-            'waktu_perubahan' => now(),
-        ]);
+        try {
+            $model->forceDelete();
 
-        return redirect()->route('admin.restore-points.index')
-            ->with('success', "Data '{$title}' berhasil dihapus permanen dari sistem.");
+            AuditLog::create([
+                'user_id'         => auth()->id(),
+                'modul'           => 'Pusat Pemulihan Data',
+                'tindakan'        => "Menghapus PERMANEN data ({$type}): {$title}",
+                'data_lama'       => ['type' => $type, 'id' => $id, 'title' => $title],
+                'data_baru'       => null,
+                'waktu_perubahan' => now(),
+            ]);
+
+            return redirect()->route('admin.restore-points.index')
+                ->with('success', "Data '{$title}' berhasil dihapus permanen dari sistem.");
+        } catch (\Exception $e) {
+            return back()->with('error', "Gagal menghapus permanen '{$title}': Data ini masih terhubung dengan riwayat audit aktif.");
+        }
     }
 
     /**
      * Restore all soft-deleted items across all modules or a specific module.
      */
-    public function restoreAll(Request $request)
+    public function restoreAll(Request $request): RedirectResponse
     {
         $module = $request->input('module', 'all');
         $restoredCount = 0;
@@ -234,7 +246,7 @@ class RestorePointController extends Controller
     /**
      * Empty trash / permanently delete all soft-deleted items.
      */
-    public function emptyTrash(Request $request)
+    public function emptyTrash(Request $request): RedirectResponse
     {
         $request->validate([
             'password_confirmation' => 'required|string',
@@ -247,15 +259,24 @@ class RestorePointController extends Controller
         }
 
         $deletedCount = 0;
+        $skippedCount = 0;
         $targetTypes = ['audit_sesi', 'user', 'perusahaan', 'elemen', 'sub_elemen', 'kriteria'];
 
         foreach ($targetTypes as $type) {
             $class = $this->getModelClass($type);
             if ($class) {
                 $trashed = $class::onlyTrashed()->get();
-                $deletedCount += $trashed->count();
                 foreach ($trashed as $item) {
-                    $item->forceDelete();
+                    if ($type === 'user' && (int) $item->id === (int) auth()->id()) {
+                        $skippedCount++;
+                        continue;
+                    }
+                    try {
+                        $item->forceDelete();
+                        $deletedCount++;
+                    } catch (\Exception $e) {
+                        $skippedCount++;
+                    }
                 }
             }
         }
@@ -292,7 +313,7 @@ class RestorePointController extends Controller
     /**
      * Helper to resolve Eloquent Model instance.
      */
-    protected function resolveModel(string $type, $id, bool $onlyTrashed = false)
+    protected function resolveModel(string $type, int|string $id, bool $onlyTrashed = false): ?Model
     {
         $class = $this->getModelClass($type);
         if (!$class) return null;
@@ -304,7 +325,7 @@ class RestorePointController extends Controller
     /**
      * Helper to get user-friendly title of a model instance.
      */
-    protected function getModelTitle(string $type, $model): string
+    protected function getModelTitle(string $type, Model $model): string
     {
         return match ($type) {
             'audit_sesi' => "Sesi Audit #{$model->id}" . ($model->perusahaan ? " — {$model->perusahaan->nama_perusahaan}" : ""),

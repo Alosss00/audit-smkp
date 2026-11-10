@@ -345,9 +345,8 @@
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
-                                <td class="text-center small text-secondary">
+                                <td class="<?php echo !empty($sub['direct_detail']['is_na']) ? 'text-center' : 'text-start'; ?> small text-secondary" style="white-space: pre-line; word-break: break-word;">
                                     <?php echo e(!empty($sub['direct_detail']['is_na']) ? 'N/A' : ($sub['direct_detail']['catatan'] ?? '')); ?>
-
                                 </td>
                             </tr>
                         <?php else: ?>
@@ -392,9 +391,8 @@
                                     </td>
                                     <td class="text-center text-muted">-</td>
                                     <td class="text-center text-muted">-</td>
-                                    <td class="text-center small text-muted" style="font-size: 8.5px;">
+                                    <td class="<?php echo !empty($d['is_na']) ? 'text-center' : 'text-start'; ?> small text-muted" style="font-size: 8.5px; white-space: pre-line; word-break: break-word;">
                                         <?php echo e($d['is_na'] ? 'N/A' : ($d['catatan'] ?? '')); ?>
-
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

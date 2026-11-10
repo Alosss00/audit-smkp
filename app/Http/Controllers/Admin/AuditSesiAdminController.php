@@ -12,17 +12,20 @@ use App\Models\Kriteria;
 use App\Models\Perusahaan;
 use App\Models\Pica;
 use App\Services\GatingRuleService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditSesiAdminController extends Controller
 {
     /**
      * Display listing of all audit sessions for Administrator.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = AuditSesi::with(['user', 'perusahaan'])->latest();
 
@@ -48,7 +51,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Show the form for creating a new audit session.
      */
-    public function create()
+    public function create(): View
     {
         $perusahaans = Perusahaan::where('is_active', true)->orderBy('nama_perusahaan')->get();
         return view('admin.audit-sesi.create', compact('perusahaans'));
@@ -57,7 +60,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Store a newly created audit session.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         // Support both perusahaan_id directly or area_selection
         if ($request->filled('area_selection') && !$request->filled('perusahaan_id')) {
@@ -140,7 +143,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Display matrix scoring view for admin.
      */
-    public function matrix($id)
+    public function matrix(int|string $id): View
     {
         $sesi = AuditSesi::with(['user', 'perusahaan'])->findOrFail($id);
 
@@ -181,7 +184,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Update matrix scores with AuditLog tracking.
      */
-    public function updateMatrix(Request $request, $id)
+    public function updateMatrix(Request $request, int|string $id): RedirectResponse
     {
         $sesi = AuditSesi::findOrFail($id);
 
@@ -248,14 +251,16 @@ class AuditSesiAdminController extends Controller
                         $catatanFinal = implode("\n", $formattedLines);
                     }
 
-                    // Existing Lampirans
+                    // Existing Lampirans (only delete files that genuinely belong to this detail)
                     $existingLampirans = $detail->lampiran_array;
                     if (!empty($data['hapus_lampiran']) && is_array($data['hapus_lampiran'])) {
                         foreach ($data['hapus_lampiran'] as $delPath) {
-                            if (Storage::disk('public')->exists($delPath)) {
-                                Storage::disk('public')->delete($delPath);
+                            if (is_string($delPath) && in_array($delPath, $existingLampirans, true)) {
+                                if (Storage::disk('public')->exists($delPath)) {
+                                    Storage::disk('public')->delete($delPath);
+                                }
+                                $existingLampirans = array_diff($existingLampirans, [$delPath]);
                             }
-                            $existingLampirans = array_diff($existingLampirans, [$delPath]);
                         }
                     }
 
@@ -385,7 +390,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Display audit summary rekap for admin.
      */
-    public function rekap($id)
+    public function rekap(int|string $id): View
     {
         $sesi      = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'auditDetails.pica'])->findOrFail($id);
         $rekap     = $sesi->getRekapPerElemen();
@@ -398,7 +403,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Display printable report.
      */
-    public function cetak($id)
+    public function cetak(int|string $id): View
     {
         $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'perusahaan'])->findOrFail($id);
         $rekap     = $sesi->getRekapPerElemen();
@@ -411,7 +416,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Display printable nonconformity report (Formulir Rencana Tindak Lanjut Ketidaksesuaian / PICA).
      */
-    public function cetakKetidaksesuaian($id)
+    public function cetakKetidaksesuaian(int|string $id): View
     {
         $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'perusahaan'])->findOrFail($id);
         $tahunFilter = request('tahun_periode');
@@ -452,7 +457,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Export to Excel.
      */
-    public function exportExcel($id)
+    public function exportExcel(int|string $id): StreamedResponse
     {
         $sesi = AuditSesi::with(['user', 'auditDetails.kriteria.subElemen.elemen', 'perusahaan'])->findOrFail($id);
         $safeArea = preg_replace('/[^A-Za-z0-9_\-]/', '_', $sesi->area_audit);
@@ -464,7 +469,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Display comprehensive audit detail report (Tree Matrix, Best Practices, PICA findings).
      */
-    public function laporanDetail($id)
+    public function laporanDetail(int|string $id): View
     {
         $sesi           = AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
         $tahunFilter    = request('tahun_periode', $sesi->tahun_periode);
@@ -479,7 +484,8 @@ class AuditSesiAdminController extends Controller
         $selectedYear   = $companyReport['selectedYear'];
         $isReadOnly     = false;
 
-        $chartData      = AuditSesi::getAccumulatedChartData();
+        $tahunFilterInt = (!empty($selectedYear) && $selectedYear !== 'semua' && is_numeric($selectedYear)) ? (int)$selectedYear : null;
+        $chartData      = AuditSesi::getAccumulatedChartData($tahunFilterInt);
         $semuaSesi      = AuditSesi::with('perusahaan')->orderBy('tahun_periode', 'desc')->latest()->get();
 
         return view('laporan.detail', compact(
@@ -491,7 +497,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Display printable full comprehensive report (Tabel Penilaian Audit + Tabel Praktik Terbaik + Tabel PICA).
      */
-    public function cetakLengkap($id)
+    public function cetakLengkap(int|string $id): View
     {
         $sesi           = AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
         $tahunFilter    = request('tahun_periode', $sesi->tahun_periode);
@@ -518,7 +524,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Finalize audit session with AuditLog.
      */
-    public function finalisasi($id)
+    public function finalisasi(int|string $id): RedirectResponse
     {
         $sesi = AuditSesi::findOrFail($id);
 
@@ -547,7 +553,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Soft delete audit session (draft/berjalan only).
      */
-    public function destroy($id)
+    public function destroy(int|string $id): RedirectResponse
     {
         $sesi = AuditSesi::findOrFail($id);
         $sesiData = $sesi->toArray();
@@ -574,7 +580,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Restore soft-deleted audit session.
      */
-    public function restore($id)
+    public function restore(int|string $id): RedirectResponse
     {
         $sesi = AuditSesi::onlyTrashed()->findOrFail($id);
         $sesi->restore();
@@ -595,7 +601,7 @@ class AuditSesiAdminController extends Controller
     /**
      * Permanently delete audit session and its details.
      */
-    public function forceDelete($id)
+    public function forceDelete(int|string $id): RedirectResponse
     {
         $sesi = AuditSesi::onlyTrashed()->findOrFail($id);
         $sesiData = $sesi->toArray();

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Kriteria;
 use App\Models\SubElemen;
 use App\Models\AuditLog;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +16,7 @@ class KriteriaController extends Controller
     /**
      * Display a listing of criteria (active & trashed).
      */
-    public function index()
+    public function index(): View
     {
         $kriterias = Kriteria::with(['subElemen.elemen'])->latest()->get();
         $trashedKriterias = Kriteria::onlyTrashed()->with(['subElemen.elemen'])->latest()->get();
@@ -53,7 +55,7 @@ class KriteriaController extends Controller
     /**
      * Store a newly created criteria (or multiple criteria in batch) in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'sub_elemen_id' => 'required|exists:sub_elemens,id',
@@ -238,7 +240,7 @@ class KriteriaController extends Controller
     /**
      * Update the specified criteria in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): RedirectResponse
     {
         $kriteria = Kriteria::findOrFail($id);
 
@@ -309,7 +311,7 @@ class KriteriaController extends Controller
     /**
      * Toggle N/A (Not Applicable) status for a Sub-sub Elemen (Kriteria).
      */
-    public function toggleNa($id)
+    public function toggleNa(int|string $id): RedirectResponse
     {
         $kriteria = Kriteria::findOrFail($id);
         $newNaState = !$kriteria->is_na;
@@ -325,7 +327,7 @@ class KriteriaController extends Controller
     /**
      * Remove the specified criteria from storage.
      */
-    public function destroy($id)
+    public function destroy(int|string $id): RedirectResponse
     {
         $kriteria = Kriteria::findOrFail($id);
         $kriteriaData = $kriteria->toArray();
@@ -354,7 +356,7 @@ class KriteriaController extends Controller
     /**
      * Restore soft-deleted criteria.
      */
-    public function restore($id)
+    public function restore(int|string $id): RedirectResponse
     {
         $kriteria = Kriteria::onlyTrashed()->findOrFail($id);
         $kriteria->restore();
@@ -379,7 +381,7 @@ class KriteriaController extends Controller
     /**
      * Permanently delete criteria.
      */
-    public function forceDelete($id)
+    public function forceDelete(int|string $id): RedirectResponse
     {
         $kriteria = Kriteria::onlyTrashed()->findOrFail($id);
         $kriteriaData = $kriteria->toArray();

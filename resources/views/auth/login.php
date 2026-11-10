@@ -157,25 +157,27 @@ ob_start();
                 </button>
             </form>
 
-            <!-- Quick Demo Credentials Box -->
-            <div class="p-3 bg-light rounded-3 border">
-                <div class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.68rem; letter-spacing: 0.5px;">
-                    <i class="bi bi-key-fill text-warning me-1"></i> Akun Pengujian (Klik untuk Autofill):
-                </div>
-                <div class="d-flex flex-column gap-2">
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-danger demo-badge p-2 flex-grow-1 text-center btn-fill-cred" role="button" data-username="admin" data-password="password" title="Administrator (Full Access)">
-                            <i class="bi bi-shield-lock-fill me-1"></i> Admin: <code>admin</code>
-                        </span>
-                        <span class="badge bg-primary demo-badge p-2 flex-grow-1 text-center btn-fill-cred" role="button" data-username="auditor_smkp" data-password="password" title="Auditor SMKP (Dashboard & Penilaian)">
-                            <i class="bi bi-patch-check-fill me-1"></i> Auditor SMKP: <code>auditor_smkp</code>
+            <!-- Quick Demo Credentials Box (Hanya Tampil di Mode Local/Pengembangan) -->
+            <?php if (app()->environment('local')): ?>
+                <div class="p-3 bg-light rounded-3 border">
+                    <div class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                        <i class="bi bi-key-fill text-warning me-1"></i> Akun Pengujian (Klik untuk Autofill):
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-danger demo-badge p-2 flex-grow-1 text-center btn-fill-cred" role="button" data-username="admin" data-password="password" title="Administrator (Full Access)">
+                                <i class="bi bi-shield-lock-fill me-1"></i> Admin: <code>admin</code>
+                            </span>
+                            <span class="badge bg-primary demo-badge p-2 flex-grow-1 text-center btn-fill-cred" role="button" data-username="auditor_smkp" data-password="password" title="Auditor SMKP (Dashboard & Penilaian)">
+                                <i class="bi bi-patch-check-fill me-1"></i> Auditor SMKP: <code>auditor_smkp</code>
+                            </span>
+                        </div>
+                        <span class="badge bg-info text-dark demo-badge p-2 w-100 text-center btn-fill-cred" role="button" data-username="auditor" data-password="password" title="Auditor Perusahaan (Auditee / Area Scoped)">
+                            <i class="bi bi-clipboard-check-fill me-1"></i> Auditor Perusahaan: <code>auditor</code>
                         </span>
                     </div>
-                    <span class="badge bg-info text-dark demo-badge p-2 w-100 text-center btn-fill-cred" role="button" data-username="auditor" data-password="password" title="Auditor Perusahaan (Auditee / Area Scoped)">
-                        <i class="bi bi-clipboard-check-fill me-1"></i> Auditor Perusahaan: <code>auditor</code>
-                    </span>
                 </div>
-            </div>
+            <?php endif; ?>
 
         </div>
     </div>

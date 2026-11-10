@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditSesi;
 use App\Models\Pica;
 use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +17,7 @@ class PicaController extends Controller
     /**
      * Display global listing of all PICA items grouped by Audit Session for Administrator oversight.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $query = AuditSesi::whereHas('auditDetails.pica')
             ->with([
@@ -135,7 +138,7 @@ class PicaController extends Controller
     /**
      * Update PICA record by Administrator (Lead Auditor).
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): JsonResponse|RedirectResponse
     {
         $pica = Pica::with('auditDetail.kriteria', 'auditDetail.auditSesi')->findOrFail($id);
         $originalData = $pica->getOriginal();
@@ -233,7 +236,7 @@ class PicaController extends Controller
     /**
      * Batch update all PICA records for an entire Audit Session.
      */
-    public function batchUpdate(Request $request)
+    public function batchUpdate(Request $request): JsonResponse|RedirectResponse
     {
         $picaItems = $request->input('picas', []);
         if (empty($picaItems) || !is_array($picaItems)) {

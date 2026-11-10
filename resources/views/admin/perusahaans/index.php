@@ -151,14 +151,11 @@ ob_start();
                             </td>
                             <td>
                                 <span class="badge bg-light text-dark border rounded-pill px-3 py-1 fw-bold">
-                                    <?php echo e($perusahaan->auditSesis->count()); ?> Sesi
+                                    <?php echo e($perusahaan->audit_sesis_count ?? ($perusahaan->relationLoaded('auditSesis') ? $perusahaan->auditSesis->count() : 0)); ?> Sesi
                                 </span>
                             </td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
-                                    <a href="<?php echo e(route('admin.master-tahap-awal.edit', $perusahaan->id)); ?>" class="btn btn-sm btn-light rounded-circle" title="Kelola Master Dokumen Tahap Awal Audit">
-                                        <i class="bi bi-journal-bookmark-fill text-primary"></i>
-                                    </a>
                                     <button type="button" class="btn btn-sm btn-light rounded-circle" data-bs-toggle="modal" data-bs-target="#modalEditPerusahaan<?php echo e($perusahaan->id); ?>" title="Edit">
                                         <i class="bi bi-pencil-fill text-warning"></i>
                                     </button>
@@ -179,51 +176,6 @@ ob_start();
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- Modal Edit Perusahaan -->
-                        <div class="modal fade" id="modalEditPerusahaan<?php echo e($perusahaan->id); ?>" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header border-bottom-0 pb-0">
-                                        <h5 class="modal-title fw-bold text-slate-800">
-                                            <i class="bi bi-pencil-square text-warning me-2"></i>Edit Data Perusahaan
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <form action="<?php echo route('admin.perusahaans.update', $perusahaan->id); ?>" method="POST">
-                                        <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
-                                        <input type="hidden" name="_method" value="PUT">
-                                        <div class="modal-body py-3">
-                                            <div class="mb-3">
-                                                <label class="form-label fw-semibold text-slate-800">Nama Perusahaan <span class="text-danger">*</span></label>
-                                                <input type="text" name="nama_perusahaan" class="form-control" value="<?php echo e($perusahaan->nama_perusahaan); ?>" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label fw-semibold text-slate-800">Kode Perusahaan (Opsional)</label>
-                                                <input type="text" name="kode_perusahaan" class="form-control" value="<?php echo e($perusahaan->kode_perusahaan); ?>" placeholder="Contoh: PT-MSM">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label fw-semibold text-slate-800">Kategori Perusahaan <span class="text-danger">*</span></label>
-                                                <select name="kategori" class="form-select" required>
-                                                    <option value="Pemegang IUP" <?php echo $perusahaan->kategori == 'Pemegang IUP' ? 'selected' : ''; ?>>Pemegang IUP</option>
-                                                    <option value="Kontraktor" <?php echo $perusahaan->kategori == 'Kontraktor' ? 'selected' : ''; ?>>Kontraktor</option>
-                                                    <option value="Subkontraktor" <?php echo $perusahaan->kategori == 'Subkontraktor' ? 'selected' : ''; ?>>Subkontraktor</option>
-                                                    <option value="Lainnya" <?php echo $perusahaan->kategori == 'Lainnya' ? 'selected' : ''; ?>>Lainnya</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-check form-switch mb-2">
-                                                <input class="form-check-input" type="checkbox" name="is_active" id="editActive<?php echo e($perusahaan->id); ?>" value="1" <?php echo $perusahaan->is_active ? 'checked' : ''; ?>>
-                                                <label class="form-check-label fw-semibold text-slate-800" for="editActive<?php echo e($perusahaan->id); ?>">Status Aktif</label>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-top-0 pt-0">
-                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-primary rounded-pill px-4">Simpan Perubahan</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
@@ -237,6 +189,55 @@ ob_start();
         </table>
     </div>
 </div>
+
+<!-- Modal Edit Perusahaan (Ditempatkan di luar tabel card agar tidak terpengaruh CSS transform & stacking context backdrop) -->
+<?php if ($perusahaans->isNotEmpty()): ?>
+    <?php foreach ($perusahaans as $perusahaan): ?>
+        <div class="modal fade" id="modalEditPerusahaan<?php echo e($perusahaan->id); ?>" tabindex="-1" aria-labelledby="modalEditPerusahaanLabel<?php echo e($perusahaan->id); ?>" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold text-slate-800" id="modalEditPerusahaanLabel<?php echo e($perusahaan->id); ?>">
+                            <i class="bi bi-pencil-square text-warning me-2"></i>Edit Data Perusahaan
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="<?php echo route('admin.perusahaans.update', $perusahaan->id); ?>" method="POST">
+                        <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
+                        <input type="hidden" name="_method" value="PUT">
+                        <div class="modal-body py-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-slate-800">Nama Perusahaan <span class="text-danger">*</span></label>
+                                <input type="text" name="nama_perusahaan" class="form-control" value="<?php echo e($perusahaan->nama_perusahaan); ?>" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-slate-800">Kode Perusahaan (Opsional)</label>
+                                <input type="text" name="kode_perusahaan" class="form-control" value="<?php echo e($perusahaan->kode_perusahaan); ?>" placeholder="Contoh: PT-MSM">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-slate-800">Kategori Perusahaan <span class="text-danger">*</span></label>
+                                <select name="kategori" class="form-select" required>
+                                    <option value="Pemegang IUP" <?php echo $perusahaan->kategori == 'Pemegang IUP' ? 'selected' : ''; ?>>Pemegang IUP</option>
+                                    <option value="Kontraktor" <?php echo $perusahaan->kategori == 'Kontraktor' ? 'selected' : ''; ?>>Kontraktor</option>
+                                    <option value="Subkontraktor" <?php echo $perusahaan->kategori == 'Subkontraktor' ? 'selected' : ''; ?>>Subkontraktor</option>
+                                    <option value="Lainnya" <?php echo $perusahaan->kategori == 'Lainnya' ? 'selected' : ''; ?>>Lainnya</option>
+                                </select>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="editActive<?php echo e($perusahaan->id); ?>" value="1" <?php echo $perusahaan->is_active ? 'checked' : ''; ?>>
+                                <label class="form-check-label fw-semibold text-slate-800" for="editActive<?php echo e($perusahaan->id); ?>">Status Aktif</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 pt-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">Simpan Perubahan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+<?php endif; ?>
 
 <!-- Modal Create Perusahaan -->
 <div class="modal fade" id="modalCreatePerusahaan" tabindex="-1" aria-hidden="true">

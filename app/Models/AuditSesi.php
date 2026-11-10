@@ -771,16 +771,35 @@ class AuditSesi extends Model
             }
         }
 
+        $subOpen = 0;
+        $subInProgress = 0;
+        $subClosed = 0;
+        foreach ($groupedBySubElemen as $subElemenId => $subPicas) {
+            if ($subPicas->contains('status', 'open')) {
+                $subOpen++;
+            } elseif ($subPicas->contains('status', 'in_progress')) {
+                $subInProgress++;
+            } else {
+                $subClosed++;
+            }
+        }
+
         $temuanKategori = [
-            'kritikal'           => $kritikalItems->values(),
-            'mayor'              => $mayorItems->values(),
-            'minor'              => $minorItems->values(),
-            'total_items'        => $picas->count(),
-            'total_sub_temuan'   => $groupedBySubElemen->count(),
-            'total_temuan'       => $groupedBySubElemen->count(),
-            'kritikal_count'     => $kritikalSubCount,
-            'mayor_count'        => $mayorSubCount,
-            'minor_count'        => $minorSubCount,
+            'kritikal'              => $kritikalItems->values(),
+            'mayor'                 => $mayorItems->values(),
+            'minor'                 => $minorItems->values(),
+            'total_items'           => $picas->count(),
+            'total_sub_temuan'      => $groupedBySubElemen->count(),
+            'total_temuan'          => $groupedBySubElemen->count(),
+            'kritikal_count'        => $kritikalSubCount,
+            'mayor_count'           => $mayorSubCount,
+            'minor_count'           => $minorSubCount,
+            'open_count'            => $subOpen,
+            'in_progress_count'     => $subInProgress,
+            'closed_count'          => $subClosed,
+            'open_kriteria'         => $picas->where('status', 'open')->count(),
+            'in_progress_kriteria'  => $picas->where('status', 'in_progress')->count(),
+            'closed_kriteria'       => $picas->where('status', 'closed')->count(),
         ];
 
         return [

@@ -368,7 +368,7 @@ $allPicas = collect()
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
                                 <td class="text-center text-muted">-</td>
-                                <td class="text-center small text-secondary">
+                                <td class="<?php echo !empty($sub['direct_detail']['is_na']) ? 'text-center' : 'text-start'; ?> small text-secondary" style="white-space: pre-line; word-break: break-word;">
                                     <?php echo e(!empty($sub['direct_detail']['is_na']) ? 'N/A' : ($sub['direct_detail']['catatan'] ?? '')); ?>
                                 </td>
                             </tr>
@@ -412,7 +412,7 @@ $allPicas = collect()
                                     </td>
                                     <td class="text-center text-muted">-</td>
                                     <td class="text-center text-muted">-</td>
-                                    <td class="text-center small text-muted" style="font-size: 8.5px;">
+                                    <td class="<?php echo !empty($d['is_na']) ? 'text-center' : 'text-start'; ?> small text-muted" style="font-size: 8.5px; white-space: pre-line; word-break: break-word;">
                                         <?php echo e($d['is_na'] ? 'N/A' : ($d['catatan'] ?? '')); ?>
                                     </td>
                                 </tr>
@@ -494,7 +494,7 @@ $allPicas = collect()
                                 <?php if(is_array($item['catatan'])): ?>
                                     <ul class="mb-0 ps-3 small">
                                         <?php foreach($item['catatan'] as $ct): ?>
-                                            <li><?php echo e($ct); ?></li>
+                                            <li style="white-space: pre-line;"><?php echo e($ct); ?></li>
                                         <?php endforeach; ?>
                                     </ul>
                                 <?php elseif(!empty($item['catatan'])): ?>
