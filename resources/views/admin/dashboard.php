@@ -226,7 +226,7 @@ ob_start();
                     </div>
                 </div>
             </div>
-            <div style="height: 440px; position: relative;">
+            <div style="height: 480px; position: relative;">
                 <canvas id="multiYearGroupedBarChart"></canvas>
             </div>
         </div>
@@ -1079,58 +1079,109 @@ ob_start();
                 { bg: '#ef4444', border: '#dc2626' }  // Merah (Tahun 7)
             ];
 
-            // Helper untuk membuat label kategori X-axis (Dikelompokkan per Elemen)
-            function getElementLabels(elementFilter = 'all') {
-                const visibleElements = Object.values(trendElements).filter(el => {
-                    return elementFilter === 'all' 
-                        || String(el.id) === String(elementFilter) 
-                        || String(el.kode) === String(elementFilter);
-                });
+            const elementFilterEl = document.getElementById('multiYearElementFilter');
+            const companyFilterEl = document.getElementById('multiYearCompanyFilter');
 
+            // Helper untuk membuat label kategori X-axis
+            function getElementLabels(elementFilter = 'all') {
+                if (elementFilter !== 'all') {
+                    // Saat ada filter elemen aktif: sumbu X menampilkan urutan tahun periode sesi
+                    return trendYears.map(yr => 'Tahun ' + yr);
+                }
+
+                // Saat semua elemen: sumbu X menampilkan kelompok Elemen SMKP (I - VII)
+                const visibleElements = Object.values(trendElements);
                 return visibleElements.map(el => {
                     return ['Elemen ' + el.kode, el.nama];
                 });
             }
 
-            // Helper untuk membuat datasets (Tiap dataset adalah 1 Tahun Sesi)
+            // Helper untuk membuat datasets
             function buildGroupedDatasets(companyType = 'all', elementFilter = 'all') {
-                const visibleElements = Object.values(trendElements).filter(el => {
-                    return elementFilter === 'all' 
-                        || String(el.id) === String(elementFilter) 
-                        || String(el.kode) === String(elementFilter);
-                });
+                if (elementFilter === 'all') {
+                    // 1. Mode SEMUA ELEMEN: Hanya batang per tahun, TANPA garis penghubung
+                    const visibleElements = Object.values(trendElements);
 
-                const isSingleElement = visibleElements.length === 1;
+                    return trendYears.map((yr, yrIdx) => {
+                        const scores = visibleElements.map(el => {
+                            let scoreArr = el.scores || [];
+                            if (companyType === 'msm') {
+                                scoreArr = el.msmScores || [];
+                            } else if (companyType === 'ttn') {
+                                scoreArr = el.ttnScores || [];
+                            } else if (companyType !== 'all' && el.scoresByCompany && el.scoresByCompany[companyType]) {
+                                scoreArr = el.scoresByCompany[companyType] || [];
+                            }
+                            return (scoreArr[yrIdx] !== undefined && scoreArr[yrIdx] !== null) ? Number(scoreArr[yrIdx]) : 0;
+                        });
 
-                return trendYears.map((yr, yrIdx) => {
-                    const scores = visibleElements.map(el => {
-                        let scoreArr = el.scores || [];
-                        if (companyType === 'msm') {
-                            scoreArr = el.msmScores || [];
-                        } else if (companyType === 'ttn') {
-                            scoreArr = el.ttnScores || [];
-                        } else if (companyType !== 'all' && el.scoresByCompany && el.scoresByCompany[companyType]) {
-                            scoreArr = el.scoresByCompany[companyType] || [];
-                        }
-                        return (scoreArr[yrIdx] !== undefined && scoreArr[yrIdx] !== null) ? Number(scoreArr[yrIdx]) : 0;
+                        const colorObj = yearPalette[yrIdx % yearPalette.length];
+
+                        return {
+                            type: 'bar',
+                            label: 'Tahun ' + yr,
+                            year: yr,
+                            data: scores,
+                            backgroundColor: colorObj.bg,
+                            borderColor: colorObj.border,
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barPercentage: 0.88,
+                            categoryPercentage: 0.82,
+                            order: 2
+                        };
                     });
+                }
 
-                    const colorObj = yearPalette[yrIdx % yearPalette.length];
+                // 2. Mode FILTER ELEMEN AKTIF: Tampilkan batang per tahun + AKTIFKAN GARIS PENGHUBUNG TREN
+                const selectedEl = Object.values(trendElements).find(el => {
+                    return String(el.id) === String(elementFilter) || String(el.kode) === String(elementFilter);
+                }) || Object.values(trendElements)[0];
 
-                    return {
-                        type: 'bar',
-                        label: 'Tahun ' + yr,
-                        year: yr,
-                        data: scores,
-                        backgroundColor: colorObj.bg,
-                        borderColor: colorObj.border,
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        barPercentage: isSingleElement ? 0.45 : 0.88,
-                        categoryPercentage: isSingleElement ? 0.6 : 0.82,
-                        order: 2
-                    };
+                let scoreArr = selectedEl ? (selectedEl.scores || []) : [];
+                if (companyType === 'msm' && selectedEl) {
+                    scoreArr = selectedEl.msmScores || [];
+                } else if (companyType === 'ttn' && selectedEl) {
+                    scoreArr = selectedEl.ttnScores || [];
+                } else if (companyType !== 'all' && selectedEl && selectedEl.scoresByCompany && selectedEl.scoresByCompany[companyType]) {
+                    scoreArr = selectedEl.scoresByCompany[companyType] || [];
+                }
+
+                const yearScores = trendYears.map((yr, yrIdx) => {
+                    return (scoreArr[yrIdx] !== undefined && scoreArr[yrIdx] !== null) ? Number(scoreArr[yrIdx]) : 0;
                 });
+
+                const barDataset = {
+                    type: 'bar',
+                    label: selectedEl ? ('Nilai Elemen ' + selectedEl.kode + ': ' + selectedEl.nama) : 'Nilai Audit',
+                    data: yearScores,
+                    backgroundColor: trendYears.map((yr, idx) => yearPalette[idx % yearPalette.length].bg),
+                    borderColor: trendYears.map((yr, idx) => yearPalette[idx % yearPalette.length].border),
+                    borderWidth: 1.5,
+                    borderRadius: 8,
+                    barPercentage: 0.45,
+                    categoryPercentage: 0.65,
+                    order: 2
+                };
+
+                const lineDataset = {
+                    type: 'line',
+                    label: 'Garis Tren Pencapaian',
+                    data: yearScores,
+                    borderColor: '#0284c7',
+                    backgroundColor: '#0284c7',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#0284c7',
+                    pointBorderWidth: 2.5,
+                    order: 1
+                };
+
+                return [barDataset, lineDataset];
             }
 
             // Plugin khusus: Tampilkan Nilai di atas batang & Keterangan Tahun di bawah tiap batang
@@ -1139,6 +1190,7 @@ ob_start();
                 afterDatasetsDraw(chart) {
                     const { ctx } = chart;
                     const yScale = chart.scales.y;
+                    const isAllElements = (elementFilterEl ? elementFilterEl.value : 'all') === 'all';
 
                     chart.data.datasets.forEach((dataset, datasetIndex) => {
                         if (dataset.type === 'line') return;
@@ -1173,8 +1225,8 @@ ob_start();
                                 ctx.restore();
                             }
 
-                            // 2. Gambar keterangan tahun sesi di bawah tiap batang grafik
-                            if (yr) {
+                            // 2. Gambar keterangan tahun sesi di bawah tiap batang grafik (hanya saat mode Semua Elemen)
+                            if (isAllElements && yr) {
                                 ctx.save();
                                 const textYear = bar.width >= 56 ? ('Tahun ' + yr) : String(yr);
                                 ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
@@ -1260,14 +1312,17 @@ ob_start();
                 plugins: [groupedMultiYearBarTextPlugin]
             });
 
-            const elementFilterEl = document.getElementById('multiYearElementFilter');
-            const companyFilterEl = document.getElementById('multiYearCompanyFilter');
-
             function updateMultiYearChart() {
                 const compVal = companyFilterEl ? companyFilterEl.value : 'all';
                 const elemVal = elementFilterEl ? elementFilterEl.value : 'all';
                 multiYearChartInstance.data.labels = getElementLabels(elemVal);
                 multiYearChartInstance.data.datasets = buildGroupedDatasets(compVal, elemVal);
+                
+                // Atur padding sumbu X: 26px jika Semua Elemen (memberi ruang label tahun di bawah batang), 10px jika Filter Elemen aktif
+                if (multiYearChartInstance.options.scales && multiYearChartInstance.options.scales.x && multiYearChartInstance.options.scales.x.ticks) {
+                    multiYearChartInstance.options.scales.x.ticks.padding = (elemVal === 'all') ? 26 : 10;
+                }
+
                 multiYearChartInstance.update();
             }
 

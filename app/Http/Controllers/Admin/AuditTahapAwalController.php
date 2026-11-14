@@ -195,6 +195,28 @@ class AuditTahapAwalController extends Controller
 
             $tahapAwal->update($payload);
 
+            // Sinkronisasi Jadwal Pelaksanaan Audit (II.A) jika dinyatakan Layak (II.C) & Dapat Dilanjutkan (II.D)
+            $kesimpulanKelayakan = $payload['kesimpulan_kelayakan'];
+            $kesimpulanKecukupan = $payload['kesimpulan_kecukupan'];
+
+            if ($kesimpulanKelayakan === 'layak' && $kesimpulanKecukupan === 'dapat_dilanjutkan') {
+                if ($request->filled('tanggal_mulai') && $request->filled('tanggal_selesai')) {
+                    $request->validate([
+                        'tanggal_mulai'   => 'required|date',
+                        'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+                    ], [
+                        'tanggal_mulai.required'         => 'Tanggal mulai pelaksanaan audit wajib diisi.',
+                        'tanggal_selesai.required'       => 'Tanggal selesai pelaksanaan audit wajib diisi.',
+                        'tanggal_selesai.after_or_equal' => 'Tanggal selesai pelaksanaan audit harus sama atau setelah tanggal mulai.',
+                    ]);
+
+                    $sesi->update([
+                        'tanggal_mulai'   => $request->input('tanggal_mulai'),
+                        'tanggal_selesai' => $request->input('tanggal_selesai'),
+                    ]);
+                }
+            }
+
             AuditLog::create([
                 'user_id'         => auth()->id(),
                 'modul'           => 'Tahap Awal Audit',

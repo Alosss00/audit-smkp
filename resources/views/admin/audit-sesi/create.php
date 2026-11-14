@@ -80,35 +80,41 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- 3. Jadwal Pelaksanaan Audit -->
+                <!-- 3. Jadwal Pelaksanaan Audit (Estimasi Awal) -->
                 <div class="p-3 bg-light rounded-3 border mb-4">
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <i class="bi bi-calendar-event text-danger"></i>
-                        <span class="fw-bold small text-slate-800">Jadwal Pelaksanaan Audit</span>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar-event text-primary"></i>
+                            <span class="fw-bold small text-slate-800">Estimasi Jadwal Sesi (Opsional)</span>
+                        </div>
+                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-2.5 py-1 small">
+                            <i class="bi bi-info-circle me-1"></i>Penetapan di Tahap I
+                        </span>
+                    </div>
+                    <div class="alert alert-white bg-white border border-slate-200 py-2 px-3 mb-3 small text-muted">
+                        <i class="bi bi-shield-check text-success me-1"></i>
+                        <strong>Catatan:</strong> Jadwal pelaksanaan audit resmi akan ditetapkan pada dokumen <strong>Tahap Awal Audit (Bagian II.A)</strong> setelah form Kelayakan Audit (II.C) disimpulkan <em>"Layak"</em> dan Kecukupan Dokumentasi (II.D) disimpulkan <em>"Dapat dilanjutkan"</em>.
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="tanggal_mulai" class="form-label fw-semibold small text-secondary">
-                                Tanggal Mulai Sesi <span class="text-danger">*</span>
+                                Tanggal Mulai Sesi
                             </label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white"><i class="bi bi-calendar3"></i></span>
-                                <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="form-control" value="<?php echo e(old('tanggal_mulai', date('Y-m-d'))); ?>" required>
+                                <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="form-control" value="<?php echo e(old('tanggal_mulai', date('Y-m-d'))); ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label for="tanggal_selesai" class="form-label fw-semibold small text-secondary">
-                                Tanggal Selesai Sesi <span class="text-danger">*</span>
+                                Tanggal Selesai Sesi
                             </label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white"><i class="bi bi-calendar3"></i></span>
-                                <input type="date" name="tanggal_selesai" id="tanggal_selesai" class="form-control" value="<?php echo e(old('tanggal_selesai', date('Y-m-d'))); ?>" required>
+                                <input type="date" name="tanggal_selesai" id="tanggal_selesai" class="form-control" value="<?php echo e(old('tanggal_selesai', date('Y-m-d'))); ?>">
                             </div>
                         </div>
                     </div>
-                    <small class="text-muted d-block mt-2">
-                        * Rentang tanggal pelaksanaan verifikasi lapangan / tatap muka audit oleh tim auditor.
-                    </small>
                 </div>
 
                 <!-- Tombol Aksi -->

@@ -19,6 +19,10 @@ $harapanList = !empty($tahapAwal->harapan_pemangku) ? $tahapAwal->harapan_pemang
 $thnPeriode = $sesi->tahun_periode ?? ($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y') : date('Y'));
 $thnDepan = ((int) $thnPeriode) + 1;
 $thnSebelumnya = ((int) $thnPeriode) - 1;
+
+$isKelayakanLayak = ($tahapAwal->kesimpulan_kelayakan ?? '') === 'layak';
+$isKecukupanLanjut = ($tahapAwal->kesimpulan_kecukupan ?? '') === 'dapat_dilanjutkan';
+$isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
 ?>
 
 <!-- Top Page Header -->
@@ -315,6 +319,83 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                             </div>
                         </div>
 
+                        <!-- Jadwal Pelaksanaan Audit (Hanya Dapat Ditentukan Setelah Evaluasi II.C & II.D Selesai & Disetujui) -->
+                        <div id="containerJadwalAudit" class="p-3 p-md-4 rounded-3 border mb-4 <?php echo $isJadwalDapatDitentukan ? 'bg-white border-success shadow-sm' : 'bg-light bg-opacity-75 border-secondary border-dashed'; ?>">
+                            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="stat-icon-box <?php echo $isJadwalDapatDitentukan ? 'bg-success text-white' : 'bg-secondary bg-opacity-10 text-secondary'; ?> d-flex align-items-center justify-content-center rounded-3" id="jadwalIconBox" style="width: 42px; height: 42px;">
+                                        <i class="bi <?php echo $isJadwalDapatDitentukan ? 'bi-calendar-check-fill' : 'bi-calendar-x'; ?> fs-5" id="jadwalIcon"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-slate-800">
+                                            Jadwal Pelaksanaan Audit (Verifikasi Lapangan / Tahap II)
+                                        </h6>
+                                        <small class="text-muted" id="jadwalSubtitle">
+                                            Ditentukan berdasarkan hasil evaluasi kelayakan form II.C & kecukupan dokumentasi form II.D.
+                                        </small>
+                                    </div>
+                                </div>
+                                <div id="jadwalStatusBadge">
+                                    <?php if ($isJadwalDapatDitentukan): ?>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2 fw-semibold">
+                                            <i class="bi bi-unlock-fill me-1"></i> Siap Ditentukan
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-2 fw-semibold text-dark">
+                                            <i class="bi bi-lock-fill me-1"></i> Terkunci (Menunggu Evaluasi II.C & II.D)
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <!-- Alert Penjelasan Prasyarat -->
+                            <div id="jadwalAlertNotice" class="alert <?php echo $isJadwalDapatDitentukan ? 'alert-success bg-white border border-success border-opacity-25' : 'alert-warning bg-white border border-warning border-opacity-25'; ?> py-2 px-3 mb-3 d-flex align-items-center justify-content-between gap-2 small">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi <?php echo $isJadwalDapatDitentukan ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-warning'; ?> fs-6" id="jadwalAlertIcon"></i>
+                                    <span id="jadwalAlertText">
+                                        <?php if ($isJadwalDapatDitentukan): ?>
+                                            Prasyarat Terpenuhi: Evaluasi Kelayakan Audit (II.C) bernilai <strong>"Layak untuk dilaksanakan"</strong> dan Evaluasi Dokumentasi (II.D) bernilai <strong>"Dapat dilanjutkan ke tahap berikutnya"</strong>. Jadwal pelaksanaan audit kini dapat ditentukan.
+                                        <?php else: ?>
+                                            Jadwal pelaksanaan audit baru dapat ditentukan setelah form <strong>II.C (7 Indikator)</strong> disimpulkan <em>"Layak untuk dilaksanakan"</em> dan form <strong>II.D (7 Elemen)</strong> disimpulkan <em>"Dapat dilanjutkan ke tahap berikutnya"</em> di bagian bawah.
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+                                <a href="#row_IIC_IID" class="btn btn-sm btn-outline-primary text-nowrap rounded-pill py-0 px-2 fw-semibold" id="btnScrollToIIC">
+                                    <i class="bi bi-arrow-down-short"></i> Cek Form II.C & II.D
+                                </a>
+                            </div>
+
+                            <!-- Input Tanggal Mulai & Tanggal Selesai -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="input_tanggal_mulai" class="form-label small fw-bold text-slate-800">
+                                        Tanggal Mulai Pelaksanaan Audit <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-slate-300"><i class="bi bi-calendar3 text-primary"></i></span>
+                                        <input type="date" name="tanggal_mulai" id="input_tanggal_mulai" 
+                                               class="form-control <?php echo $isJadwalDapatDitentukan ? '' : 'bg-light'; ?>" 
+                                               value="<?php echo e($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y-m-d') : ''); ?>" 
+                                               <?php echo $isJadwalDapatDitentukan ? '' : 'disabled'; ?> required>
+                                    </div>
+                                    <small class="text-muted">Awal pelaksanaan verifikasi lapangan / opening meeting.</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="input_tanggal_selesai" class="form-label small fw-bold text-slate-800">
+                                        Tanggal Selesai Pelaksanaan Audit <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-slate-300"><i class="bi bi-calendar3-check text-primary"></i></span>
+                                        <input type="date" name="tanggal_selesai" id="input_tanggal_selesai" 
+                                               class="form-control <?php echo $isJadwalDapatDitentukan ? '' : 'bg-light'; ?>" 
+                                               value="<?php echo e($sesi->tanggal_selesai ? $sesi->tanggal_selesai->format('Y-m-d') : ''); ?>" 
+                                               <?php echo $isJadwalDapatDitentukan ? '' : 'disabled'; ?> required>
+                                    </div>
+                                    <small class="text-muted">Akhir pelaksanaan audit lapangan / closing meeting.</small>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle mb-0" id="tableTim1">
                                 <thead class="table-light text-center">
@@ -415,7 +496,7 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         </div>
                         <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
                             <span class="small fw-bold">Kesimpulan Kelayakan Audit:</span>
-                            <select name="kesimpulan_kelayakan" class="form-select form-select-sm w-auto fw-bold">
+                            <select name="kesimpulan_kelayakan" id="selectKesimpulanKelayakan" class="form-select form-select-sm w-auto fw-bold">
                                 <option value="" <?php echo e(empty($tahapAwal->kesimpulan_kelayakan) ? 'selected' : ''); ?>>-- Pilih Kesimpulan --</option>
                                 <option value="layak" <?php echo e(($tahapAwal->kesimpulan_kelayakan ?? '') === 'layak' ? 'selected' : ''); ?>>Layak untuk dilaksanakan</option>
                                 <option value="tidak_layak" <?php echo e(($tahapAwal->kesimpulan_kelayakan ?? '') === 'tidak_layak' ? 'selected' : ''); ?>>Tidak Layak untuk dilaksanakan</option>
@@ -459,11 +540,39 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
                         </div>
                         <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
                             <span class="small fw-bold">Kesimpulan Evaluasi Dokumentasi:</span>
-                            <select name="kesimpulan_kecukupan" class="form-select form-select-sm w-auto fw-bold">
+                            <select name="kesimpulan_kecukupan" id="selectKesimpulanKecukupan" class="form-select form-select-sm w-auto fw-bold">
                                 <option value="" <?php echo e(empty($tahapAwal->kesimpulan_kecukupan) ? 'selected' : ''); ?>>-- Pilih Kesimpulan --</option>
                                 <option value="dapat_dilanjutkan" <?php echo e(($tahapAwal->kesimpulan_kecukupan ?? '') === 'dapat_dilanjutkan' ? 'selected' : ''); ?>>Dapat dilanjutkan*) ke tahap berikutnya</option>
                                 <option value="tidak_dapat_dilanjutkan" <?php echo e(($tahapAwal->kesimpulan_kecukupan ?? '') === 'tidak_dapat_dilanjutkan' ? 'selected' : ''); ?>>Belum dapat dilanjutkan</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Evaluasi ke Bagian II.A (Jadwal Pelaksanaan Audit) -->
+                <div class="col-12" id="row_IIC_IID">
+                    <div id="bannerKesesuaianJadwal" class="alert <?php echo $isJadwalDapatDitentukan ? 'alert-success border-success' : 'alert-warning border-warning'; ?> rounded-3 p-3 mb-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="stat-icon-box <?php echo $isJadwalDapatDitentukan ? 'bg-success text-white' : 'bg-warning text-dark'; ?> rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;" id="bannerStatusIconBox">
+                                <i class="bi <?php echo $isJadwalDapatDitentukan ? 'bi-check2-all' : 'bi-lock-fill'; ?> fs-5" id="bannerStatusIcon"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-slate-800" id="bannerStatusTitle">
+                                    <?php echo $isJadwalDapatDitentukan ? 'Evaluasi Memenuhi Syarat: Jadwal Pelaksanaan Audit Terbuka' : 'Status Evaluasi: Jadwal Pelaksanaan Audit di Bagian II.A Masih Terkunci'; ?>
+                                </h6>
+                                <p class="small text-muted mb-0" id="bannerStatusDesc">
+                                    <?php if ($isJadwalDapatDitentukan): ?>
+                                        Kelayakan Audit dinyatakan <strong>"Layak untuk dilaksanakan"</strong> dan Evaluasi Dokumentasi dinyatakan <strong>"Dapat dilanjutkan ke tahap berikutnya"</strong>. Anda dapat menentukan Jadwal Pelaksanaan Audit pada Bagian II.A di atas.
+                                    <?php else: ?>
+                                        Untuk mengaktifkan Jadwal Pelaksanaan Audit di Bagian II.A, pastikan form II.C & II.D diisi, Kesimpulan Kelayakan diset ke <strong>"Layak untuk dilaksanakan"</strong>, dan Kesimpulan Dokumentasi diset ke <strong>"Dapat dilanjutkan*) ke tahap berikutnya"</strong>.
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="#containerJadwalAudit" class="btn <?php echo $isJadwalDapatDitentukan ? 'btn-success' : 'btn-outline-secondary'; ?> rounded-pill px-4 fw-semibold shadow-sm text-nowrap" id="btnGoToJadwal">
+                                <i class="bi bi-calendar-event me-1"></i> <?php echo $isJadwalDapatDitentukan ? 'Tentukan Jadwal di Bagian II.A ↑' : 'Lihat Bagian II.A ↑'; ?>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -1110,6 +1219,165 @@ document.addEventListener('DOMContentLoaded', function () {
         table.querySelector('tbody').appendChild(tr);
         renumberTable(table);
     });
+
+    // ========================================================
+    // Validasi & Aktivasi Reaktif: Jadwal Pelaksanaan Audit (II.A)
+    // Berdasarkan Kelayakan (II.C) & Kecukupan Dokumen (II.D)
+    // ========================================================
+    const selKelayakan = document.getElementById('selectKesimpulanKelayakan');
+    const selKecukupan = document.getElementById('selectKesimpulanKecukupan');
+    const inpTglMulai = document.getElementById('input_tanggal_mulai');
+    const inpTglSelesai = document.getElementById('input_tanggal_selesai');
+    const containerJadwal = document.getElementById('containerJadwalAudit');
+    const jadwalBadge = document.getElementById('jadwalStatusBadge');
+    const jadwalAlertText = document.getElementById('jadwalAlertText');
+    const jadwalAlertNotice = document.getElementById('jadwalAlertNotice');
+    const jadwalIconBox = document.getElementById('jadwalIconBox');
+    const jadwalIcon = document.getElementById('jadwalIcon');
+    const bannerKesesuaian = document.getElementById('bannerKesesuaianJadwal');
+    const bannerStatusIconBox = document.getElementById('bannerStatusIconBox');
+    const bannerStatusIcon = document.getElementById('bannerStatusIcon');
+    const bannerStatusTitle = document.getElementById('bannerStatusTitle');
+    const bannerStatusDesc = document.getElementById('bannerStatusDesc');
+    const btnGoToJadwal = document.getElementById('btnGoToJadwal');
+
+    function checkJadwalEligibility() {
+        const valKelayakan = selKelayakan ? selKelayakan.value : '';
+        const valKecukupan = selKecukupan ? selKecukupan.value : '';
+
+        const isEligible = (valKelayakan === 'layak' && valKecukupan === 'dapat_dilanjutkan');
+
+        if (isEligible) {
+            // AKTIFKAN JADWAL DI II.A
+            if (inpTglMulai) {
+                inpTglMulai.removeAttribute('disabled');
+                inpTglMulai.classList.remove('bg-light');
+            }
+            if (inpTglSelesai) {
+                inpTglSelesai.removeAttribute('disabled');
+                inpTglSelesai.classList.remove('bg-light');
+            }
+
+            if (containerJadwal) {
+                containerJadwal.className = 'p-3 p-md-4 rounded-3 border mb-4 bg-white border-success shadow-sm';
+            }
+
+            if (jadwalIconBox) {
+                jadwalIconBox.className = 'stat-icon-box bg-success text-white d-flex align-items-center justify-content-center rounded-3';
+            }
+            if (jadwalIcon) {
+                jadwalIcon.className = 'bi bi-calendar-check-fill fs-5';
+            }
+
+            if (jadwalBadge) {
+                jadwalBadge.innerHTML = '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2 fw-semibold"><i class="bi bi-unlock-fill me-1"></i> Siap Ditentukan</span>';
+            }
+
+            if (jadwalAlertNotice) {
+                jadwalAlertNotice.className = 'alert alert-success bg-white border border-success border-opacity-25 py-2 px-3 mb-3 d-flex align-items-center justify-content-between gap-2 small';
+            }
+
+            if (jadwalAlertText) {
+                jadwalAlertText.innerHTML = 'Prasyarat Terpenuhi: Evaluasi Kelayakan Audit (II.C) bernilai <strong>"Layak untuk dilaksanakan"</strong> dan Evaluasi Dokumentasi (II.D) bernilai <strong>"Dapat dilanjutkan ke tahap berikutnya"</strong>. Jadwal pelaksanaan audit kini dapat ditentukan.';
+            }
+
+            // Update Banner di bawah II.C & II.D
+            if (bannerKesesuaian) {
+                bannerKesesuaian.className = 'alert alert-success border-success rounded-3 p-3 mb-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm';
+            }
+            if (bannerStatusIconBox) {
+                bannerStatusIconBox.className = 'stat-icon-box bg-success text-white rounded-circle d-flex align-items-center justify-content-center';
+            }
+            if (bannerStatusIcon) {
+                bannerStatusIcon.className = 'bi bi-check2-all fs-5';
+            }
+            if (bannerStatusTitle) {
+                bannerStatusTitle.textContent = 'Evaluasi Memenuhi Syarat: Jadwal Pelaksanaan Audit Terbuka';
+            }
+            if (bannerStatusDesc) {
+                bannerStatusDesc.innerHTML = 'Kelayakan Audit dinyatakan <strong>"Layak untuk dilaksanakan"</strong> dan Evaluasi Dokumentasi dinyatakan <strong>"Dapat dilanjutkan ke tahap berikutnya"</strong>. Anda dapat menentukan Jadwal Pelaksanaan Audit pada Bagian II.A di atas.';
+            }
+            if (btnGoToJadwal) {
+                btnGoToJadwal.className = 'btn btn-success rounded-pill px-4 fw-semibold shadow-sm text-nowrap';
+                btnGoToJadwal.innerHTML = '<i class="bi bi-calendar-event me-1"></i> Tentukan Jadwal di Bagian II.A ↑';
+            }
+        } else {
+            // KUNCI JADWAL DI II.A
+            if (inpTglMulai) {
+                inpTglMulai.setAttribute('disabled', 'disabled');
+                inpTglMulai.classList.add('bg-light');
+            }
+            if (inpTglSelesai) {
+                inpTglSelesai.setAttribute('disabled', 'disabled');
+                inpTglSelesai.classList.add('bg-light');
+            }
+
+            if (containerJadwal) {
+                containerJadwal.className = 'p-3 p-md-4 rounded-3 border mb-4 bg-light bg-opacity-75 border-secondary border-dashed';
+            }
+
+            if (jadwalIconBox) {
+                jadwalIconBox.className = 'stat-icon-box bg-secondary bg-opacity-10 text-secondary d-flex align-items-center justify-content-center rounded-3';
+            }
+            if (jadwalIcon) {
+                jadwalIcon.className = 'bi bi-calendar-x fs-5';
+            }
+
+            if (jadwalBadge) {
+                jadwalBadge.innerHTML = '<span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-2 fw-semibold text-dark"><i class="bi bi-lock-fill me-1"></i> Terkunci (Menunggu Evaluasi II.C & II.D)</span>';
+            }
+
+            if (jadwalAlertNotice) {
+                jadwalAlertNotice.className = 'alert alert-warning bg-white border border-warning border-opacity-25 py-2 px-3 mb-3 d-flex align-items-center justify-content-between gap-2 small';
+            }
+
+            if (jadwalAlertText) {
+                jadwalAlertText.innerHTML = 'Jadwal pelaksanaan audit baru dapat ditentukan setelah form <strong>II.C (7 Indikator)</strong> disimpulkan <em>"Layak untuk dilaksanakan"</em> dan form <strong>II.D (7 Elemen)</strong> disimpulkan <em>"Dapat dilanjutkan ke tahap berikutnya"</em> di bagian bawah.';
+            }
+
+            // Update Banner di bawah II.C & II.D
+            if (bannerKesesuaian) {
+                bannerKesesuaian.className = 'alert alert-warning border-warning rounded-3 p-3 mb-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm';
+            }
+            if (bannerStatusIconBox) {
+                bannerStatusIconBox.className = 'stat-icon-box bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center';
+            }
+            if (bannerStatusIcon) {
+                bannerStatusIcon.className = 'bi bi-lock-fill fs-5';
+            }
+            if (bannerStatusTitle) {
+                bannerStatusTitle.textContent = 'Status Evaluasi: Jadwal Pelaksanaan Audit di Bagian II.A Masih Terkunci';
+            }
+            if (bannerStatusDesc) {
+                bannerStatusDesc.innerHTML = 'Untuk mengaktifkan Jadwal Pelaksanaan Audit di Bagian II.A, pastikan form II.C & II.D diisi, Kesimpulan Kelayakan diset ke <strong>"Layak untuk dilaksanakan"</strong>, dan Kesimpulan Dokumentasi diset ke <strong>"Dapat dilanjutkan*) ke tahap berikutnya"</strong>.';
+            }
+            if (btnGoToJadwal) {
+                btnGoToJadwal.className = 'btn btn-outline-secondary rounded-pill px-4 fw-semibold shadow-sm text-nowrap';
+                btnGoToJadwal.innerHTML = '<i class="bi bi-arrow-up-circle me-1"></i> Lihat Bagian II.A ↑';
+            }
+        }
+    }
+
+    if (selKelayakan) selKelayakan.addEventListener('change', checkJadwalEligibility);
+    if (selKecukupan) selKecukupan.addEventListener('change', checkJadwalEligibility);
+    document.querySelectorAll('input[name^="kelayakan_audit"]').forEach(inp => inp.addEventListener('input', checkJadwalEligibility));
+    document.querySelectorAll('select[name^="kecukupan_dokumen"]').forEach(sel => sel.addEventListener('change', checkJadwalEligibility));
+
+    // Jalankan pengecekan saat inisialisasi halaman
+    checkJadwalEligibility();
+
+    // Pastikan input enabled saat submit jika memenuhi syarat agar browser mengirimkan value
+    const formTahapAwal = document.getElementById('formTahapAwal');
+    if (formTahapAwal) {
+        formTahapAwal.addEventListener('submit', function (e) {
+            const valKelayakan = selKelayakan ? selKelayakan.value : '';
+            const valKecukupan = selKecukupan ? selKecukupan.value : '';
+            if (valKelayakan === 'layak' && valKecukupan === 'dapat_dilanjutkan') {
+                if (inpTglMulai) inpTglMulai.removeAttribute('disabled');
+                if (inpTglSelesai) inpTglSelesai.removeAttribute('disabled');
+            }
+        });
+    }
 });
 </script>
 

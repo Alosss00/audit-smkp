@@ -152,56 +152,15 @@ ob_start();
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary btn-login w-100 py-3 rounded-3 text-white mb-4">
+                <button type="submit" class="btn btn-primary btn-login w-100 py-3 rounded-3 text-white mb-0">
                     <i class="bi bi-box-arrow-in-right me-2"></i> Masuk Sekarang
                 </button>
             </form>
-
-            <!-- Quick Demo Credentials Box (Hanya Tampil di Mode Local/Pengembangan) -->
-            <?php if (app()->environment('local')): ?>
-                <div class="p-3 bg-light rounded-3 border">
-                    <div class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.68rem; letter-spacing: 0.5px;">
-                        <i class="bi bi-key-fill text-warning me-1"></i> Akun Pengujian (Klik untuk Autofill):
-                    </div>
-                    <div class="d-flex flex-column gap-2">
-                        <div class="d-flex gap-2">
-                            <span class="badge bg-danger demo-badge p-2 flex-grow-1 text-center btn-fill-cred" role="button" data-username="admin" data-password="password" title="Administrator (Full Access)">
-                                <i class="bi bi-shield-lock-fill me-1"></i> Admin: <code>admin</code>
-                            </span>
-                            <span class="badge bg-primary demo-badge p-2 flex-grow-1 text-center btn-fill-cred" role="button" data-username="auditor_smkp" data-password="password" title="Auditor SMKP (Dashboard & Penilaian)">
-                                <i class="bi bi-patch-check-fill me-1"></i> Auditor SMKP: <code>auditor_smkp</code>
-                            </span>
-                        </div>
-                        <span class="badge bg-info text-dark demo-badge p-2 w-100 text-center btn-fill-cred" role="button" data-username="auditor" data-password="password" title="Auditor Perusahaan (Auditee / Area Scoped)">
-                            <i class="bi bi-clipboard-check-fill me-1"></i> Auditor Perusahaan: <code>auditor</code>
-                        </span>
-                    </div>
-                </div>
-            <?php endif; ?>
 
         </div>
     </div>
 </div>
 <?php
 $content = ob_get_clean();
-
-ob_start();
-?>
-<script nonce="<?php echo e($cspNonce ?? ''); ?>">
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.btn-fill-cred').forEach(function(el) {
-            el.addEventListener('click', function() {
-                const u = this.getAttribute('data-username');
-                const p = this.getAttribute('data-password');
-                const uInput = document.getElementById('username');
-                const pInput = document.getElementById('password');
-                if (uInput) uInput.value = u;
-                if (pInput) pInput.value = p;
-            });
-        });
-    });
-</script>
-<?php
-$scripts = ob_get_clean();
 
 echo view('layouts.app', get_defined_vars())->render();
