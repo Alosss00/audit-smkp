@@ -225,7 +225,7 @@ class AuthController extends Controller
      */
     public function autoLogout(Request $request): JsonResponse|RedirectResponse
     {
-        $timeoutMinutes = (int) config('session.idle_timeout', 15);
+        $timeoutMinutes = (int) config('session.idle_timeout', 30);
 
         if (Auth::check()) {
             $user = Auth::user();

@@ -194,7 +194,7 @@ ob_start();
 <?php if ($perusahaans->isNotEmpty()): ?>
     <?php foreach ($perusahaans as $perusahaan): ?>
         <div class="modal fade" id="modalEditPerusahaan<?php echo e($perusahaan->id); ?>" tabindex="-1" aria-labelledby="modalEditPerusahaanLabel<?php echo e($perusahaan->id); ?>" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header border-bottom-0 pb-0">
                         <h5 class="modal-title fw-bold text-slate-800" id="modalEditPerusahaanLabel<?php echo e($perusahaan->id); ?>">
@@ -206,24 +206,50 @@ ob_start();
                         <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
                         <input type="hidden" name="_method" value="PUT">
                         <div class="modal-body py-3">
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold text-slate-800">Nama Perusahaan <span class="text-danger">*</span></label>
-                                <input type="text" name="nama_perusahaan" class="form-control" value="<?php echo e($perusahaan->nama_perusahaan); ?>" required>
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold text-slate-800">Nama Perusahaan <span class="text-danger">*</span></label>
+                                    <input type="text" name="nama_perusahaan" class="form-control" value="<?php echo e($perusahaan->nama_perusahaan); ?>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-slate-800">Kode Perusahaan (Opsional)</label>
+                                    <input type="text" name="kode_perusahaan" class="form-control" value="<?php echo e($perusahaan->kode_perusahaan); ?>" placeholder="Contoh: PT-MSM">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-slate-800">Kategori Perusahaan <span class="text-danger">*</span></label>
+                                    <select name="kategori" class="form-select" required>
+                                        <option value="Pemegang IUP" <?php echo $perusahaan->kategori == 'Pemegang IUP' ? 'selected' : ''; ?>>Pemegang IUP</option>
+                                        <option value="Kontraktor" <?php echo $perusahaan->kategori == 'Kontraktor' ? 'selected' : ''; ?>>Kontraktor</option>
+                                        <option value="Subkontraktor" <?php echo $perusahaan->kategori == 'Subkontraktor' ? 'selected' : ''; ?>>Subkontraktor</option>
+                                        <option value="Lainnya" <?php echo $perusahaan->kategori == 'Lainnya' ? 'selected' : ''; ?>>Lainnya</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-slate-800">Nama KTT (Kepala Teknik Tambang)</label>
+                                    <input type="text" name="nama_ktt_default" class="form-control" value="<?php echo e($perusahaan->nama_ktt_default); ?>" placeholder="Contoh: Tejo Prihantoro">
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold text-slate-800">Jenis Perizinan (Pisahkan baris jika > 1)</label>
+                                    <textarea name="jenis_perizinan" class="form-control" rows="2" placeholder="Contoh: IUP Operasi Produksi No. ..."><?php echo e($perusahaan->jenis_perizinan); ?></textarea>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold text-slate-800">Jenis Komoditas</label>
+                                    <input type="text" name="jenis_komoditas" class="form-control" value="<?php echo e($perusahaan->jenis_komoditas); ?>" placeholder="Contoh: Batubara / Emas / Nikel">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-slate-800">Alamat Kantor Site</label>
+                                    <textarea name="alamat_kantor_site" class="form-control" rows="2" placeholder="Alamat kantor site / operasional lapangan"><?php echo e($perusahaan->alamat_kantor_site); ?></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-slate-800">Alamat Lokasi Tambang</label>
+                                    <textarea name="alamat_lokasi_tambang" class="form-control" rows="2" placeholder="Alamat lokasi atau wilayah kerja tambang"><?php echo e($perusahaan->alamat_lokasi_tambang); ?></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold text-slate-800">Alamat Kantor Pusat</label>
+                                    <textarea name="alamat_kantor_pusat" class="form-control" rows="2" placeholder="Alamat lengkap kantor pusat perusahaan"><?php echo e($perusahaan->alamat_kantor_pusat); ?></textarea>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold text-slate-800">Kode Perusahaan (Opsional)</label>
-                                <input type="text" name="kode_perusahaan" class="form-control" value="<?php echo e($perusahaan->kode_perusahaan); ?>" placeholder="Contoh: PT-MSM">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold text-slate-800">Kategori Perusahaan <span class="text-danger">*</span></label>
-                                <select name="kategori" class="form-select" required>
-                                    <option value="Pemegang IUP" <?php echo $perusahaan->kategori == 'Pemegang IUP' ? 'selected' : ''; ?>>Pemegang IUP</option>
-                                    <option value="Kontraktor" <?php echo $perusahaan->kategori == 'Kontraktor' ? 'selected' : ''; ?>>Kontraktor</option>
-                                    <option value="Subkontraktor" <?php echo $perusahaan->kategori == 'Subkontraktor' ? 'selected' : ''; ?>>Subkontraktor</option>
-                                    <option value="Lainnya" <?php echo $perusahaan->kategori == 'Lainnya' ? 'selected' : ''; ?>>Lainnya</option>
-                                </select>
-                            </div>
-                            <div class="form-check form-switch mb-2">
+                            <div class="form-check form-switch mt-3">
                                 <input class="form-check-input" type="checkbox" name="is_active" id="editActive<?php echo e($perusahaan->id); ?>" value="1" <?php echo $perusahaan->is_active ? 'checked' : ''; ?>>
                                 <label class="form-check-label fw-semibold text-slate-800" for="editActive<?php echo e($perusahaan->id); ?>">Status Aktif</label>
                             </div>
@@ -241,7 +267,7 @@ ob_start();
 
 <!-- Modal Create Perusahaan -->
 <div class="modal fade" id="modalCreatePerusahaan" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom-0 pb-0">
                 <h5 class="modal-title fw-bold text-slate-800">
@@ -252,22 +278,48 @@ ob_start();
             <form action="<?php echo route('admin.perusahaans.store'); ?>" method="POST">
                 <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
                 <div class="modal-body py-3">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-slate-800">Nama Perusahaan <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_perusahaan" class="form-control" placeholder="Contoh: PT. Meares Soputan Mining" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-slate-800">Kode Perusahaan (Opsional)</label>
-                        <input type="text" name="kode_perusahaan" class="form-control" placeholder="Contoh: MSM">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold text-slate-800">Kategori Perusahaan <span class="text-danger">*</span></label>
-                        <select name="kategori" class="form-select" required>
-                            <option value="Subkontraktor" selected>Subkontraktor</option>
-                            <option value="Kontraktor">Kontraktor</option>
-                            <option value="Pemegang IUP">Pemegang IUP</option>
-                            <option value="Lainnya">Lainnya</option>
-                        </select>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold text-slate-800">Nama Perusahaan <span class="text-danger">*</span></label>
+                            <input type="text" name="nama_perusahaan" class="form-control" placeholder="Contoh: PT. Meares Soputan Mining" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-slate-800">Kode Perusahaan (Opsional)</label>
+                            <input type="text" name="kode_perusahaan" class="form-control" placeholder="Contoh: MSM">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-800">Kategori Perusahaan <span class="text-danger">*</span></label>
+                            <select name="kategori" class="form-select" required>
+                                <option value="Subkontraktor" selected>Subkontraktor</option>
+                                <option value="Kontraktor">Kontraktor</option>
+                                <option value="Pemegang IUP">Pemegang IUP</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-800">Nama KTT (Kepala Teknik Tambang)</label>
+                            <input type="text" name="nama_ktt_default" class="form-control" placeholder="Contoh: Tejo Prihantoro">
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold text-slate-800">Jenis Perizinan (Pisahkan baris jika > 1)</label>
+                            <textarea name="jenis_perizinan" class="form-control" rows="2" placeholder="Contoh: IUP Operasi Produksi No. ..."></textarea>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold text-slate-800">Jenis Komoditas</label>
+                            <input type="text" name="jenis_komoditas" class="form-control" placeholder="Contoh: Batubara / Emas / Nikel">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-800">Alamat Kantor Site</label>
+                            <textarea name="alamat_kantor_site" class="form-control" rows="2" placeholder="Alamat kantor site / operasional lapangan"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-800">Alamat Lokasi Tambang</label>
+                            <textarea name="alamat_lokasi_tambang" class="form-control" rows="2" placeholder="Alamat lokasi atau wilayah kerja tambang"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-slate-800">Alamat Kantor Pusat</label>
+                            <textarea name="alamat_kantor_pusat" class="form-control" rows="2" placeholder="Alamat lengkap kantor pusat perusahaan"></textarea>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-top-0 pt-0">

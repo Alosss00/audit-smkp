@@ -38,6 +38,13 @@ ob_start();
     .demo-badge:hover {
         transform: scale(1.03);
     }
+    #btnTogglePassword {
+        cursor: pointer;
+        transition: color 0.2s ease, background-color 0.2s ease;
+    }
+    #btnTogglePassword:focus {
+        box-shadow: none;
+    }
 </style>
 <?php
 $styles = ob_get_clean();
@@ -136,8 +143,11 @@ ob_start();
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
                         <input type="password" name="password" id="password" 
-                            class="form-control bg-light border-start-0 <?php echo (isset($errors) && $errors->has('password')) ? 'is-invalid' : ''; ?>" 
-                            placeholder="Masukkan password" required>
+                            class="form-control bg-light border-start-0 border-end-0 <?php echo (isset($errors) && $errors->has('password')) ? 'is-invalid' : ''; ?>" 
+                            placeholder="Masukkan password" required autocomplete="current-password">
+                        <button type="button" class="btn btn-light bg-light border border-start-0 text-muted px-3" id="btnTogglePassword" tabindex="-1" title="Lihat password">
+                            <i class="bi bi-eye" id="iconTogglePassword"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -162,5 +172,59 @@ ob_start();
 </div>
 <?php
 $content = ob_get_clean();
+
+ob_start();
+?>
+<script nonce="<?php echo e($cspNonce ?? ''); ?>">
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('password');
+    const btnToggle = document.getElementById('btnTogglePassword');
+    const iconToggle = document.getElementById('iconTogglePassword');
+
+    if (passwordInput && btnToggle && iconToggle) {
+        function setVisibility(show) {
+            if (show) {
+                passwordInput.type = 'text';
+                iconToggle.className = 'bi bi-eye-slash text-primary';
+                btnToggle.setAttribute('title', 'Sembunyikan password');
+                btnToggle.setAttribute('aria-label', 'Sembunyikan password');
+            } else {
+                passwordInput.type = 'password';
+                iconToggle.className = 'bi bi-eye text-muted';
+                btnToggle.setAttribute('title', 'Lihat password');
+                btnToggle.setAttribute('aria-label', 'Lihat password');
+            }
+        }
+
+        // Klik tombol view untuk melihat atau menyembunyikan password saat mengisi
+        btnToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const willShow = passwordInput.type === 'password';
+            setVisibility(willShow);
+            passwordInput.focus();
+        });
+
+        // Demi keamanan: hanya bisa dilihat saat aktif mengisi password di field
+        // Jika kursor berpindah (blur), password otomatis disembunyikan kembali
+        passwordInput.addEventListener('blur', function() {
+            setTimeout(function() {
+                if (document.activeElement !== btnToggle) {
+                    setVisibility(false);
+                }
+            }, 180);
+        });
+
+        // Pastikan kembali ke mode tersembunyi saat form login dikirim
+        const form = passwordInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                setVisibility(false);
+            });
+        }
+    }
+});
+</script>
+<?php
+$scripts = ob_get_clean();
 
 echo view('layouts.app', get_defined_vars())->render();

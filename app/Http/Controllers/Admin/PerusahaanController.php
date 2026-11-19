@@ -42,9 +42,15 @@ class PerusahaanController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'nama_perusahaan' => ['required', 'string', 'max:255', Rule::unique('perusahaans', 'nama_perusahaan')->whereNull('deleted_at')],
-            'kode_perusahaan' => 'nullable|string|max:50',
-            'kategori'        => 'required|in:Pemegang IUP,Kontraktor,Subkontraktor,Lainnya',
+            'nama_perusahaan'       => ['required', 'string', 'max:255', Rule::unique('perusahaans', 'nama_perusahaan')->whereNull('deleted_at')],
+            'kode_perusahaan'       => 'nullable|string|max:50',
+            'kategori'              => 'required|in:Pemegang IUP,Kontraktor,Subkontraktor,Lainnya',
+            'nama_ktt_default'      => 'nullable|string|max:255',
+            'jenis_perizinan'       => 'nullable|string',
+            'jenis_komoditas'       => 'nullable|string|max:255',
+            'alamat_kantor_site'    => 'nullable|string',
+            'alamat_lokasi_tambang' => 'nullable|string',
+            'alamat_kantor_pusat'   => 'nullable|string',
         ], [
             'nama_perusahaan.required' => 'Nama perusahaan wajib diisi.',
             'nama_perusahaan.unique'   => 'Nama perusahaan ini sudah terdaftar dalam sistem.',
@@ -53,10 +59,16 @@ class PerusahaanController extends Controller
         ]);
 
         $perusahaan = Perusahaan::create([
-            'nama_perusahaan' => $request->nama_perusahaan,
-            'kode_perusahaan' => $request->kode_perusahaan,
-            'kategori'        => $request->kategori,
-            'is_active'       => true,
+            'nama_perusahaan'       => $request->nama_perusahaan,
+            'kode_perusahaan'       => $request->kode_perusahaan,
+            'kategori'              => $request->kategori,
+            'nama_ktt_default'      => $request->nama_ktt_default,
+            'jenis_perizinan'       => $request->jenis_perizinan,
+            'jenis_komoditas'       => $request->jenis_komoditas,
+            'alamat_kantor_site'    => $request->alamat_kantor_site,
+            'alamat_lokasi_tambang' => $request->alamat_lokasi_tambang,
+            'alamat_kantor_pusat'   => $request->alamat_kantor_pusat,
+            'is_active'             => true,
         ]);
 
         \App\Models\AuditLog::create([
@@ -81,9 +93,15 @@ class PerusahaanController extends Controller
         $oldData = $perusahaan->toArray();
 
         $request->validate([
-            'nama_perusahaan' => ['required', 'string', 'max:255', Rule::unique('perusahaans', 'nama_perusahaan')->ignore($perusahaan->id)->whereNull('deleted_at')],
-            'kode_perusahaan' => 'nullable|string|max:50',
-            'kategori'        => 'required|in:Pemegang IUP,Kontraktor,Subkontraktor,Lainnya',
+            'nama_perusahaan'       => ['required', 'string', 'max:255', Rule::unique('perusahaans', 'nama_perusahaan')->ignore($perusahaan->id)->whereNull('deleted_at')],
+            'kode_perusahaan'       => 'nullable|string|max:50',
+            'kategori'              => 'required|in:Pemegang IUP,Kontraktor,Subkontraktor,Lainnya',
+            'nama_ktt_default'      => 'nullable|string|max:255',
+            'jenis_perizinan'       => 'nullable|string',
+            'jenis_komoditas'       => 'nullable|string|max:255',
+            'alamat_kantor_site'    => 'nullable|string',
+            'alamat_lokasi_tambang' => 'nullable|string',
+            'alamat_kantor_pusat'   => 'nullable|string',
         ], [
             'nama_perusahaan.required' => 'Nama perusahaan wajib diisi.',
             'nama_perusahaan.unique'   => 'Nama perusahaan ini sudah terdaftar dalam sistem.',
@@ -92,10 +110,16 @@ class PerusahaanController extends Controller
         ]);
 
         $perusahaan->update([
-            'nama_perusahaan' => $request->nama_perusahaan,
-            'kode_perusahaan' => $request->kode_perusahaan,
-            'kategori'        => $request->kategori,
-            'is_active'       => $request->has('is_active') ? true : false,
+            'nama_perusahaan'       => $request->nama_perusahaan,
+            'kode_perusahaan'       => $request->kode_perusahaan,
+            'kategori'              => $request->kategori,
+            'nama_ktt_default'      => $request->nama_ktt_default,
+            'jenis_perizinan'       => $request->jenis_perizinan,
+            'jenis_komoditas'       => $request->jenis_komoditas,
+            'alamat_kantor_site'    => $request->alamat_kantor_site,
+            'alamat_lokasi_tambang' => $request->alamat_lokasi_tambang,
+            'alamat_kantor_pusat'   => $request->alamat_kantor_pusat,
+            'is_active'             => $request->has('is_active') ? true : false,
         ]);
 
         \App\Models\AuditLog::create([

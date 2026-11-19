@@ -150,6 +150,13 @@ class AuditTahapAwal extends Model
      */
     public static function buildEmptyAttributes(AuditSesi $sesi): array
     {
+        $perusahaan = $sesi->perusahaan;
+        if (!$perusahaan && $sesi->perusahaan_id) {
+            $perusahaan = Perusahaan::find($sesi->perusahaan_id);
+        }
+        $tahun = $sesi->tahun_periode ?? ($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y') : date('Y'));
+        $periodeLabel = $tahun ? "1 Januari {$tahun} s/d 31 Desember {$tahun}" : null;
+
         return [
             'audit_sesi_id'           => $sesi->id,
             'no_dokumen_header'       => null,
@@ -157,13 +164,13 @@ class AuditTahapAwal extends Model
             'no_revisi'               => null,
             'tanggal_terbit'          => null,
             'tanggal_tinjau_ulang'    => null,
-            'nama_perusahaan_auditi'  => null,
-            'jenis_perizinan'         => null,
-            'jenis_komoditas'         => null,
-            'alamat_kantor_site'      => null,
-            'alamat_lokasi_tambang'   => null,
-            'alamat_kantor_pusat'     => null,
-            'periode_audit_label'     => null,
+            'nama_perusahaan_auditi'  => $perusahaan?->nama_perusahaan ?? $sesi->area_audit,
+            'jenis_perizinan'         => $perusahaan?->jenis_perizinan,
+            'jenis_komoditas'         => $perusahaan?->jenis_komoditas,
+            'alamat_kantor_site'      => $perusahaan?->alamat_kantor_site,
+            'alamat_lokasi_tambang'   => $perusahaan?->alamat_lokasi_tambang,
+            'alamat_kantor_pusat'     => $perusahaan?->alamat_kantor_pusat,
+            'periode_audit_label'     => $periodeLabel,
             'kinerja_kp'              => [],
             'faktor_penyesuaian'      => [],
             'jumlah_pekerja'          => null,
@@ -176,7 +183,12 @@ class AuditTahapAwal extends Model
             'no_surat_tugas'          => null,
             'tanggal_surat_tugas'     => null,
             'tim_audit_tahap_1'       => [],
-            'kontak_awal'             => [],
+            'kontak_awal'             => [
+                'hari_tanggal'       => null,
+                'media'              => null,
+                'perwakilan_auditi'  => $perusahaan?->nama_ktt_default,
+                'jabatan_perwakilan' => $perusahaan?->nama_ktt_default ? 'Kepala Teknik Tambang' : null,
+            ],
             'kelayakan_audit'         => [],
             'kesimpulan_kelayakan'    => null,
             'kecukupan_dokumen'       => [],
@@ -191,7 +203,7 @@ class AuditTahapAwal extends Model
             'harapan_pemangku'        => [],
             'tanggal_berita_acara'    => null,
             'ketua_tim_audit'         => null,
-            'nama_ktt'                => null,
+            'nama_ktt'                => $perusahaan?->nama_ktt_default,
         ];
     }
 
@@ -272,7 +284,7 @@ class AuditTahapAwal extends Model
             'nama_perusahaan_auditi' => $namaPerusahaan,
             'jenis_perizinan'        => ($perusahaan && $perusahaan->jenis_perizinan)
                 ? $perusahaan->jenis_perizinan
-                : "B-43/Pres/11/1986\n323.K/30/DJB/2015",
+                : ($isTtn ? 'B-143/Pres/3/1997' : "B-43/Pres/11/1986\n323.K/30/DJB/2015"),
             'jenis_komoditas'        => ($perusahaan && $perusahaan->jenis_komoditas)
                 ? $perusahaan->jenis_komoditas
                 : 'Emas DMP',
@@ -325,7 +337,7 @@ class AuditTahapAwal extends Model
             'kontak_awal' => [
                 'hari_tanggal'       => "Jumat s/d Minggu, 2- 4 Januari {$tahunDepan}",
                 'media'              => 'Meeting',
-                'perwakilan_auditi'  => ($perusahaan && $perusahaan->nama_ktt_default) ? $perusahaan->nama_ktt_default : 'Tejo Prihantoro',
+                'perwakilan_auditi'  => ($perusahaan && $perusahaan->nama_ktt_default) ? $perusahaan->nama_ktt_default : ($isTtn ? 'Agung Praptono' : 'Tejo Prihantoro'),
                 'jabatan_perwakilan' => 'Kepala Teknik Tambang',
             ],
 
@@ -555,7 +567,7 @@ class AuditTahapAwal extends Model
 
             'tanggal_berita_acara' => "{$tahunDepan}-01-04",
             'ketua_tim_audit'      => 'Fiska Polii',
-            'nama_ktt'             => ($perusahaan && $perusahaan->nama_ktt_default) ? $perusahaan->nama_ktt_default : 'Tejo Prihantoro',
+            'nama_ktt'             => ($perusahaan && $perusahaan->nama_ktt_default) ? $perusahaan->nama_ktt_default : ($isTtn ? 'Agung Praptono' : 'Tejo Prihantoro'),
         ];
     }
 

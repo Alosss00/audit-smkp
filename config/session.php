@@ -39,10 +39,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | Batas waktu user tidak aktif (idle) sebelum otomatis dikeluarkan (auto-logout).
-    | Standar audit & keamanan internal: 15 menit.
+    | Standar audit & keamanan internal: 30 menit.
     |
     */
-    'idle_timeout' => (int) env('SESSION_IDLE_TIMEOUT', 15),
+    'idle_timeout' => (int) env('SESSION_IDLE_TIMEOUT', 30),
 
     'expire_on_close' => false,
 

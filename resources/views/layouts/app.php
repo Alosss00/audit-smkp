@@ -739,7 +739,7 @@ $cspNonce = $cspNonce ?? request()->attributes->get('cspNonce') ?? view()->share
         <!-- Client-Side Auto-Logout on Inactivity Watcher -->
         <script nonce="<?php echo e($cspNonce ?? ''); ?>">
             (function() {
-                const idleTimeoutMinutes = <?php echo (int) config('session.idle_timeout', 15); ?>;
+                const idleTimeoutMinutes = <?php echo (int) config('session.idle_timeout', 30); ?>;
                 const idleTimeoutSeconds = idleTimeoutMinutes * 60;
                 const warningWindowSeconds = Math.min(60, Math.max(10, Math.floor(idleTimeoutSeconds * 0.2)));
 

@@ -5,6 +5,14 @@ ob_start();
 $kinerja = $tahapAwal->kinerja_kp ?? [];
 $faktorPenyesuaian = $tahapAwal->faktor_penyesuaian ?? [];
 $tim1 = !empty($tahapAwal->tim_audit_tahap_1) ? $tahapAwal->tim_audit_tahap_1 : [['nama' => '', 'jabatan' => '', 'no_registrasi' => '']];
+$ketuaTimTahap1 = null;
+foreach ($tim1 as $anggota) {
+    if ((($anggota['jabatan'] ?? '') === 'Ketua Tim Audit') && !empty($anggota['nama'])) {
+        $ketuaTimTahap1 = trim($anggota['nama']);
+        break;
+    }
+}
+$valKetuaTim = $ketuaTimTahap1 ?: ($tahapAwal->ketua_tim_audit ?? '');
 $kontak = $tahapAwal->kontak_awal ?? [];
 $kelayakan = $tahapAwal->kelayakan_audit ?? [];
 $kecukupan = $tahapAwal->kecukupan_dokumen ?? [];
@@ -110,38 +118,66 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- A.1 Data Perusahaan Auditi -->
                 <div class="col-lg-6">
                     <div class="card card-custom p-4 h-100">
-                        <h5 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">
-                            <i class="bi bi-building text-primary me-2"></i>I.A. Data Perusahaan Auditi
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                            <div>
+                                <h5 class="fw-bold text-slate-800 mb-0">
+                                    <i class="bi bi-building text-primary me-2"></i>I.A. Data Perusahaan Auditi
+                                </h5>
+                                <span class="badge bg-primary bg-opacity-10 text-primary small mt-1">
+                                    <i class="bi bi-link-45deg me-1"></i>Otomatis dari Master Perusahaan & Sesi Audit
+                                </span>
+                            </div>
+                            <?php if ($sesi->perusahaan): ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-xs" id="btnSyncPerusahaan" title="Sinkronkan ulang data dari Master Perusahaan & Sesi Audit">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Sinkron Data
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                        <?php
+                            $comp = $sesi->perusahaan;
+                            $thnSesi = $sesi->tahun_periode ?? ($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y') : date('Y'));
+                            $periodeDefault = $thnSesi ? "1 Januari {$thnSesi} s/d 31 Desember {$thnSesi}" : '';
+
+                            $valNamaPerusahaan = $tahapAwal->nama_perusahaan_auditi ?: ($comp->nama_perusahaan ?? $sesi->area_audit ?? '');
+                            $valJenisPerizinan = trim(str_replace(['Jenis Perizinan', "\t"], '', (string) ($tahapAwal->jenis_perizinan ?: ($comp->jenis_perizinan ?? ''))));
+                            $valJenisKomoditas = $tahapAwal->jenis_komoditas ?: ($comp->jenis_komoditas ?? '');
+                            $valAlamatSite     = $tahapAwal->alamat_kantor_site ?: ($comp->alamat_kantor_site ?? '');
+                            $valAlamatTambang  = $tahapAwal->alamat_lokasi_tambang ?: ($comp->alamat_lokasi_tambang ?? '');
+                            $valAlamatPusat    = $tahapAwal->alamat_kantor_pusat ?: ($comp->alamat_kantor_pusat ?? '');
+                            $valPeriodeAudit   = $tahapAwal->periode_audit_label ?: $periodeDefault;
+                        ?>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Nama Perusahaan Auditi</label>
-                            <input type="text" name="nama_perusahaan_auditi" class="form-control" value="<?php echo e($tahapAwal->nama_perusahaan_auditi ?? ''); ?>">
+                            <input type="text" name="nama_perusahaan_auditi" id="input_nama_perusahaan_auditi" class="form-control" value="<?php echo e($valNamaPerusahaan); ?>">
                         </div>
                         <div class="row g-3 mb-3">
                             <div class="col-md-7">
                                 <label class="form-label small fw-bold">Jenis Perizinan (Pisahkan baris jika > 1)</label>
-                                <textarea name="jenis_perizinan" class="form-control" rows="2"><?php echo e($tahapAwal->jenis_perizinan ?? ''); ?></textarea>
+                                <textarea name="jenis_perizinan" id="input_jenis_perizinan" class="form-control" rows="2" placeholder="Contoh: IUP Operasi Produksi No. ... (Tekan Enter untuk baris baru)"><?php echo e($valJenisPerizinan); ?></textarea>
                             </div>
                             <div class="col-md-5">
                                 <label class="form-label small fw-bold">Jenis Komoditas</label>
-                                <input type="text" name="jenis_komoditas" class="form-control" value="<?php echo e($tahapAwal->jenis_komoditas ?? ''); ?>">
+                                <input type="text" name="jenis_komoditas" id="input_jenis_komoditas" class="form-control" value="<?php echo e($valJenisKomoditas); ?>">
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Alamat Kantor Site</label>
-                            <textarea name="alamat_kantor_site" class="form-control" rows="2"><?php echo e($tahapAwal->alamat_kantor_site ?? ''); ?></textarea>
+                            <textarea name="alamat_kantor_site" id="input_alamat_kantor_site" class="form-control" rows="2"><?php echo e($valAlamatSite); ?></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Alamat Lokasi Tambang</label>
-                            <textarea name="alamat_lokasi_tambang" class="form-control" rows="2"><?php echo e($tahapAwal->alamat_lokasi_tambang ?? ''); ?></textarea>
+                            <textarea name="alamat_lokasi_tambang" id="input_alamat_lokasi_tambang" class="form-control" rows="2"><?php echo e($valAlamatTambang); ?></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Alamat Kantor Pusat</label>
-                            <textarea name="alamat_kantor_pusat" class="form-control" rows="3"><?php echo e($tahapAwal->alamat_kantor_pusat ?? ''); ?></textarea>
+                            <textarea name="alamat_kantor_pusat" id="input_alamat_kantor_pusat" class="form-control" rows="3"><?php echo e($valAlamatPusat); ?></textarea>
                         </div>
                         <div>
                             <label class="form-label small fw-bold">Periode Audit</label>
-                            <input type="text" name="periode_audit_label" class="form-control" value="<?php echo e($tahapAwal->periode_audit_label ?? ''); ?>">
+                            <input type="text" name="periode_audit_label" id="input_periode_audit_label" class="form-control" value="<?php echo e($valPeriodeAudit); ?>">
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-info-circle me-1"></i>Diambil dari tahun periode audit yang dipilih saat sesi dibuat (<?php echo e($thnSesi); ?>).
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -284,6 +320,74 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                             <div class="col-md-8">
                                 <label class="form-label small fw-bold">Alokasi Mandays Tahap II (Min. 90% Total & Rincian Auditor)</label>
                                 <input type="text" name="alokasi_tahap_2" id="inpAlokasiTahap2" class="form-control" value="<?php echo e($tahapAwal->alokasi_tahap_2 ?? ''); ?>">
+                                <div class="mt-2 text-muted small d-flex align-items-center gap-1" id="hintAlokasiDurasi">
+                                    <i class="bi bi-calendar-event text-primary"></i>
+                                    <span>Total Durasi Audit: <strong id="lblDurasiHari" class="text-primary">-</strong> (dibulatkan ke atas &bull; otomatis menyinkronkan Jadwal Pelaksanaan di bawah).</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- C. Jadwal Pelaksanaan Audit (Verifikasi Lapangan / Tahap II) -->
+                <div class="col-12" id="row_jadwal_pelaksanaan">
+                    <div id="containerJadwalAudit" class="card card-custom p-4 border-start border-4 border-primary">
+                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="stat-icon-box bg-primary text-white d-flex align-items-center justify-content-center rounded-3" id="jadwalIconBox" style="width: 44px; height: 44px;">
+                                    <i class="bi bi-calendar-check-fill fs-5" id="jadwalIcon"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-slate-800">
+                                        <i class="bi bi-calendar-range text-primary me-2"></i>I.C. Jadwal Pelaksanaan Audit (Verifikasi Lapangan / Tahap II)
+                                    </h5>
+                                    <small class="text-muted" id="jadwalSubtitle">
+                                        Disinkronkan otomatis berdasarkan Alokasi Mandays Tahap II (Form I.B di atas).
+                                    </small>
+                                </div>
+                            </div>
+                            <div id="jadwalStatusBadge">
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2 fw-semibold" id="badgeDurasiAudit">
+                                    <i class="bi bi-clock-history me-1"></i> <span id="textBadgeDurasi">Tersinkronisasi Mandays</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Alert Penjelasan Durasi & Sinkronisasi -->
+                        <div id="jadwalAlertNotice" class="alert alert-info bg-white border border-info border-opacity-25 py-2 px-3 mb-3 d-flex align-items-center justify-content-between gap-2 small">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-info-circle-fill text-info fs-6" id="jadwalAlertIcon"></i>
+                                <span id="jadwalAlertText">
+                                    Total durasi audit lapangan dihitung otomatis berdasarkan pembulatan ke atas (<em>round up / ceil</em>) dari rata-rata hari per auditor pada Alokasi Mandays Tahap II. Tanggal selesai akan otomatis terkalkulasi saat tanggal mulai ditentukan.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Input Tanggal Mulai & Tanggal Selesai -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="input_tanggal_mulai" class="form-label small fw-bold text-slate-800">
+                                    Tanggal Mulai Pelaksanaan Audit (Tahap II) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-slate-300"><i class="bi bi-calendar3 text-primary"></i></span>
+                                    <input type="date" name="tanggal_mulai" id="input_tanggal_mulai" 
+                                           class="form-control" 
+                                           value="<?php echo e($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y-m-d') : ''); ?>" required>
+                                </div>
+                                <small class="text-muted">Awal pelaksanaan verifikasi lapangan / opening meeting.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="input_tanggal_selesai" class="form-label small fw-bold text-slate-800">
+                                    Tanggal Selesai Pelaksanaan Audit (Tahap II) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-slate-300"><i class="bi bi-calendar3-check text-primary"></i></span>
+                                    <input type="date" name="tanggal_selesai" id="input_tanggal_selesai" 
+                                           class="form-control bg-light" 
+                                           value="<?php echo e($sesi->tanggal_selesai ? $sesi->tanggal_selesai->format('Y-m-d') : ''); ?>" required>
+                                </div>
+                                <small class="text-muted" id="infoDurasiAuditText">Akhir pelaksanaan audit lapangan / closing meeting (otomatis terhitung dari durasi).</small>
                             </div>
                         </div>
                     </div>
@@ -334,9 +438,9 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                     <?php foreach($tim1 as $idx => $anggota): ?>
                                         <tr>
                                             <td class="text-center fw-bold row-num"><?php echo e($idx + 1); ?></td>
-                                            <td><input type="text" name="tim_audit_tahap_1[<?php echo e($idx); ?>][nama]" class="form-control form-control-sm" value="<?php echo e($anggota['nama'] ?? ''); ?>"></td>
+                                            <td><input type="text" name="tim_audit_tahap_1[<?php echo e($idx); ?>][nama]" class="form-control form-control-sm tim1-nama" value="<?php echo e($anggota['nama'] ?? ''); ?>"></td>
                                             <td>
-                                                <select name="tim_audit_tahap_1[<?php echo e($idx); ?>][jabatan]" class="form-select form-select-sm">
+                                                <select name="tim_audit_tahap_1[<?php echo e($idx); ?>][jabatan]" class="form-select form-select-sm tim1-jabatan">
                                                     <option value="" <?php echo e(empty($anggota['jabatan']) ? 'selected' : ''); ?>>-- Pilih Jabatan --</option>
                                                     <option value="Ketua Tim Audit" <?php echo e(($anggota['jabatan'] ?? '') === 'Ketua Tim Audit' ? 'selected' : ''); ?>>Ketua Tim Audit</option>
                                                     <option value="Auditor" <?php echo e(($anggota['jabatan'] ?? '') === 'Auditor' ? 'selected' : ''); ?>>Auditor</option>
@@ -468,82 +572,6 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                 <option value="dapat_dilanjutkan" <?php echo e(($tahapAwal->kesimpulan_kecukupan ?? '') === 'dapat_dilanjutkan' ? 'selected' : ''); ?>>Dapat dilanjutkan*) ke tahap berikutnya</option>
                                 <option value="tidak_dapat_dilanjutkan" <?php echo e(($tahapAwal->kesimpulan_kecukupan ?? '') === 'tidak_dapat_dilanjutkan' ? 'selected' : ''); ?>>Belum dapat dilanjutkan</option>
                             </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Jadwal Pelaksanaan Audit (Verifikasi Lapangan / Tahap II) - Baris Paling Bawah Tab 2 -->
-                <div class="col-12" id="row_jadwal_pelaksanaan">
-                    <div id="containerJadwalAudit" class="card card-custom p-4 <?php echo $isJadwalDapatDitentukan ? 'border-success shadow-sm' : 'border-secondary border-dashed bg-light bg-opacity-50'; ?>">
-                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="stat-icon-box <?php echo $isJadwalDapatDitentukan ? 'bg-success text-white' : 'bg-secondary bg-opacity-10 text-secondary'; ?> d-flex align-items-center justify-content-center rounded-3" id="jadwalIconBox" style="width: 44px; height: 44px;">
-                                    <i class="bi <?php echo $isJadwalDapatDitentukan ? 'bi-calendar-check-fill' : 'bi-calendar-x'; ?> fs-5" id="jadwalIcon"></i>
-                                </div>
-                                <div>
-                                    <h5 class="fw-bold mb-0 text-slate-800">
-                                        Jadwal Pelaksanaan Audit (Verifikasi Lapangan / Tahap II)
-                                    </h5>
-                                    <small class="text-muted" id="jadwalSubtitle">
-                                        Ditentukan setelah pengisian evaluasi kelayakan form II.C & kecukupan dokumentasi form II.D.
-                                    </small>
-                                </div>
-                            </div>
-                            <div id="jadwalStatusBadge">
-                                <?php if ($isJadwalDapatDitentukan): ?>
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2 fw-semibold">
-                                        <i class="bi bi-unlock-fill me-1"></i> Siap Ditentukan
-                                    </span>
-                                <?php else: ?>
-                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-2 fw-semibold text-dark">
-                                        <i class="bi bi-lock-fill me-1"></i> Terkunci (Menunggu Evaluasi II.C & II.D)
-                                    </span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- Alert Penjelasan Prasyarat -->
-                        <div id="jadwalAlertNotice" class="alert <?php echo $isJadwalDapatDitentukan ? 'alert-success bg-white border border-success border-opacity-25' : 'alert-warning bg-white border border-warning border-opacity-25'; ?> py-2 px-3 mb-3 d-flex align-items-center justify-content-between gap-2 small">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi <?php echo $isJadwalDapatDitentukan ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-warning'; ?> fs-6" id="jadwalAlertIcon"></i>
-                                <span id="jadwalAlertText">
-                                    <?php if ($isJadwalDapatDitentukan): ?>
-                                        Prasyarat Terpenuhi: Evaluasi Kelayakan Audit (II.C) bernilai <strong>"Layak untuk dilaksanakan"</strong> dan Evaluasi Dokumentasi (II.D) bernilai <strong>"Dapat dilanjutkan ke tahap berikutnya"</strong>. Anda dapat menentukan Jadwal Pelaksanaan Audit berikut ini.
-                                    <?php else: ?>
-                                        Jadwal pelaksanaan audit baru dapat ditentukan setelah form <strong>II.C (7 Indikator)</strong> disimpulkan <em>"Layak untuk dilaksanakan"</em> dan form <strong>II.D (7 Elemen)</strong> disimpulkan <em>"Dapat dilanjutkan*) ke tahap berikutnya"</em> di atas.
-                                    <?php endif; ?>
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Input Tanggal Mulai & Tanggal Selesai -->
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="input_tanggal_mulai" class="form-label small fw-bold text-slate-800">
-                                    Tanggal Mulai Pelaksanaan Audit (Tahap II) <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-slate-300"><i class="bi bi-calendar3 text-primary"></i></span>
-                                    <input type="date" name="tanggal_mulai" id="input_tanggal_mulai" 
-                                           class="form-control <?php echo $isJadwalDapatDitentukan ? '' : 'bg-light'; ?>" 
-                                           value="<?php echo e($sesi->tanggal_mulai ? $sesi->tanggal_mulai->format('Y-m-d') : ''); ?>" 
-                                           <?php echo $isJadwalDapatDitentukan ? '' : 'disabled'; ?> required>
-                                </div>
-                                <small class="text-muted">Awal pelaksanaan verifikasi lapangan / opening meeting.</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="input_tanggal_selesai" class="form-label small fw-bold text-slate-800">
-                                    Tanggal Selesai Pelaksanaan Audit (Tahap II) <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-slate-300"><i class="bi bi-calendar3-check text-primary"></i></span>
-                                    <input type="date" name="tanggal_selesai" id="input_tanggal_selesai" 
-                                           class="form-control <?php echo $isJadwalDapatDitentukan ? '' : 'bg-light'; ?>" 
-                                           value="<?php echo e($sesi->tanggal_selesai ? $sesi->tanggal_selesai->format('Y-m-d') : ''); ?>" 
-                                           <?php echo $isJadwalDapatDitentukan ? '' : 'disabled'; ?> required>
-                                </div>
-                                <small class="text-muted">Akhir pelaksanaan audit lapangan / closing meeting.</small>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -910,7 +938,13 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Nama Ketua Tim Audit (Penandatangan 1)</label>
-                            <input type="text" name="ketua_tim_audit" class="form-control" value="<?php echo e($tahapAwal->ketua_tim_audit ?? ''); ?>">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-person-badge text-primary"></i></span>
+                                <input type="text" name="ketua_tim_audit" id="inpKetuaTimAudit" class="form-control" value="<?php echo e($valKetuaTim); ?>">
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-link-45deg me-1"></i>Otomatis terhubung dari Auditor dengan jabatan <strong>Ketua Tim Audit</strong> di bagian II.A.
+                            </small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Nama Kepala Teknik Tambang / KTT (Penandatangan 2)</label>
@@ -994,14 +1028,51 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function syncKetuaTimAuditFromTim1() {
+        const inpKetua = document.getElementById('inpKetuaTimAudit');
+        if (!inpKetua) return;
+
+        let ketuaNama = '';
+        const rows = document.querySelectorAll('#tableTim1 tbody tr');
+        for (const tr of rows) {
+            const selJabatan = tr.querySelector('.tim1-jabatan');
+            const inpNama = tr.querySelector('.tim1-nama');
+            if (selJabatan && inpNama && selJabatan.value === 'Ketua Tim Audit' && inpNama.value.trim() !== '') {
+                ketuaNama = inpNama.value.trim();
+                break;
+            }
+        }
+        if (ketuaNama) {
+            inpKetua.value = ketuaNama;
+        }
+    }
+
+    const tableTim1 = document.getElementById('tableTim1');
+    if (tableTim1) {
+        tableTim1.addEventListener('input', function (e) {
+            if (e.target && e.target.classList.contains('tim1-nama')) {
+                syncKetuaTimAuditFromTim1();
+            }
+        });
+        tableTim1.addEventListener('change', function (e) {
+            if (e.target && e.target.classList.contains('tim1-jabatan')) {
+                syncKetuaTimAuditFromTim1();
+            }
+        });
+    }
+
     document.body.addEventListener('click', function (e) {
         const removeRowBtn = e.target.closest('.btn-remove-row');
         if (removeRowBtn) {
             const tr = removeRowBtn.closest('tr');
             const table = tr ? tr.closest('table') : null;
             if (tr && table && table.querySelectorAll('tbody tr').length > 1) {
+                const wasTable1 = table.id === 'tableTim1';
                 tr.remove();
                 renumberTable(table);
+                if (wasTable1) {
+                    syncKetuaTimAuditFromTim1();
+                }
             }
         }
 
@@ -1011,6 +1082,59 @@ document.addEventListener('DOMContentLoaded', function () {
             if (group) group.remove();
         }
     });
+
+    // Sinkronkan Form I.A dengan data master perusahaan & periode sesi
+    const btnSyncPerusahaan = document.getElementById('btnSyncPerusahaan');
+    if (btnSyncPerusahaan) {
+        btnSyncPerusahaan.addEventListener('click', function () {
+            const data = <?php echo json_encode([
+                'nama'     => $comp->nama_perusahaan ?? '',
+                'izin'     => $comp->jenis_perizinan ?? '',
+                'komoditas'=> $comp->jenis_komoditas ?? '',
+                'site'     => $comp->alamat_kantor_site ?? '',
+                'tambang'  => $comp->alamat_lokasi_tambang ?? '',
+                'pusat'    => $comp->alamat_kantor_pusat ?? '',
+                'periode'  => $periodeDefault,
+                'ktt'      => $comp->nama_ktt_default ?? '',
+            ]); ?>;
+
+            if (document.getElementById('input_nama_perusahaan_auditi')) {
+                document.getElementById('input_nama_perusahaan_auditi').value = data.nama;
+            }
+            if (document.getElementById('input_jenis_perizinan')) {
+                document.getElementById('input_jenis_perizinan').value = data.izin;
+            }
+            if (document.getElementById('input_jenis_komoditas')) {
+                document.getElementById('input_jenis_komoditas').value = data.komoditas;
+            }
+            if (document.getElementById('input_alamat_kantor_site')) {
+                document.getElementById('input_alamat_kantor_site').value = data.site;
+            }
+            if (document.getElementById('input_alamat_lokasi_tambang')) {
+                document.getElementById('input_alamat_lokasi_tambang').value = data.tambang;
+            }
+            if (document.getElementById('input_alamat_kantor_pusat')) {
+                document.getElementById('input_alamat_kantor_pusat').value = data.pusat;
+            }
+            if (document.getElementById('input_periode_audit_label')) {
+                document.getElementById('input_periode_audit_label').value = data.periode;
+            }
+
+            const inpKtt = document.querySelector('input[name="nama_ktt"]');
+            if (inpKtt && data.ktt) {
+                inpKtt.value = data.ktt;
+            }
+
+            btnSyncPerusahaan.classList.remove('btn-outline-primary');
+            btnSyncPerusahaan.classList.add('btn-success');
+            btnSyncPerusahaan.innerHTML = '<i class="bi bi-check-circle me-1"></i> Data Tersinkron!';
+            setTimeout(function() {
+                btnSyncPerusahaan.classList.remove('btn-success');
+                btnSyncPerusahaan.classList.add('btn-outline-primary');
+                btnSyncPerusahaan.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Sinkron Data';
+            }, 2500);
+        });
+    }
 
     // Calculator for Mandays
     const btnCalc = document.getElementById('btnHitungMandaysOtomatis');
@@ -1027,6 +1151,9 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('inpTotalMandays').value = total.toFixed(1);
             document.getElementById('inpAlokasiTahap1').value = tahap1;
             document.getElementById('inpAlokasiTahap2').value = `${tahap2} Hari ( ${hariPerAuditor} Hari, ${jmlAuditor} Auditor)`;
+            if (typeof syncTanggalSelesaiOtomatis === 'function') {
+                syncTanggalSelesaiOtomatis();
+            }
         });
     }
 
@@ -1038,9 +1165,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td class="text-center fw-bold row-num"></td>
-            <td><input type="text" name="tim_audit_tahap_1[${idx}][nama]" class="form-control form-control-sm"></td>
+            <td><input type="text" name="tim_audit_tahap_1[${idx}][nama]" class="form-control form-control-sm tim1-nama"></td>
             <td>
-                <select name="tim_audit_tahap_1[${idx}][jabatan]" class="form-select form-select-sm">
+                <select name="tim_audit_tahap_1[${idx}][jabatan]" class="form-select form-select-sm tim1-jabatan">
                     <option value="" selected>-- Pilih Jabatan --</option>
                     <option value="Ketua Tim Audit">Ketua Tim Audit</option>
                     <option value="Auditor">Auditor</option>
@@ -1192,124 +1319,116 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ========================================================
-    // Validasi & Aktivasi Reaktif: Jadwal Pelaksanaan Audit
-    // Berdasarkan Kelayakan (II.C) & Kecukupan Dokumen (II.D)
+    // Sinkronisasi Durasi Audit Mandays Tahap II & Jadwal Pelaksanaan
     // ========================================================
-    const selKelayakan = document.getElementById('selectKesimpulanKelayakan');
-    const selKecukupan = document.getElementById('selectKesimpulanKecukupan');
+    const inpAlokasiTahap2 = document.getElementById('inpAlokasiTahap2');
     const inpTglMulai = document.getElementById('input_tanggal_mulai');
     const inpTglSelesai = document.getElementById('input_tanggal_selesai');
-    const containerJadwal = document.getElementById('containerJadwalAudit');
-    const jadwalBadge = document.getElementById('jadwalStatusBadge');
-    const jadwalAlertText = document.getElementById('jadwalAlertText');
-    const jadwalAlertNotice = document.getElementById('jadwalAlertNotice');
-    const jadwalAlertIcon = document.getElementById('jadwalAlertIcon');
-    const jadwalIconBox = document.getElementById('jadwalIconBox');
-    const jadwalIcon = document.getElementById('jadwalIcon');
+    const lblDurasiHari = document.getElementById('lblDurasiHari');
+    const textBadgeDurasi = document.getElementById('textBadgeDurasi');
+    const infoDurasiAuditText = document.getElementById('infoDurasiAuditText');
 
-    function checkJadwalEligibility() {
-        const valKelayakan = selKelayakan ? selKelayakan.value : '';
-        const valKecukupan = selKecukupan ? selKecukupan.value : '';
+    function getDurasiHariAudit() {
+        const alokasiText = inpAlokasiTahap2 ? inpAlokasiTahap2.value.trim() : '';
 
-        const isEligible = (valKelayakan === 'layak' && valKecukupan === 'dapat_dilanjutkan');
+        // 1. Ekstrak nilai rincian hari per auditor, misal: "( 4.9 Hari, 5 Auditor)" atau "( 4,9 Hari, 5 Auditor)"
+        const matchPerAuditor = alokasiText.match(/\(\s*([\d\.,]+)\s*Hari/i);
+        if (matchPerAuditor) {
+            const rawVal = parseFloat(matchPerAuditor[1].replace(',', '.'));
+            if (!isNaN(rawVal) && rawVal > 0) {
+                return Math.ceil(rawVal);
+            }
+        }
 
-        if (isEligible) {
-            // AKTIFKAN JADWAL
-            if (inpTglMulai) {
-                inpTglMulai.removeAttribute('disabled');
-                inpTglMulai.classList.remove('bg-light');
+        // 2. Ekstrak angka pertama jika format teks langsung, misal "5 Hari" atau "4.9 Hari"
+        const matchFirstNum = alokasiText.match(/^([\d\.,]+)\s*Hari/i);
+        if (matchFirstNum) {
+            const rawVal = parseFloat(matchFirstNum[1].replace(',', '.'));
+            if (!isNaN(rawVal) && rawVal > 0) {
+                const jmlAuditor = document.querySelectorAll('#tableTim2 tbody tr').length || 1;
+                if (rawVal > 10 && jmlAuditor > 1) {
+                    return Math.ceil(rawVal / jmlAuditor);
+                }
+                return Math.ceil(rawVal);
             }
-            if (inpTglSelesai) {
-                inpTglSelesai.removeAttribute('disabled');
-                inpTglSelesai.classList.remove('bg-light');
-            }
+        }
 
-            if (containerJadwal) {
-                containerJadwal.className = 'card card-custom p-4 border-success shadow-sm';
+        // 3. Fallback kalkulasi manual dari input Mandays
+        const total = parseFloat(document.getElementById('inpTotalMandays')?.value) || 0;
+        const tahap1 = parseFloat(document.getElementById('inpAlokasiTahap1')?.value) || Math.round(total * 0.1);
+        const jmlAuditor = document.querySelectorAll('#tableTim2 tbody tr').length || 1;
+        if (total > 0 && jmlAuditor > 0) {
+            const sisa = total - tahap1;
+            const hariPerAuditor = sisa / jmlAuditor;
+            if (hariPerAuditor > 0) {
+                return Math.ceil(hariPerAuditor);
             }
+        }
 
-            if (jadwalIconBox) {
-                jadwalIconBox.className = 'stat-icon-box bg-success text-white d-flex align-items-center justify-content-center rounded-3';
-            }
-            if (jadwalIcon) {
-                jadwalIcon.className = 'bi bi-calendar-check-fill fs-5';
-            }
+        return 1; // default minimal 1 hari
+    }
 
-            if (jadwalBadge) {
-                jadwalBadge.innerHTML = '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2 fw-semibold"><i class="bi bi-unlock-fill me-1"></i> Siap Ditentukan</span>';
-            }
+    function syncTanggalSelesaiOtomatis() {
+        const durasi = getDurasiHariAudit();
 
-            if (jadwalAlertNotice) {
-                jadwalAlertNotice.className = 'alert alert-success bg-white border border-success border-opacity-25 py-2 px-3 mb-3 d-flex align-items-center justify-content-between gap-2 small';
-            }
+        if (lblDurasiHari) {
+            lblDurasiHari.textContent = `${durasi} Hari`;
+        }
+        if (textBadgeDurasi) {
+            textBadgeDurasi.textContent = `Durasi: ${durasi} Hari`;
+        }
 
-            if (jadwalAlertIcon) {
-                jadwalAlertIcon.className = 'bi bi-check-circle-fill text-success fs-6';
-            }
+        if (inpTglMulai && inpTglMulai.value) {
+            const parts = inpTglMulai.value.split('-');
+            if (parts.length === 3) {
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const day = parseInt(parts[2], 10);
 
-            if (jadwalAlertText) {
-                jadwalAlertText.innerHTML = 'Prasyarat Terpenuhi: Evaluasi Kelayakan Audit (II.C) bernilai <strong>"Layak untuk dilaksanakan"</strong> dan Evaluasi Dokumentasi (II.D) bernilai <strong>"Dapat dilanjutkan ke tahap berikutnya"</strong>. Anda dapat menentukan Jadwal Pelaksanaan Audit berikut ini.';
-            }
-        } else {
-            // KUNCI JADWAL
-            if (inpTglMulai) {
-                inpTglMulai.setAttribute('disabled', 'disabled');
-                inpTglMulai.classList.add('bg-light');
-            }
-            if (inpTglSelesai) {
-                inpTglSelesai.setAttribute('disabled', 'disabled');
-                inpTglSelesai.classList.add('bg-light');
-            }
+                const d = new Date(year, month, day);
+                d.setDate(d.getDate() + (durasi - 1));
 
-            if (containerJadwal) {
-                containerJadwal.className = 'card card-custom p-4 border-secondary border-dashed bg-light bg-opacity-50';
-            }
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const computedSelesai = `${yyyy}-${mm}-${dd}`;
 
-            if (jadwalIconBox) {
-                jadwalIconBox.className = 'stat-icon-box bg-secondary bg-opacity-10 text-secondary d-flex align-items-center justify-content-center rounded-3';
-            }
-            if (jadwalIcon) {
-                jadwalIcon.className = 'bi bi-calendar-x fs-5';
-            }
+                if (inpTglSelesai) {
+                    inpTglSelesai.value = computedSelesai;
+                }
 
-            if (jadwalBadge) {
-                jadwalBadge.innerHTML = '<span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-2 fw-semibold text-dark"><i class="bi bi-lock-fill me-1"></i> Terkunci (Menunggu Evaluasi II.C & II.D)</span>';
-            }
-
-            if (jadwalAlertNotice) {
-                jadwalAlertNotice.className = 'alert alert-warning bg-white border border-warning border-opacity-25 py-2 px-3 mb-3 d-flex align-items-center justify-content-between gap-2 small';
-            }
-
-            if (jadwalAlertIcon) {
-                jadwalAlertIcon.className = 'bi bi-exclamation-triangle-fill text-warning fs-6';
-            }
-
-            if (jadwalAlertText) {
-                jadwalAlertText.innerHTML = 'Jadwal pelaksanaan audit baru dapat ditentukan setelah form <strong>II.C (7 Indikator)</strong> disimpulkan <em>"Layak untuk dilaksanakan"</em> dan form <strong>II.D (7 Elemen)</strong> disimpulkan <em>"Dapat dilanjutkan*) ke tahap berikutnya"</em> di atas.';
+                if (infoDurasiAuditText) {
+                    infoDurasiAuditText.innerHTML = `Durasi: <strong>${durasi} Hari</strong> (Otomatis: ${inpTglMulai.value} s/d ${computedSelesai}).`;
+                }
             }
         }
     }
 
-    if (selKelayakan) selKelayakan.addEventListener('change', checkJadwalEligibility);
-    if (selKecukupan) selKecukupan.addEventListener('change', checkJadwalEligibility);
-    document.querySelectorAll('input[name^="kelayakan_audit"]').forEach(inp => inp.addEventListener('input', checkJadwalEligibility));
-    document.querySelectorAll('select[name^="kecukupan_dokumen"]').forEach(sel => sel.addEventListener('change', checkJadwalEligibility));
-
-    // Jalankan pengecekan saat inisialisasi halaman
-    checkJadwalEligibility();
-
-    // Pastikan input enabled saat submit jika memenuhi syarat agar browser mengirimkan value
-    const formTahapAwal = document.getElementById('formTahapAwal');
-    if (formTahapAwal) {
-        formTahapAwal.addEventListener('submit', function (e) {
-            const valKelayakan = selKelayakan ? selKelayakan.value : '';
-            const valKecukupan = selKecukupan ? selKecukupan.value : '';
-            if (valKelayakan === 'layak' && valKecukupan === 'dapat_dilanjutkan') {
-                if (inpTglMulai) inpTglMulai.removeAttribute('disabled');
-                if (inpTglSelesai) inpTglSelesai.removeAttribute('disabled');
-            }
-        });
+    if (inpTglMulai) {
+        inpTglMulai.addEventListener('change', syncTanggalSelesaiOtomatis);
+        inpTglMulai.addEventListener('input', syncTanggalSelesaiOtomatis);
     }
+    if (inpAlokasiTahap2) {
+        inpAlokasiTahap2.addEventListener('input', syncTanggalSelesaiOtomatis);
+        inpAlokasiTahap2.addEventListener('change', syncTanggalSelesaiOtomatis);
+    }
+
+    // Monitoring perubahan jumlah auditor Tim 2 terhadap durasi
+    document.getElementById('btnAddTim2')?.addEventListener('click', function () {
+        setTimeout(syncTanggalSelesaiOtomatis, 100);
+    });
+    document.getElementById('btnCopyFromTim1')?.addEventListener('click', function () {
+        setTimeout(syncTanggalSelesaiOtomatis, 100);
+    });
+    document.getElementById('tableTim2')?.addEventListener('click', function (e) {
+        if (e.target.closest('.btn-remove-row')) {
+            setTimeout(syncTanggalSelesaiOtomatis, 100);
+        }
+    });
+
+    // Inisialisasi awal sinkronisasi durasi & jadwal saat halaman dimuat
+    syncTanggalSelesaiOtomatis();
+    syncKetuaTimAuditFromTim1();
 });
 </script>
 

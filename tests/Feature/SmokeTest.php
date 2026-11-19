@@ -33,6 +33,8 @@ class SmokeTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
+        $response->assertSee('btnTogglePassword');
+        $response->assertSee('bi-eye');
     }
 
     /**

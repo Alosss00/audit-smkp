@@ -48,7 +48,7 @@ class AutoLogoutIdleUser
                 ]);
             }
 
-            $timeoutMinutes = (int) config('session.idle_timeout', 15);
+            $timeoutMinutes = (int) config('session.idle_timeout', 30);
             $timeoutSeconds = $timeoutMinutes * 60;
 
             if ($request->session()->has('last_activity_time')) {

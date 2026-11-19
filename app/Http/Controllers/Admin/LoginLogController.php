@@ -80,7 +80,7 @@ class LoginLogController extends Controller
             ->count();
 
         $users = User::orderBy('name')->get(['id', 'name', 'username', 'role']);
-        $idleTimeoutMinutes = (int) config('session.idle_timeout', 15);
+        $idleTimeoutMinutes = (int) config('session.idle_timeout', 30);
 
         return view('admin.login_logs.index', compact(
             'logs',
