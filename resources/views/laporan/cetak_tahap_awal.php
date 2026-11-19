@@ -613,8 +613,8 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                                 <thead>
                                     <tr>
                                         <th style="width: 45px;">No</th>
-                                        <th>Peninjauan Dokumentasi</th>
-                                        <th style="width: 220px;">Hasil Evaluasi</th>
+                                        <th style="width: 32%;">Peninjauan Dokumentasi</th>
+                                        <th>Hasil Evaluasi</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -543,22 +543,34 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                 <thead class="table-light text-center">
                                     <tr>
                                         <th style="width: 45px;">No</th>
-                                        <th class="text-start">Peninjauan Dokumentasi</th>
-                                        <th style="width: 170px;">Hasil Evaluasi</th>
+                                        <th class="text-start" style="width: 32%;">Peninjauan Dokumentasi</th>
+                                        <th class="text-start">Hasil Evaluasi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach($elemenDokumentasi as $no => $elText): ?>
+                                        <?php
+                                            $val = $kecukupan[$no] ?? '';
+                                            $isPredefined = in_array($val, ['Baik', 'Cukup', 'Kurang'], true);
+                                            $isCustom = !empty($val) && !$isPredefined;
+                                        ?>
                                         <tr>
                                             <td class="text-center fw-bold"><?php echo e($no); ?></td>
                                             <td class="small fw-semibold"><?php echo e($elText); ?></td>
                                             <td>
-                                                <select name="kecukupan_dokumen[<?php echo e($no); ?>]" class="form-select form-select-sm fw-semibold">
-                                                    <option value="" <?php echo e(empty($kecukupan[$no]) ? 'selected' : ''); ?>>-- Pilih --</option>
-                                                    <?php foreach(['Baik', 'Cukup', 'Kurang'] as $opt): ?>
-                                                        <option value="<?php echo e($opt); ?>" <?php echo e(($kecukupan[$no] ?? '') === $opt ? 'selected' : ''); ?>><?php echo e($opt); ?></option>
-                                                    <?php endforeach; ?>
-                                                </select>
+                                                <div class="kecukupan-row-container" data-no="<?php echo e($no); ?>">
+                                                    <select class="form-select form-select-sm fw-semibold sel-kecukupan" id="sel_kecukupan_<?php echo e($no); ?>">
+                                                        <option value="" <?php echo e(empty($val) ? 'selected' : ''); ?>>-- Pilih Evaluasi --</option>
+                                                        <option value="Baik" <?php echo e($val === 'Baik' ? 'selected' : ''); ?>>Baik</option>
+                                                        <option value="Cukup" <?php echo e($val === 'Cukup' ? 'selected' : ''); ?>>Cukup</option>
+                                                        <option value="Kurang" <?php echo e($val === 'Kurang' ? 'selected' : ''); ?>>Kurang</option>
+                                                        <option value="custom" <?php echo e($isCustom ? 'selected' : ''); ?>>Input Deskripsi...</option>
+                                                    </select>
+                                                    <div class="desc-kecukupan-wrapper mt-2 <?php echo e($isCustom ? '' : 'd-none'); ?>" id="wrapper_desc_<?php echo e($no); ?>">
+                                                        <textarea class="form-control form-control-sm txt-kecukupan-desc" id="txt_desc_<?php echo e($no); ?>" rows="3" placeholder="Ketik narasi atau deskripsi hasil evaluasi..."><?php echo e($isCustom ? $val : ''); ?></textarea>
+                                                    </div>
+                                                    <input type="hidden" name="kecukupan_dokumen[<?php echo e($no); ?>]" id="inp_kecukupan_<?php echo e($no); ?>" value="<?php echo e($val); ?>">
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -1425,6 +1437,51 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(syncTanggalSelesaiOtomatis, 100);
         }
     });
+
+    // Interaktivitas Opsi Evaluasi Kecukupan Dokumentasi (Baik, Cukup, Kurang, Input Deskripsi)
+    document.querySelectorAll('.kecukupan-row-container').forEach(function (container) {
+        const select = container.querySelector('.sel-kecukupan');
+        const wrapper = container.querySelector('.desc-kecukupan-wrapper');
+        const textarea = container.querySelector('.txt-kecukupan-desc');
+        const hiddenInp = container.querySelector('input[type="hidden"]');
+
+        if (!select || !wrapper || !textarea || !hiddenInp) return;
+
+        select.addEventListener('change', function () {
+            if (this.value === 'custom') {
+                wrapper.classList.remove('d-none');
+                textarea.focus();
+                hiddenInp.value = textarea.value.trim();
+            } else {
+                wrapper.classList.add('d-none');
+                hiddenInp.value = this.value;
+            }
+        });
+
+        textarea.addEventListener('input', function () {
+            if (select.value === 'custom') {
+                hiddenInp.value = this.value;
+            }
+        });
+    });
+
+    const formTahapAwal = document.getElementById('formTahapAwal');
+    if (formTahapAwal) {
+        formTahapAwal.addEventListener('submit', function () {
+            document.querySelectorAll('.kecukupan-row-container').forEach(function (container) {
+                const select = container.querySelector('.sel-kecukupan');
+                const textarea = container.querySelector('.txt-kecukupan-desc');
+                const hiddenInp = container.querySelector('input[type="hidden"]');
+                if (select && hiddenInp) {
+                    if (select.value === 'custom' && textarea) {
+                        hiddenInp.value = textarea.value.trim();
+                    } else if (select.value !== 'custom') {
+                        hiddenInp.value = select.value;
+                    }
+                }
+            });
+        });
+    }
 
     // Inisialisasi awal sinkronisasi durasi & jadwal saat halaman dimuat
     syncTanggalSelesaiOtomatis();
