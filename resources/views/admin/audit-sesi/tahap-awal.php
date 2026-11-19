@@ -1108,7 +1108,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'pusat'    => $comp->alamat_kantor_pusat ?? '',
                 'periode'  => $periodeDefault,
                 'ktt'      => $comp->nama_ktt_default ?? '',
-            ]); ?>;
+            ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 
             if (document.getElementById('input_nama_perusahaan_auditi')) {
                 document.getElementById('input_nama_perusahaan_auditi').value = data.nama;

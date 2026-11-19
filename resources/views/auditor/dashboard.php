@@ -190,11 +190,11 @@ ob_start();
         new Chart(ctxBar, {
             type: 'bar',
             data: {
-                labels: <?php echo json_encode($areaLabels); ?>,
+                labels: <?php echo json_encode($areaLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
                 datasets: [{
                     label: 'Skor Akhir Pencapaian (%)',
-                    data: <?php echo json_encode($areaScores); ?>,
-                    backgroundColor: <?php echo json_encode($areaColors); ?>,
+                    data: <?php echo json_encode($areaScores, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
+                    backgroundColor: <?php echo json_encode($areaColors, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
                     borderColor: 'rgba(15, 23, 42, 0.1)',
                     borderWidth: 1,
                     borderRadius: 6,
@@ -223,15 +223,15 @@ ob_start();
 
         // Horizontal Bar Chart Findings (Skala 100% per Elemen)
         const ctxFindings = document.getElementById('auditorFindingsChart').getContext('2d');
-        const rawFindingCounts = <?php echo json_encode($findingCounts); ?>;
-        const rawFindingTotals = <?php echo json_encode($findingTotalsPerElemen ?? []); ?>;
+        const rawFindingCounts = <?php echo json_encode($findingCounts, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        const rawFindingTotals = <?php echo json_encode($findingTotalsPerElemen ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
         new Chart(ctxFindings, {
             type: 'bar',
             data: {
-                labels: <?php echo json_encode($findingLabels); ?>,
+                labels: <?php echo json_encode($findingLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
                 datasets: [{
                     label: 'Persentase Temuan per Elemen (%)',
-                    data: <?php echo json_encode($findingPercentages); ?>,
+                    data: <?php echo json_encode($findingPercentages, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
                     backgroundColor: 'rgba(239, 68, 68, 0.75)',
                     borderColor: '#ef4444',
                     borderWidth: 2,

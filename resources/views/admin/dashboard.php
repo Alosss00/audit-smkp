@@ -521,8 +521,8 @@ ob_start();
                 labels: barLabels,
                 datasets: [{
                     label: 'Rata-Rata Pencapaian (%)',
-                    data: <?php echo json_encode($elementScores); ?>,
-                    backgroundColor: <?php echo json_encode($elementColors); ?>,
+                    data: <?php echo json_encode($elementScores, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
+                    backgroundColor: <?php echo json_encode($elementColors, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
                     borderColor: 'rgba(15, 23, 42, 0.1)',
                     borderWidth: 1,
                     borderRadius: 8,
