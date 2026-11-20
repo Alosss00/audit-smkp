@@ -44,6 +44,37 @@ class AuthController extends Controller
             'password.max'      => 'Password tidak boleh lebih dari 255 karakter.',
         ]);
 
+        $targetUser = User::where('username', $request->username)->first();
+
+        // 1. Account Lockout Check: Reject immediately if user account is locked
+        if ($targetUser && $targetUser->isLocked()) {
+            $remainingMinutes = $targetUser->lockoutRemainingMinutes();
+
+            LoginLog::create([
+                'user_id'    => $targetUser->id,
+                'username'   => $request->username,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'device'     => LoginLog::parseDevice($request->userAgent()),
+                'status'     => 'locked',
+                'keterangan' => "Percobaan login pada akun terkunci. Sisa waktu penguncian: {$remainingMinutes} menit",
+                'login_at'   => now(),
+            ]);
+
+            AuditLog::create([
+                'user_id'         => $targetUser->id,
+                'modul'           => 'Autentikasi',
+                'tindakan'        => "Percobaan login pada akun terkunci: '{$targetUser->username}' dari IP " . $request->ip() . " (Sisa: {$remainingMinutes} menit)",
+                'data_lama'       => null,
+                'data_baru'       => ['username' => $request->username, 'ip' => $request->ip(), 'remaining_minutes' => $remainingMinutes],
+                'waktu_perubahan' => now(),
+            ]);
+
+            return back()->withErrors([
+                'username' => "Akun Anda sedang terkunci karena terlalu banyak percobaan login yang gagal. Silakan coba lagi dalam {$remainingMinutes} menit atau hubungi Administrator.",
+            ])->onlyInput('username');
+        }
+
         $remember = $request->has('remember');
 
         if (Auth::attempt($credentials, $remember)) {
@@ -80,6 +111,11 @@ class AuthController extends Controller
                     'username' => 'Akun Anda telah dinonaktifkan oleh Administrator. Silakan hubungi admin.',
                 ])->onlyInput('username');
             }
+
+            // Reset lockout counters on successful authentication
+            $user->failed_login_attempts = 0;
+            $user->locked_until = null;
+            $user->save();
 
             $request->session()->regenerate();
 
@@ -121,8 +157,39 @@ class AuthController extends Controller
                 ->with('success', 'Selamat datang kembali, Auditor Perusahaan!');
         }
 
-        // Authentication failed - record in LoginLog & AuditLog
-        $targetUser = User::where('username', $request->username)->first();
+        // Authentication failed - record failed attempts & enforce account lockout
+        if ($targetUser) {
+            $targetUser->increment('failed_login_attempts');
+
+            if ($targetUser->failed_login_attempts >= 5) {
+                $targetUser->locked_until = now()->addMinutes(15);
+                $targetUser->save();
+
+                LoginLog::create([
+                    'user_id'    => $targetUser->id,
+                    'username'   => $request->username,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'device'     => LoginLog::parseDevice($request->userAgent()),
+                    'status'     => 'locked',
+                    'keterangan' => 'Akun dikunci otomatis selama 15 menit karena 5 kali percobaan login gagal',
+                    'login_at'   => now(),
+                ]);
+
+                AuditLog::create([
+                    'user_id'         => $targetUser->id,
+                    'modul'           => 'Autentikasi',
+                    'tindakan'        => "Akun '{$targetUser->username}' otomatis dikunci selama 15 menit karena 5 kali gagal login dari IP " . $request->ip(),
+                    'data_lama'       => null,
+                    'data_baru'       => ['ip' => $request->ip(), 'failed_attempts' => $targetUser->failed_login_attempts, 'locked_until' => $targetUser->locked_until],
+                    'waktu_perubahan' => now(),
+                ]);
+
+                return back()->withErrors([
+                    'username' => 'Akun Anda telah dikunci selama 15 menit karena 5 kali percobaan login gagal berturut-turut. Silakan hubungi Administrator untuk membuka kunci.',
+                ])->onlyInput('username');
+            }
+        }
 
         LoginLog::create([
             'user_id'    => $targetUser?->id,

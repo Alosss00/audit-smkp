@@ -165,6 +165,31 @@ class UserController extends Controller
     }
 
     /**
+     * Unlock a locked user account and reset failed login attempts counter.
+     */
+    public function unlock(int|string $id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+
+        $oldLockedUntil = $user->locked_until;
+        $user->failed_login_attempts = 0;
+        $user->locked_until = null;
+        $user->save();
+
+        \App\Models\AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Manajemen User',
+            'tindakan'        => "Membuka kunci akun user: '{$user->name}' ({$user->username})",
+            'data_lama'       => ['locked_until' => $oldLockedUntil],
+            'data_baru'       => ['locked_until' => null, 'failed_login_attempts' => 0],
+            'waktu_perubahan' => now(),
+        ]);
+
+        return redirect()->route('admin.users.index')
+            ->with('success', "Kunci akun '{$user->name}' berhasil dibuka. User kini dapat login kembali.");
+    }
+
+    /**
      * Remove the specified user from storage.
      */
     public function destroy(int|string $id): RedirectResponse

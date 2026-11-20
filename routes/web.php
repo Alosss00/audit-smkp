@@ -118,6 +118,7 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
 
             // User Management CRUD with Rate Limiting
             Route::middleware('throttle:30,1')->group(function () {
+                Route::post('/users/{id}/unlock', [UserController::class, 'unlock'])->name('users.unlock');
                 Route::patch('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
                 Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
                 Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');

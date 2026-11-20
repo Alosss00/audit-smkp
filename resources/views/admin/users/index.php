@@ -56,7 +56,11 @@ ob_start();
                                 <?php endif; ?>
                             </td>
                             <td class="text-center">
-                                <?php if ($u->is_active): ?>
+                                <?php if ($u->isLocked()): ?>
+                                    <span class="badge bg-danger rounded-pill px-3 py-2" title="Terkunci hingga <?php echo e($u->locked_until->format('H:i:s')); ?>">
+                                        <i class="bi bi-lock-fill me-1"></i>Terkunci (<?php echo e($u->lockoutRemainingMinutes()); ?>m)
+                                    </span>
+                                <?php elseif ($u->is_active): ?>
                                     <span class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Aktif</span>
                                 <?php else: ?>
                                     <span class="badge bg-danger rounded-pill px-3 py-2"><i class="bi bi-x-circle-fill me-1"></i>Nonaktif</span>
@@ -64,6 +68,14 @@ ob_start();
                             </td>
                             <td class="text-end">
                                 <div class="btn-group gap-1">
+                                    <?php if ($u->isLocked()): ?>
+                                        <form action="<?php echo route('admin.users.unlock', $u->id); ?>" method="POST" class="d-inline" data-confirm="Buka kunci akun '<?php echo e($u->name); ?>'?">
+                                            <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
+                                            <button type="submit" class="btn btn-sm btn-warning text-dark rounded-2 fw-semibold" title="Buka Kunci Akun">
+                                                <i class="bi bi-unlock-fill me-1"></i> Buka Kunci
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
                                     <?php if ($u->id !== auth()->id()): ?>
                                         <?php if ($u->is_active): ?>
                                             <button type="button" class="btn btn-sm btn-outline-danger rounded-2" data-bs-toggle="modal" data-bs-target="#toggleUserModal<?php echo e($u->id); ?>">

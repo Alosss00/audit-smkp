@@ -26,6 +26,8 @@ class User extends Authenticatable
         'role',
         'area',
         'is_active',
+        'failed_login_attempts',
+        'locked_until',
     ];
 
     /**
@@ -44,9 +46,11 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'is_active' => 'boolean',
+        'email_verified_at'     => 'datetime',
+        'password'              => 'hashed',
+        'is_active'             => 'boolean',
+        'failed_login_attempts' => 'integer',
+        'locked_until'          => 'datetime',
     ];
 
     /**
@@ -126,5 +130,25 @@ class User extends Authenticatable
             'auditor'      => 'Auditor Perusahaan',
             default        => ucfirst($this->role),
         };
+    }
+
+    /**
+     * Determine if user account is currently locked due to consecutive failed logins.
+     */
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until->isFuture();
+    }
+
+    /**
+     * Get remaining lockout duration in minutes (rounded up).
+     */
+    public function lockoutRemainingMinutes(): int
+    {
+        if (!$this->isLocked()) {
+            return 0;
+        }
+
+        return (int) ceil(now()->diffInSeconds($this->locked_until) / 60);
     }
 }
