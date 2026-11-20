@@ -29,11 +29,16 @@ class AttachmentController extends Controller
             }
 
             $path = $pica->bukti_perbaikan;
-            if (!$path || !Storage::disk('public')->exists($path)) {
+            if (!$path) {
                 abort(404, 'File bukti perbaikan tidak ditemukan.');
             }
 
-            return response()->file(Storage::disk('public')->path($path));
+            $fullPath = $this->resolveFilePath($path);
+            if (!$fullPath) {
+                abort(404, 'File bukti perbaikan tidak ditemukan pada storage.');
+            }
+
+            return $this->buildSecureFileResponse($fullPath);
         }
 
         if ($type === 'lampiran') {
@@ -61,14 +66,75 @@ class AttachmentController extends Controller
                 $matchedPath = $detail->lampiran_array[0];
             }
 
-            if (!$matchedPath || !Storage::disk('public')->exists($matchedPath)) {
+            if (!$matchedPath) {
                 abort(404, 'File lampiran kriteria tidak ditemukan.');
             }
 
-            return response()->file(Storage::disk('public')->path($matchedPath));
+            $fullPath = $this->resolveFilePath($matchedPath);
+            if (!$fullPath) {
+                abort(404, 'File lampiran kriteria tidak ditemukan pada storage.');
+            }
+
+            return $this->buildSecureFileResponse($fullPath);
         }
 
         abort(404, 'Tipe berkas tidak dikenali.');
+    }
+
+    /**
+     * Resolve absolute file path, prioritizing private attachments disk with fallback to public disk.
+     */
+    protected function resolveFilePath(string $relativePath): ?string
+    {
+        if (Storage::disk('attachments')->exists($relativePath)) {
+            return Storage::disk('attachments')->path($relativePath);
+        }
+
+        if (Storage::disk('public')->exists($relativePath)) {
+            return Storage::disk('public')->path($relativePath);
+        }
+
+        return null;
+    }
+
+    /**
+     * Build secure BinaryFileResponse with proper Content-Type, X-Content-Type-Options, and Content-Disposition.
+     */
+    protected function buildSecureFileResponse(string $fullPath): BinaryFileResponse
+    {
+        $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        $basename = basename($fullPath);
+
+        $mimeType = @mime_content_type($fullPath);
+        if (!$mimeType || $mimeType === 'application/x-empty') {
+            $extensionMap = [
+                'pdf'  => 'application/pdf',
+                'png'  => 'image/png',
+                'jpg'  => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'gif'  => 'image/gif',
+                'webp' => 'image/webp',
+                'svg'  => 'image/svg+xml',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'zip'  => 'application/zip',
+                'txt'  => 'text/plain',
+            ];
+            $mimeType = $extensionMap[$extension] ?? 'application/octet-stream';
+        }
+
+        $inlineExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+        $disposition = in_array($extension, $inlineExtensions, true)
+            ? 'inline; filename="' . addcslashes($basename, '"') . '"'
+            : 'attachment; filename="' . addcslashes($basename, '"') . '"';
+
+        $headers = [
+            'Content-Type'           => $mimeType,
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Disposition'    => $disposition,
+        ];
+
+        return response()->file($fullPath, $headers);
     }
 }
 

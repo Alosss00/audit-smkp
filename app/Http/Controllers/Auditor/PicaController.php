@@ -145,12 +145,16 @@ class PicaController extends Controller
             'tindakan_pencegahan' => $request->tindakan_pencegahan,
         ];
 
-        // Handle proof attachment upload
+        // Handle proof attachment upload to private attachments disk
         if ($request->hasFile('bukti_perbaikan') && $request->file('bukti_perbaikan')->isValid()) {
-            if ($pica->bukti_perbaikan && Storage::disk('public')->exists($pica->bukti_perbaikan)) {
-                Storage::disk('public')->delete($pica->bukti_perbaikan);
+            if ($pica->bukti_perbaikan) {
+                if (Storage::disk('attachments')->exists($pica->bukti_perbaikan)) {
+                    Storage::disk('attachments')->delete($pica->bukti_perbaikan);
+                } elseif (Storage::disk('public')->exists($pica->bukti_perbaikan)) {
+                    Storage::disk('public')->delete($pica->bukti_perbaikan);
+                }
             }
-            $updatePayload['bukti_perbaikan'] = $request->file('bukti_perbaikan')->store('bukti_pica', 'public');
+            $updatePayload['bukti_perbaikan'] = $request->file('bukti_perbaikan')->store('bukti_pica', 'attachments');
         }
 
         // Auto-transition from open to in_progress if root cause is provided

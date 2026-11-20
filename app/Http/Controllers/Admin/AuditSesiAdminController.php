@@ -256,7 +256,9 @@ class AuditSesiAdminController extends Controller
                     if (!empty($data['hapus_lampiran']) && is_array($data['hapus_lampiran'])) {
                         foreach ($data['hapus_lampiran'] as $delPath) {
                             if (is_string($delPath) && in_array($delPath, $existingLampirans, true)) {
-                                if (Storage::disk('public')->exists($delPath)) {
+                                if (Storage::disk('attachments')->exists($delPath)) {
+                                    Storage::disk('attachments')->delete($delPath);
+                                } elseif (Storage::disk('public')->exists($delPath)) {
                                     Storage::disk('public')->delete($delPath);
                                 }
                                 $existingLampirans = array_diff($existingLampirans, [$delPath]);
@@ -264,15 +266,15 @@ class AuditSesiAdminController extends Controller
                         }
                     }
 
-                    // Upload new Lampirans
+                    // Upload new Lampirans to private attachments disk
                     if (!empty($data['lampirans']) && is_array($data['lampirans'])) {
                         foreach ($data['lampirans'] as $file) {
                             if ($file && $file->isValid()) {
-                                $existingLampirans[] = $file->store('lampiran', 'public');
+                                $existingLampirans[] = $file->store('lampiran', 'attachments');
                             }
                         }
                     } elseif (isset($data['lampiran']) && $data['lampiran'] instanceof \Illuminate\Http\UploadedFile && $data['lampiran']->isValid()) {
-                        $existingLampirans[] = $data['lampiran']->store('lampiran', 'public');
+                        $existingLampirans[] = $data['lampiran']->store('lampiran', 'attachments');
                     }
 
                     $existingLampirans = array_values(array_unique(array_filter($existingLampirans)));

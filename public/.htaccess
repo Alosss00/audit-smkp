@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Block direct HTTP access to audit attachments and PICA proofs via public storage symlink
+    RewriteRule ^storage/(lampiran|bukti_pica)/ - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
