@@ -10,13 +10,12 @@ $namaPerusahaanUpper = strtoupper($namaPerusahaan);
 $areaAudit = $sesi->area_audit ?? 'Toka Tindung Project';
 $projectTitle = 'TOKA TINDUNG PROJECT';
 
-$namaLower = strtolower($namaPerusahaan);
-if (str_contains($namaLower, 'meares') || str_contains($namaLower, 'msm')) {
-    $companyLogo = 'logo_msm.jpg';
-} elseif (str_contains($namaLower, 'tondano') || str_contains($namaLower, 'ttn')) {
+$kodePerusahaan = $sesi->perusahaan->kode_perusahaan ?? '';
+$searchStr = strtolower($namaPerusahaan . ' ' . $kodePerusahaan . ' ' . ($sesi->area_audit ?? ''));
+if (str_contains($searchStr, 'tondano') || str_contains($searchStr, 'ttn')) {
     $companyLogo = 'logo_ttn.jpg';
 } else {
-    $companyLogo = 'logo_ttn.jpg';
+    $companyLogo = 'logo_msm.jpg';
 }
 
 if (!function_exists('formatTanggalAuditIndo')) {

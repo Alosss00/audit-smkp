@@ -8,6 +8,13 @@
  */
 
 $namaPerusahaan = $sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit;
+$kodePerusahaan = $sesi->perusahaan->kode_perusahaan ?? '';
+$searchStr = strtolower($namaPerusahaan . ' ' . $kodePerusahaan . ' ' . ($sesi->area_audit ?? ''));
+if (str_contains($searchStr, 'tondano') || str_contains($searchStr, 'ttn')) {
+    $companyLogo = 'logo_ttn.jpg';
+} else {
+    $companyLogo = 'logo_msm.jpg';
+}
 $periodeLabel = ($selectedYear ?? 'semua') === 'semua'
     ? 'Semua Periode Tahun (Akumulasi Total)'
     : 'Tahun ' . ($selectedYear ?: ($sesi->tahun_periode ?? date('Y')));
@@ -61,6 +68,44 @@ $allPicas = collect()
             padding: 25px 30px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             border-radius: 8px;
+        }
+
+        /* 3-Box Header Table */
+        .header-box-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            border: 1px solid #71717a;
+        }
+
+        .header-box-table td {
+            border: 1px solid #71717a;
+            vertical-align: middle;
+            padding: 8px 12px;
+        }
+
+        .header-box-table .logo-col-left {
+            width: 180px;
+            text-align: center;
+        }
+
+        .header-box-table .title-col-center {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .header-box-table .logo-col-right {
+            width: 180px;
+            text-align: center;
+        }
+
+        .header-logo-img {
+            max-height: 52px;
+            max-width: 155px;
+            object-fit: contain;
+            display: inline-block;
         }
 
         .report-header {
@@ -232,12 +277,12 @@ $allPicas = collect()
                 margin: 0 !important;
                 border-radius: 0 !important;
             }
-            .table-hierarki, .meta-table, .table-praktek, .table-pica {
+            .table-hierarki, .meta-table, .table-praktek, .table-pica, .header-box-table {
                 font-size: 8.5px !important;
             }
             .table-hierarki th, .table-hierarki td,
             .meta-table td, .table-praktek th, .table-praktek td,
-            .table-pica th, .table-pica td {
+            .table-pica th, .table-pica td, .header-box-table td {
                 border-color: #475569 !important;
             }
             tr {
@@ -275,11 +320,22 @@ $allPicas = collect()
     </div>
 
     <div class="print-container" id="printableFullReport">
-        <!-- HEADER DOKUMEN -->
-        <div class="report-header text-center">
-            <h4 class="text-uppercase mb-1">LAPORAN LENGKAP HASIL AUDIT INTERNAL SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN (SMKP) MINERBA</h4>
-            <h6>Sesuai Keputusan Direktur Jenderal Mineral dan Batubara No. 185.K/37.04/DJB/2019</h6>
-        </div>
+        <!-- 3-Box Header Table -->
+        <table class="header-box-table">
+            <tr>
+                <td class="logo-col-left">
+                    <img src="<?php echo asset('images/' . $companyLogo); ?>" alt="Company Logo" class="header-logo-img">
+                </td>
+                <td class="title-col-center">
+                    <div style="font-size: 15px; font-weight: 800; letter-spacing: 0.5px; color: #0f172a;">TOKA TINDUNG PROJECT</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #334155; margin-top: 2px;">LAPORAN LENGKAP HASIL AUDIT INTERNAL SMKP MINERBA</div>
+                    <div style="font-size: 9.5px; font-weight: 500; color: #64748b; margin-top: 2px;">Sesuai Keputusan Direktur Jenderal Mineral dan Batubara No. 185.K/37.04/DJB/2019</div>
+                </td>
+                <td class="logo-col-right">
+                    <img src="<?php echo asset('images/logo_archi.png'); ?>" alt="Archi Indonesia" class="header-logo-img">
+                </td>
+            </tr>
+        </table>
 
         <!-- TABEL METADATA -->
         <table class="meta-table mb-3">

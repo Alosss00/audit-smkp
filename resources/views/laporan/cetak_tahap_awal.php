@@ -5,10 +5,9 @@
  */
 
 $namaPerusahaan = $tahapAwal->nama_perusahaan_auditi ?: ($sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit);
-$namaLower = strtolower($namaPerusahaan);
-if (str_contains($namaLower, 'meares') || str_contains($namaLower, 'msm')) {
-    $companyLogo = 'logo_msm.jpg';
-} elseif (str_contains($namaLower, 'tondano') || str_contains($namaLower, 'ttn')) {
+$kodePerusahaan = $sesi->perusahaan->kode_perusahaan ?? '';
+$searchStr = strtolower($namaPerusahaan . ' ' . $kodePerusahaan . ' ' . ($sesi->area_audit ?? ''));
+if (str_contains($searchStr, 'tondano') || str_contains($searchStr, 'ttn')) {
     $companyLogo = 'logo_ttn.jpg';
 } else {
     $companyLogo = 'logo_msm.jpg';
@@ -133,8 +132,8 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
         }
 
         .header-logo-col img {
-            max-height: 48px;
-            max-width: 125px;
+            max-height: 52px;
+            max-width: 155px;
             object-fit: contain;
         }
 
