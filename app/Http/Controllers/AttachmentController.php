@@ -22,11 +22,8 @@ class AttachmentController extends Controller
 
             // Scoping check for Auditor Perusahaan
             if ($user->role === 'auditor') {
-                $userArea = $user->area;
-                $sesiArea = $pica->auditDetail->auditSesi->area_audit ?? '';
-                $sesiComp = $pica->auditDetail->auditSesi->perusahaan->nama_perusahaan ?? '';
-
-                if ($sesiArea !== $userArea && $sesiComp !== $userArea) {
+                $sesi = $pica->auditDetail?->auditSesi;
+                if (!$sesi || !$sesi->matchesUserArea($user->area)) {
                     abort(403, 'Anda tidak memiliki hak akses untuk melihat bukti temuan area ini.');
                 }
             }
@@ -44,11 +41,8 @@ class AttachmentController extends Controller
 
             // Scoping check for Auditor Perusahaan
             if ($user->role === 'auditor') {
-                $userArea = $user->area;
-                $sesiArea = $detail->auditSesi->area_audit ?? '';
-                $sesiComp = $detail->auditSesi->perusahaan->nama_perusahaan ?? '';
-
-                if ($sesiArea !== $userArea && $sesiComp !== $userArea) {
+                $sesi = $detail->auditSesi;
+                if (!$sesi || !$sesi->matchesUserArea($user->area)) {
                     abort(403, 'Anda tidak memiliki hak akses untuk melihat lampiran sesi audit ini.');
                 }
             }

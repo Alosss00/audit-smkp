@@ -25,12 +25,7 @@ class AuditSesiController extends Controller
         }
 
         $query = AuditSesi::with(['user', 'perusahaan'])
-            ->where(function ($q) use ($userArea) {
-                $q->where('area_audit', $userArea)
-                  ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
-                      $qp->where('nama_perusahaan', $userArea);
-                  });
-            })
+            ->forUserArea($userArea)
             ->latest();
 
         if ($request->filled('status')) {
@@ -153,12 +148,7 @@ class AuditSesiController extends Controller
         $chartData      = AuditSesi::getAccumulatedChartData($tahunFilterInt);
         $userArea       = auth()->user()->area;
         $semuaSesi      = AuditSesi::with('perusahaan')
-            ->where(function ($q) use ($userArea) {
-                $q->where('area_audit', $userArea)
-                  ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
-                      $qp->where('nama_perusahaan', $userArea);
-                  });
-            })
+            ->forUserArea($userArea)
             ->orderBy('tahun_periode', 'desc')
             ->latest()
             ->get();
@@ -207,12 +197,7 @@ class AuditSesiController extends Controller
         }
 
         return AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen', 'auditDetails.pica'])
-            ->where(function ($q) use ($userArea) {
-                $q->where('area_audit', $userArea)
-                  ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
-                      $qp->where('nama_perusahaan', $userArea);
-                  });
-            })
+            ->forUserArea($userArea)
             ->findOrFail($id);
     }
 }

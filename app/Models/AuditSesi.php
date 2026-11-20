@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -73,6 +74,32 @@ class AuditSesi extends Model
     public function tahapAwal(): HasOne
     {
         return $this->hasOne(AuditTahapAwal::class, 'audit_sesi_id');
+    }
+
+    /**
+     * Scope a query to only include audit sessions accessible by the given auditor area.
+     * Access granted if area_audit matches OR company's nama_perusahaan matches.
+     */
+    public function scopeForUserArea(Builder $query, string $area): Builder
+    {
+        return $query->where(function (Builder $q) use ($area) {
+            $q->where('area_audit', $area)
+              ->orWhereHas('perusahaan', fn (Builder $qp) => $qp->where('nama_perusahaan', $area));
+        });
+    }
+
+    /**
+     * Determine whether this audit session matches the given auditor area.
+     */
+    public function matchesUserArea(?string $area): bool
+    {
+        if (blank($area)) {
+            return false;
+        }
+
+        $this->loadMissing('perusahaan');
+
+        return $this->area_audit === $area || $this->perusahaan?->nama_perusahaan === $area;
     }
 
     /**

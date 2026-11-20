@@ -23,13 +23,8 @@ class PicaController extends Controller
             abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
         }
 
-        $query = AuditSesi::whereHas('auditDetails.pica')
-            ->where(function ($q) use ($userArea) {
-                $q->where('area_audit', $userArea)
-                  ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
-                      $qp->where('nama_perusahaan', $userArea);
-                  });
-            })
+        $query = AuditSesi::forUserArea($userArea)
+            ->whereHas('auditDetails.pica')
             ->with([
                 'user',
                 'perusahaan',
@@ -61,9 +56,8 @@ class PicaController extends Controller
 
         $auditSesis = $query->latest()->paginate(10);
 
-        $basePicas = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-            $q->where('area_audit', $userArea);
-        })->with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
+        $basePicas = Pica::whereHas('auditDetail.auditSesi', fn ($q) => $q->forUserArea($userArea))
+            ->with(['auditDetail.kriteria', 'auditDetail.auditSesi'])->get();
 
         $groupedSubTemuan = $basePicas->groupBy(function($p) {
             $sesiId = $p->auditDetail->audit_sesi_id ?? 0;
@@ -110,9 +104,9 @@ class PicaController extends Controller
             abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
         }
 
-        $pica = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-            $q->where('area_audit', $userArea);
-        })->with(['auditDetail.kriteria.subElemen.elemen', 'auditDetail.auditSesi'])->findOrFail($id);
+        $pica = Pica::whereHas('auditDetail.auditSesi', fn ($q) => $q->forUserArea($userArea))
+            ->with(['auditDetail.kriteria.subElemen.elemen', 'auditDetail.auditSesi'])
+            ->findOrFail($id);
 
         $lastLog = AuditLog::where('modul', 'PICA')
             ->where('tindakan', 'like', "%PICA #{$pica->id}%")
@@ -134,12 +128,7 @@ class PicaController extends Controller
             abort(403, 'Akun Anda belum ditugaskan ke area manapun. Hubungi Administrator.');
         }
 
-        $pica = Pica::whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-            $q->where('area_audit', $userArea)
-              ->orWhereHas('perusahaan', function ($qp) use ($userArea) {
-                  $qp->where('nama_perusahaan', $userArea);
-              });
-        })->findOrFail($id);
+        $pica = Pica::whereHas('auditDetail.auditSesi', fn ($q) => $q->forUserArea($userArea))->findOrFail($id);
 
         $request->validate([
             'akar_masalah'        => 'nullable|string',

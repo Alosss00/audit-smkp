@@ -353,10 +353,7 @@ class AuditTahapAwalController extends Controller
             if (empty($userArea)) {
                 abort(403, 'Akun Anda belum ditugaskan ke area kerja manapun. Hubungi Administrator.');
             }
-            $query->where(function ($q) use ($userArea) {
-                $q->where('area_audit', $userArea)
-                    ->orWhere('area_audit', 'like', '%'.$userArea.'%');
-            });
+            $query->forUserArea($userArea);
         }
 
         $sesi = $query->findOrFail($id);

@@ -451,21 +451,14 @@ class DashboardController extends Controller
         }
 
         // Base AuditSesi query filtered by user's assigned area
-        $auditQuery = AuditSesi::query();
-        if (! empty($userArea)) {
-            $auditQuery->where('area_audit', $userArea);
-        }
+        $auditQuery = AuditSesi::forUserArea($userArea);
 
         $recentAudits = (clone $auditQuery)->with(['perusahaan', 'user'])->latest()->take(5)->get();
         $allAuditorSessions = (clone $auditQuery)->with(['perusahaan', 'user'])->latest()->get();
 
         // PICA Stats Summary for Auditor (Agregasi berbasis Sub-Elemen per Sesi Audit)
         $basePicas = \App\Models\Pica::select(['id', 'audit_detail_id', 'status', 'tenggat_waktu', 'kategori_temuan'])
-            ->whereHas('auditDetail.auditSesi', function ($q) use ($userArea) {
-                if (! empty($userArea)) {
-                    $q->where('area_audit', $userArea);
-                }
-            })->with([
+            ->whereHas('auditDetail.auditSesi', fn ($q) => $q->forUserArea($userArea))->with([
                 'auditDetail:id,audit_sesi_id,kriteria_id',
                 'auditDetail.kriteria:id,sub_elemen_id',
             ])->get();
@@ -538,20 +531,12 @@ class DashboardController extends Controller
             $findingLabels[] = 'Elemen '.$el->kode_elemen;
 
             // Total non-NA criteria assessed across sessions in user's area for this element (Basis 100% elemen)
-            $totalAssessedInElement = AuditDetail::whereHas('auditSesi', function ($q) use ($userArea) {
-                if (! empty($userArea)) {
-                    $q->where('area_audit', $userArea);
-                }
-            })
+            $totalAssessedInElement = AuditDetail::whereHas('auditSesi', fn ($q) => $q->forUserArea($userArea))
                 ->whereHas('kriteria.subElemen', function ($q) use ($el) {
                     $q->where('elemen_id', $el->id);
                 })->where('is_na', false)->count();
 
-            $count = AuditDetail::whereHas('auditSesi', function ($q) use ($userArea) {
-                if (! empty($userArea)) {
-                    $q->where('area_audit', $userArea);
-                }
-            })
+            $count = AuditDetail::whereHas('auditSesi', fn ($q) => $q->forUserArea($userArea))
                 ->whereHas('kriteria.subElemen', function ($q) use ($el) {
                     $q->where('elemen_id', $el->id);
                 })
