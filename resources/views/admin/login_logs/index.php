@@ -147,7 +147,7 @@ ob_start();
 
         <div class="col-md-2">
             <label class="form-label small fw-bold text-slate-700">Periode Waktu</label>
-            <select name="period" class="form-select" id="periodSelect" onchange="toggleCustomDate(this.value)">
+            <select name="period" class="form-select" id="periodSelect">
                 <option value="all" <?php echo request('period', 'all') === 'all' ? 'selected' : ''; ?>>Semua Waktu</option>
                 <option value="today" <?php echo request('period') === 'today' ? 'selected' : ''; ?>>Hari Ini</option>
                 <option value="yesterday" <?php echo request('period') === 'yesterday' ? 'selected' : ''; ?>>Kemarin</option>
@@ -435,6 +435,15 @@ ob_start();
             row.classList.add('d-none');
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const periodSelect = document.getElementById('periodSelect');
+        if (periodSelect) {
+            periodSelect.addEventListener('change', function () {
+                toggleCustomDate(this.value);
+            });
+        }
+    });
 </script>
 <?php
 $content = ob_get_clean();
