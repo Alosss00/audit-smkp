@@ -1,6 +1,11 @@
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+if (php_sapi_name() !== 'cli' || (function_exists('app') && app()->isProduction())) {
+    http_response_code(403);
+    exit('Forbidden: Script hanya dapat dijalankan melalui CLI di environment non-production.');
+}
+
+require __DIR__ . '/../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -8,13 +13,21 @@ $file = __DIR__ . '/TT-MGT-FRS-026B Formulir Kriteria Audit SMKP_Rev.xlsx';
 $spreadsheet = IOFactory::load($file);
 $sheet = $spreadsheet->getActiveSheet();
 
-echo "=== ROWS 1 to 52 ===\n";
-for ($r = 1; $r <= 52; $r++) {
+$maxRow = $sheet->getHighestRow();
+$maxCol = $sheet->getHighestColumn();
+
+echo "File: $file\n";
+echo "Sheet: " . $sheet->getTitle() . "\n";
+echo "Max Row: $maxRow, Max Col: $maxCol\n\n";
+
+echo "=== DETAILED ROW ANALYSIS (Rows 1 to $maxRow) ===\n";
+for ($r = 1; $r <= $maxRow; $r++) {
     $cells = [];
     for ($col = 'A'; $col <= 'R'; $col++) {
         $val = $sheet->getCell($col . $r)->getValue();
         if ($val !== null && $val !== '') {
             $calc = '';
+            // If it's a formula, show formula and calculated value
             if (is_string($val) && strpos($val, '=') === 0) {
                 try {
                     $calcVal = $sheet->getCell($col . $r)->getCalculatedValue();

@@ -1,6 +1,12 @@
 <?php
-require 'C:/laragon/www/audit/vendor/autoload.php';
-$app = require_once 'C:/laragon/www/audit/bootstrap/app.php';
+
+if (php_sapi_name() !== 'cli' || (function_exists('app') && app()->isProduction())) {
+    http_response_code(403);
+    exit('Forbidden: Script hanya dapat dijalankan melalui CLI di environment non-production.');
+}
+
+require __DIR__ . '/../vendor/autoload.php';
+$app = require_once __DIR__ . '/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $request = Illuminate\Http\Request::create('/admin/audit-sesi/1/matrix', 'GET');
 // We need auth though...

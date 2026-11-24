@@ -2,7 +2,7 @@
     RewriteEngine On
 
     # 1. Strictly block direct access to sensitive files and directories
-    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package(-lock)?\.json|.*\.sql|.*\.sqlite|.*\.log|phpunit\.xml) - [F,L,NC]
+    RewriteRule ^(dev-tools/|\.env|\.git|composer\.(json|lock)|package(-lock)?\.json|.*\.sql|.*\.sqlite|.*\.log|phpunit\.xml) - [F,L,NC]
 
     # 2. Prevent access to storage app private files directly
     RewriteRule ^storage/app/.* - [F,L,NC]
