@@ -20,6 +20,7 @@ class AuditTahapAwal extends Model
         'tanggal_terbit',
         'tanggal_tinjau_ulang',
         'nama_perusahaan_auditi',
+        'perusahaan_induk',
         'jenis_perizinan',
         'jenis_komoditas',
         'alamat_kantor_site',
@@ -37,6 +38,7 @@ class AuditTahapAwal extends Model
         'alokasi_tahap_2',
         'no_surat_tugas',
         'tanggal_surat_tugas',
+        'tanggal_surat_tugas_tahap_2',
         'tim_audit_tahap_1',
         'kontak_awal',
         'kelayakan_audit',
@@ -53,14 +55,16 @@ class AuditTahapAwal extends Model
         'harapan_pemangku',
         'tanggal_berita_acara',
         'ketua_tim_audit',
+        'nama_pjo',
         'nama_ktt',
     ];
 
     protected $casts = [
-        'tanggal_terbit'        => 'date',
-        'tanggal_tinjau_ulang'  => 'date',
-        'tanggal_surat_tugas'   => 'date',
-        'tanggal_berita_acara'  => 'date',
+        'tanggal_terbit'              => 'date',
+        'tanggal_tinjau_ulang'        => 'date',
+        'tanggal_surat_tugas'         => 'date',
+        'tanggal_surat_tugas_tahap_2' => 'date',
+        'tanggal_berita_acara'        => 'date',
         'kinerja_kp'            => 'array',
         'faktor_penyesuaian'    => 'array',
         'tim_audit_tahap_1'     => 'array',
@@ -165,6 +169,7 @@ class AuditTahapAwal extends Model
             'tanggal_terbit'          => null,
             'tanggal_tinjau_ulang'    => null,
             'nama_perusahaan_auditi'  => $perusahaan?->nama_perusahaan ?? $sesi->area_audit,
+            'perusahaan_induk'        => null,
             'jenis_perizinan'         => $perusahaan?->jenis_perizinan,
             'jenis_komoditas'         => $perusahaan?->jenis_komoditas,
             'alamat_kantor_site'      => $perusahaan?->alamat_kantor_site,
@@ -182,13 +187,9 @@ class AuditTahapAwal extends Model
             'alokasi_tahap_2'         => null,
             'no_surat_tugas'          => null,
             'tanggal_surat_tugas'     => null,
+            'tanggal_surat_tugas_tahap_2' => null,
             'tim_audit_tahap_1'       => [],
-            'kontak_awal'             => [
-                'hari_tanggal'       => null,
-                'media'              => null,
-                'perwakilan_auditi'  => $perusahaan?->nama_ktt_default,
-                'jabatan_perwakilan' => $perusahaan?->nama_ktt_default ? 'Kepala Teknik Tambang' : null,
-            ],
+            'kontak_awal'             => [],
             'kelayakan_audit'         => [],
             'kesimpulan_kelayakan'    => null,
             'kecukupan_dokumen'       => [],
@@ -203,7 +204,8 @@ class AuditTahapAwal extends Model
             'harapan_pemangku'        => [],
             'tanggal_berita_acara'    => null,
             'ketua_tim_audit'         => null,
-            'nama_ktt'                => $perusahaan?->nama_ktt_default,
+            'nama_pjo'                => null,
+            'nama_ktt'                => null,
         ];
     }
 
@@ -573,8 +575,7 @@ class AuditTahapAwal extends Model
 
     /**
      * Get or initialize AuditTahapAwal for an AuditSesi:
-     * - Existing old sessions that don't have a record yet get the standard preset.
-     * - Newly created sessions (initialized via createEmptyForSesi) stay blank until filled by user.
+     * Always initializes with blank fields except Data Perusahaan Auditi.
      */
     public static function getOrCreateForSesi(AuditSesi $sesi): self
     {
@@ -582,17 +583,9 @@ class AuditTahapAwal extends Model
 
         $record = self::where('audit_sesi_id', $sesi->id)->first();
         if (!$record) {
-            $record = self::create(self::buildDefaultAttributes($sesi));
-        } elseif (
-            $sesi->created_at
-            && $sesi->created_at->lt(\Carbon\Carbon::parse('2026-11-03 10:05:00'))
-            && $record->jumlah_pekerja === null
-            && empty($record->nama_perusahaan_auditi)
-        ) {
-            // Restore preset if an older session was accidentally cleared
-            $record->update(self::buildDefaultAttributes($sesi));
-            $record->refresh();
+            $record = self::create(self::buildEmptyAttributes($sesi));
         }
+
         return $record;
     }
 

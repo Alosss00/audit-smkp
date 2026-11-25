@@ -4,9 +4,13 @@
  * Mengacu pada Kepdirjen Minerba No. 185.K/37.04/DJB/2019 & SE Dirjen Minerba No. B-7/MB.07/DBT.KP/2022
  */
 
+$isKontraktor = $isKontraktor ?? ($sesi->perusahaan ? $sesi->perusahaan->isKontraktor() : false);
 $namaPerusahaan = $tahapAwal->nama_perusahaan_auditi ?: ($sesi->perusahaan->nama_perusahaan ?? $sesi->area_audit);
+$namaPemegangIup = $isKontraktor
+    ? ($tahapAwal->perusahaan_induk ?: 'PT Meares Soputan Mining')
+    : $namaPerusahaan;
 $kodePerusahaan = $sesi->perusahaan->kode_perusahaan ?? '';
-$searchStr = strtolower($namaPerusahaan . ' ' . $kodePerusahaan . ' ' . ($sesi->area_audit ?? ''));
+$searchStr = strtolower(($isKontraktor ? $namaPemegangIup : $namaPerusahaan) . ' ' . $kodePerusahaan . ' ' . ($sesi->area_audit ?? ''));
 if (str_contains($searchStr, 'tondano') || str_contains($searchStr, 'ttn')) {
     $companyLogo = 'logo_ttn.jpg';
 } else {
@@ -45,6 +49,9 @@ $auditPrev = $tahapAwal->data_audit_sebelumnya ?? [];
 $harapanList = $tahapAwal->harapan_pemangku ?? [];
 
 $tglSuratTugasFormatted = formatTglIndoLengkap($tahapAwal->tanggal_surat_tugas, '25 September 2024');
+$tglSuratTugas2Formatted = $tahapAwal->tanggal_surat_tugas_tahap_2
+    ? formatTglIndoLengkap($tahapAwal->tanggal_surat_tugas_tahap_2)
+    : $tglSuratTugasFormatted;
 $tglTerbitFormatted = $tahapAwal->tanggal_terbit ? formatTglIndoLengkap($tahapAwal->tanggal_terbit) : '07 Mei 2025';
 $tglTinjauFormatted = $tahapAwal->tanggal_tinjau_ulang ? formatTglIndoLengkap($tahapAwal->tanggal_tinjau_ulang) : '07 Mei 2028';
 $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengkap($tahapAwal->tanggal_berita_acara) : '4 Januari 2026';
@@ -368,17 +375,21 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                                     <tr>
                                         <td>Alamat Perusahaan</td>
                                         <td>
-                                            <?php if(!empty($tahapAwal->alamat_kantor_site)): ?>
-                                                <div>Kantor Site:</div>
-                                                <div class="mb-2"><?php echo nl2br(e($tahapAwal->alamat_kantor_site)); ?></div>
-                                            <?php endif; ?>
-                                            <?php if(!empty($tahapAwal->alamat_lokasi_tambang)): ?>
-                                                <div>Lokasi Tambang:</div>
-                                                <div class="mb-2"><?php echo nl2br(e($tahapAwal->alamat_lokasi_tambang)); ?></div>
-                                            <?php endif; ?>
-                                            <?php if(!empty($tahapAwal->alamat_kantor_pusat)): ?>
-                                                <div>Kantor Pusat:</div>
-                                                <div><?php echo nl2br(e($tahapAwal->alamat_kantor_pusat)); ?></div>
+                                            <?php if ($isKontraktor && empty($tahapAwal->alamat_lokasi_tambang) && empty($tahapAwal->alamat_kantor_pusat)): ?>
+                                                <div><?php echo nl2br(e($tahapAwal->alamat_kantor_site ?? '')); ?></div>
+                                            <?php else: ?>
+                                                <?php if(!empty($tahapAwal->alamat_kantor_site)): ?>
+                                                    <div>Kantor Site:</div>
+                                                    <div class="mb-2"><?php echo nl2br(e($tahapAwal->alamat_kantor_site)); ?></div>
+                                                <?php endif; ?>
+                                                <?php if(!empty($tahapAwal->alamat_lokasi_tambang)): ?>
+                                                    <div>Lokasi Tambang:</div>
+                                                    <div class="mb-2"><?php echo nl2br(e($tahapAwal->alamat_lokasi_tambang)); ?></div>
+                                                <?php endif; ?>
+                                                <?php if(!empty($tahapAwal->alamat_kantor_pusat)): ?>
+                                                    <div>Kantor Pusat:</div>
+                                                    <div><?php echo nl2br(e($tahapAwal->alamat_kantor_pusat)); ?></div>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -506,7 +517,11 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                         <div class="sub-bab-title">A. Penetapan Tim Audit Tahap I</div>
                         <div class="content-indent">
                             <p class="narrative">
-                                Kepala Teknik Tambang <?php echo e($namaPerusahaan); ?> melalui Surat Pengangkatan Tim Audit nomor <?php echo e($tahapAwal->no_surat_tugas); ?> tanggal <?php echo e($tglSuratTugasFormatted); ?> telah menugaskan Tim Audit untuk Tahap Pertama Audit Internal Sistem Manajemen Keselamatan Pertambangan (Permulaan Audit, Peninjauan Dokumen, Persiapan Audit Lapangan) di <?php echo e($namaPerusahaan); ?>, sebagai berikut.
+                                <?php if ($isKontraktor): ?>
+                                    Kepala Teknik Tambang <?php echo e($namaPemegangIup); ?> melalui Surat Pengangkatan Tim Audit nomor <?php echo e($tahapAwal->no_surat_tugas); ?> tanggal <?php echo e($tglSuratTugasFormatted); ?> telah menugaskan Tim Audit untuk Tahap Pertama Audit Internal Sistem Manajemen Keselamatan Pertambangan (Permulaan Audit, Peninjauan Dokumen, Persiapan Audit Lapangan) di <?php echo e($namaPerusahaan); ?> untuk area <?php echo e($namaPemegangIup); ?>, sebagai berikut.
+                                <?php else: ?>
+                                    Kepala Teknik Tambang <?php echo e($namaPerusahaan); ?> melalui Surat Pengangkatan Tim Audit nomor <?php echo e($tahapAwal->no_surat_tugas); ?> tanggal <?php echo e($tglSuratTugasFormatted); ?> telah menugaskan Tim Audit untuk Tahap Pertama Audit Internal Sistem Manajemen Keselamatan Pertambangan (Permulaan Audit, Peninjauan Dokumen, Persiapan Audit Lapangan) di <?php echo e($namaPerusahaan); ?>, sebagai berikut.
+                                <?php endif; ?>
                             </p>
 
                             <table class="formal-table white-header">
@@ -644,7 +659,7 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                         <div class="sub-bab-title">A. Penetapan Tim Audit Tahap II</div>
                         <div class="content-indent">
                             <p class="narrative">
-                                Kepala Teknik Tambang <?php echo e($namaPerusahaan); ?> melalui Surat Pengangkatan Tim Audit nomor <?php echo e($tahapAwal->no_surat_tugas); ?> tanggal <?php echo e($tglSuratTugasFormatted); ?> telah menugaskan Tim Audit untuk Tahap Kedua Audit Internal Sistem Manajemen Keselamatan Pertambangan (Pelaksanaan Rapat Pembukaan, Pengumpulan dan Verifikasi Informasi, Perumusan Temuan Audit, Penyiapan Kesimpulan Audit, Pelaksanaan Rapat Penutupan), sebagai berikut:
+                                Kepala Teknik Tambang <?php echo e($namaPemegangIup); ?> melalui Surat Pengangkatan Tim Audit nomor <?php echo e($tahapAwal->no_surat_tugas); ?> tanggal <?php echo e($tglSuratTugas2Formatted); ?> telah menugaskan Tim Audit untuk Tahap Kedua Audit Internal Sistem Manajemen Keselamatan Pertambangan (Pelaksanaan Rapat Pembukaan, Pengumpulan dan Verifikasi Informasi, Perumusan Temuan Audit, Penyiapan Kesimpulan Audit, Pelaksanaan Rapat Penutupan), sebagai berikut:
                             </p>
 
                             <table class="formal-table white-header">
@@ -675,7 +690,7 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                                 Auditor yang ditugaskan juga telah memperhatikan persyaratan yang ditetapkan pada Lampiran II Keputusan Direktur Jenderal Mineral dan Batubara nomor 185.K/37.04/DJB/2019 tentang Petunjuk Teknis Pelaksanaan Keselamatan Pertambangan dan Pelaksanaan, Penilaian, dan Pelaporan Sistem Manajemen Keselamatan Pertambangan dan Surat Edaran Direktur Teknik dan Lingkungan Mineral dan Batubara/Kepala Inspektur Tambang nomor B-7/MB.07/DBT.KP/2022 tanggal 3 Januari 2022 perihal Auditor Internal Sistem Manajemen Keselamatan Pertambangan.
                             </p>
                             <p class="narrative">
-                                Penetapan tanggung jawab Auditor ditetapkan sesuai Prosedur Audit Internal Sistem Manajemen Keselamatan Pertambangan <?php echo e($namaPerusahaan); ?> dan Surat Pengangkatan Auditor nomor <?php echo e($tahapAwal->no_surat_tugas); ?> tanggal <?php echo e($tglSuratTugasFormatted); ?>.
+                                Penetapan tanggung jawab Auditor ditetapkan sesuai Prosedur Audit Internal Sistem Manajemen Keselamatan Pertambangan <?php echo e($namaPemegangIup); ?> dan Surat Pengangkatan Auditor nomor <?php echo e($tahapAwal->no_surat_tugas); ?> tanggal <?php echo e($tglSuratTugas2Formatted); ?>.
                             </p>
                         </div>
 
@@ -708,7 +723,7 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                             </ol>
 
                             <p class="narrative">
-                                Rencana Audit yang memuat informasi angka nomor 1 (satu) s.d. 9 (sembilan) tersebut di atas ditetapkan secara lengkap pada Formulir Rencana Audit <?php echo e($namaPerusahaan); ?> nomor TT-MGT-FRS-026 Formulir Rencanan Audit
+                                Rencana Audit yang memuat informasi angka nomor 1 (satu) s.d. 9 (sembilan) tersebut di atas ditetapkan secara lengkap pada Formulir Rencana Audit <?php echo e($namaPemegangIup); ?> nomor <?php echo $isKontraktor ? 'TT-MGT-FRS-026A' : 'TT-MGT-FRS-026 Formulir Rencanan Audit'; ?>
                             </p>
                             <p class="narrative">
                                 Mempertimbangkan bahwa program Audit Internal Sistem Manajemen Keselamatan Pertambangan wajib didasarkan pada hasil penilaian risiko pada kegiatan operasional dan hasil penilaian kinerja Keselamatan Pertambangan dari Auditi, dan berikut informasi terkait dari <?php echo e($namaPerusahaan); ?> yang <strong>wajib dipertimbangkan</strong> Auditor dalam penetapan metode dan sampel khususnya sebagai <em>critical point</em> untuk jenis pembuktian primer:
@@ -718,16 +733,25 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                             <div class="sub-section-heading">Data Top Risks aspek Keselamatan Pertambangan: Periode Audit <?php echo e($thnPeriode); ?> (<em>Risk of Present</em>)</div>
                             <table class="formal-table">
                                 <thead>
-                                    <tr>
-                                        <th rowspan="2" style="width: 42px;">No</th>
-                                        <th rowspan="2">Kegiatan</th>
-                                        <th rowspan="2" style="width: 175px;">Risiko</th>
-                                        <th colspan="2">Nilai Risiko</th>
-                                    </tr>
-                                    <tr>
-                                        <th style="width: 100px;">Awal</th>
-                                        <th style="width: 100px;">Sisa</th>
-                                    </tr>
+                                    <?php if ($isKontraktor): ?>
+                                        <tr>
+                                            <th style="width: 42px;">No</th>
+                                            <th>Kegiatan</th>
+                                            <th style="width: 190px;">Risiko</th>
+                                            <th style="width: 130px;">Nilai Risiko</th>
+                                        </tr>
+                                    <?php else: ?>
+                                        <tr>
+                                            <th rowspan="2" style="width: 42px;">No</th>
+                                            <th rowspan="2">Kegiatan</th>
+                                            <th rowspan="2" style="width: 175px;">Risiko</th>
+                                            <th colspan="2">Nilai Risiko</th>
+                                        </tr>
+                                        <tr>
+                                            <th style="width: 100px;">Awal</th>
+                                            <th style="width: 100px;">Sisa</th>
+                                        </tr>
+                                    <?php endif; ?>
                                 </thead>
                                 <tbody>
                                     <?php foreach($risksPresent as $idx => $rp): ?>
@@ -736,7 +760,9 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                                             <td><?php echo e($rp['kegiatan'] ?? ''); ?></td>
                                             <td class="text-center"><?php echo e($rp['risiko'] ?? ''); ?></td>
                                             <td class="text-center"><?php echo e($rp['nilai_awal'] ?? ''); ?></td>
-                                            <td class="text-center"><?php echo e($rp['nilai_sisa'] ?? ''); ?></td>
+                                            <?php if (!$isKontraktor): ?>
+                                                <td class="text-center"><?php echo e($rp['nilai_sisa'] ?? ''); ?></td>
+                                            <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -746,16 +772,25 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                             <div class="sub-section-heading">Data Top Risks aspek Keselamatan Pertambangan: Rencana Kegiatan <?php echo e($thnDepan); ?> (<em>Risk of Future</em>)</div>
                             <table class="formal-table">
                                 <thead>
-                                    <tr>
-                                        <th rowspan="2" style="width: 42px;">No</th>
-                                        <th rowspan="2">Kegiatan</th>
-                                        <th rowspan="2" style="width: 175px;">Risiko</th>
-                                        <th colspan="2">Nilai Risiko</th>
-                                    </tr>
-                                    <tr>
-                                        <th style="width: 100px;">Awal</th>
-                                        <th style="width: 100px;">Sisa</th>
-                                    </tr>
+                                    <?php if ($isKontraktor): ?>
+                                        <tr>
+                                            <th style="width: 42px;">No</th>
+                                            <th>Kegiatan</th>
+                                            <th style="width: 190px;">Risiko</th>
+                                            <th style="width: 130px;">Nilai Risiko</th>
+                                        </tr>
+                                    <?php else: ?>
+                                        <tr>
+                                            <th rowspan="2" style="width: 42px;">No</th>
+                                            <th rowspan="2">Kegiatan</th>
+                                            <th rowspan="2" style="width: 175px;">Risiko</th>
+                                            <th colspan="2">Nilai Risiko</th>
+                                        </tr>
+                                        <tr>
+                                            <th style="width: 100px;">Awal</th>
+                                            <th style="width: 100px;">Sisa</th>
+                                        </tr>
+                                    <?php endif; ?>
                                 </thead>
                                 <tbody>
                                     <?php foreach($risksFuture as $idx => $rf): ?>
@@ -764,7 +799,9 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                                             <td><?php echo e($rf['kegiatan'] ?? ''); ?></td>
                                             <td class="text-center"><?php echo e($rf['risiko'] ?? ''); ?></td>
                                             <td class="text-center"><?php echo e($rf['nilai_awal'] ?? ''); ?></td>
-                                            <td class="text-center"><?php echo e($rf['nilai_sisa'] ?? ''); ?></td>
+                                            <?php if (!$isKontraktor): ?>
+                                                <td class="text-center"><?php echo e($rf['nilai_sisa'] ?? ''); ?></td>
+                                            <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -1035,7 +1072,7 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                                         <td colspan="3" class="fw-normal py-2">Ketua Tim Audit</td>
                                     </tr>
                                     <tr style="height: 85px;">
-                                        <td style="width: 35%; vertical-align: middle;"><?php echo e($tahapAwal->ketua_tim_audit ?: 'Fiska Polii'); ?></td>
+                                        <td style="width: 35%; vertical-align: middle;"><?php echo e($tahapAwal->ketua_tim_audit ?: '-'); ?></td>
                                         <td style="width: 35%; vertical-align: bottom;">
                                             <span class="fst-italic" style="font-size: 8pt;">(Tanda Tangan)</span>
                                         </td>
@@ -1044,11 +1081,26 @@ $tglBeritaAcaraFormatted = $tahapAwal->tanggal_berita_acara ? formatTglIndoLengk
                                             <div class="fst-italic" style="font-size: 8pt;">(Tanggal)</div>
                                         </td>
                                     </tr>
+                                    <?php if ($isKontraktor): ?>
+                                        <tr>
+                                            <td colspan="3" class="fw-normal py-2">Penanggung Jawab Operasional dari Auditi (khusus untuk audit perusahaan jasa pertambangan)</td>
+                                        </tr>
+                                        <tr style="height: 85px;">
+                                            <td style="vertical-align: middle;"><?php echo e($tahapAwal->nama_pjo ?: '-'); ?></td>
+                                            <td style="vertical-align: bottom;">
+                                                <span class="fst-italic" style="font-size: 8pt;">(Tanda Tangan)</span>
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                <div><?php echo e($tglBeritaAcaraFormatted); ?></div>
+                                                <div class="fst-italic" style="font-size: 8pt;">(Tanggal)</div>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
                                     <tr>
                                         <td colspan="3" class="fw-normal py-2">Kepala Teknik Tambang</td>
                                     </tr>
                                     <tr style="height: 85px;">
-                                        <td style="vertical-align: middle;"><?php echo e($tahapAwal->nama_ktt ?: 'Tejo Prihantoro'); ?></td>
+                                        <td style="vertical-align: middle;"><?php echo e($tahapAwal->nama_ktt ?: '-'); ?></td>
                                         <td style="vertical-align: bottom;">
                                             <span class="fst-italic" style="font-size: 8pt;">(Tanda Tangan)</span>
                                         </td>

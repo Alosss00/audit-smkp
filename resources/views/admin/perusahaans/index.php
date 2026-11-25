@@ -225,7 +225,7 @@ ob_start();
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-semibold text-slate-800">Nama KTT (Kepala Teknik Tambang)</label>
+                                    <label class="form-label fw-semibold text-slate-800">Nama KTT/PJO</label>
                                     <input type="text" name="nama_ktt_default" class="form-control" value="<?php echo e($perusahaan->nama_ktt_default); ?>" placeholder="Contoh: Tejo Prihantoro">
                                 </div>
                                 <div class="col-md-7">
@@ -297,7 +297,7 @@ ob_start();
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold text-slate-800">Nama KTT (Kepala Teknik Tambang)</label>
+                            <label class="form-label fw-semibold text-slate-800">Nama KTT/PJO</label>
                             <input type="text" name="nama_ktt_default" class="form-control" placeholder="Contoh: Tejo Prihantoro">
                         </div>
                         <div class="col-md-7">

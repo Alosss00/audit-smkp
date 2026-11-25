@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AuditSesi;
 use App\Models\AuditTahapAwal;
+use App\Models\Perusahaan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,10 +57,6 @@ class AuditTahapAwalController extends Controller
                 $tahapAwal->alamat_kantor_pusat = $perusahaan->alamat_kantor_pusat;
                 $changed = true;
             }
-            if (empty($tahapAwal->nama_ktt) && ! empty($perusahaan->nama_ktt_default)) {
-                $tahapAwal->nama_ktt = $perusahaan->nama_ktt_default;
-                $changed = true;
-            }
             if (empty($tahapAwal->periode_audit_label) && $defaultPeriode) {
                 $tahapAwal->periode_audit_label = $defaultPeriode;
                 $changed = true;
@@ -83,6 +80,102 @@ class AuditTahapAwalController extends Controller
             }
         }
 
+        // Cari data Penyusunan Dokumen Tahap Awal Audit periode sebelumnya untuk perusahaan yang sama
+        $prevTahapAwalData = null;
+        $prevTahunLabel = null;
+        $tahunSaatIni = (int) $tahun;
+
+        if ($tahunSaatIni > 0) {
+            $prevSesiQuery = AuditSesi::query()
+                ->where('id', '!=', $sesi->id)
+                ->where('tahun_periode', '<', $tahunSaatIni)
+                ->whereExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('audit_tahap_awals')
+                        ->whereColumn('audit_tahap_awals.audit_sesi_id', 'audit_sesis.id');
+                })
+                ->orderByDesc('tahun_periode')
+                ->orderByDesc('id');
+
+            if ($sesi->perusahaan_id) {
+                $prevSesiQuery->where('perusahaan_id', $sesi->perusahaan_id);
+            } else {
+                $prevSesiQuery->where('area_audit', $sesi->area_audit);
+            }
+
+            $prevSesi = $prevSesiQuery->first();
+            if ($prevSesi) {
+                $prevTahapAwal = AuditTahapAwal::where('audit_sesi_id', $prevSesi->id)->first();
+                if ($prevTahapAwal) {
+                    $prevTahunLabel = (string) ($prevSesi->tahun_periode ?? ($prevSesi->tanggal_mulai ? $prevSesi->tanggal_mulai->format('Y') : 'Sebelumnya'));
+                    // Semua data tahap awal KECUALI form daftar tim audit (tim_audit_tahap_1, tim_audit_tahap_2, surat tugas)
+                    $prevTahapAwalData = [
+                        'tahun_periode' => $prevTahunLabel,
+                        'data_perusahaan' => [
+                            'nama_perusahaan_auditi' => $prevTahapAwal->nama_perusahaan_auditi ?? '',
+                            'perusahaan_induk' => $prevTahapAwal->perusahaan_induk ?? '',
+                            'jenis_perizinan' => $prevTahapAwal->jenis_perizinan ?? '',
+                            'jenis_komoditas' => $prevTahapAwal->jenis_komoditas ?? '',
+                            'alamat_kantor_site' => $prevTahapAwal->alamat_kantor_site ?? '',
+                            'alamat_lokasi_tambang' => $prevTahapAwal->alamat_lokasi_tambang ?? '',
+                            'alamat_kantor_pusat' => $prevTahapAwal->alamat_kantor_pusat ?? '',
+                        ],
+                        'kinerja_kp' => $prevTahapAwal->kinerja_kp ?? [],
+                        'faktor_penyesuaian' => $prevTahapAwal->faktor_penyesuaian ?? [],
+                        'mandays' => [
+                            'jumlah_pekerja' => $prevTahapAwal->jumlah_pekerja ?? '',
+                            'kelas_risiko' => $prevTahapAwal->kelas_risiko ?? '',
+                            'mandays_awal' => $prevTahapAwal->mandays_awal ?? '',
+                            'faktor_penyesuaian_hari' => $prevTahapAwal->faktor_penyesuaian_hari ?? '',
+                            'total_mandays' => $prevTahapAwal->total_mandays ?? '',
+                            'alokasi_tahap_1' => $prevTahapAwal->alokasi_tahap_1 ?? '',
+                            'alokasi_tahap_2' => $prevTahapAwal->alokasi_tahap_2 ?? '',
+                        ],
+                        'jadwal_pelaksanaan' => [
+                            'tanggal_mulai' => $prevSesi->tanggal_mulai ? $prevSesi->tanggal_mulai->format('Y-m-d') : '',
+                            'tanggal_selesai' => $prevSesi->tanggal_selesai ? $prevSesi->tanggal_selesai->format('Y-m-d') : '',
+                        ],
+                        'kontak_awal' => $prevTahapAwal->kontak_awal ?? [],
+                        'kelayakan_audit' => [
+                            'items' => $prevTahapAwal->kelayakan_audit ?? [],
+                            'kesimpulan' => $prevTahapAwal->kesimpulan_kelayakan ?? '',
+                        ],
+                        'kecukupan_dokumen' => [
+                            'items' => $prevTahapAwal->kecukupan_dokumen ?? [],
+                            'kesimpulan' => $prevTahapAwal->kesimpulan_kecukupan ?? '',
+                        ],
+                        'top_risks_present' => $prevTahapAwal->top_risks_present ?? [],
+                        'top_risks_future' => $prevTahapAwal->top_risks_future ?? [],
+                        'trend_data' => $prevTahapAwal->trend_data ?? [],
+                        'unjuk_kerja_peralatan' => $prevTahapAwal->unjuk_kerja_peralatan ?? [],
+                        'capaian_kli' => $prevTahapAwal->capaian_kli ?? [],
+                        'data_audit_sebelumnya' => $prevTahapAwal->data_audit_sebelumnya ?? [],
+                        'harapan_pemangku' => $prevTahapAwal->harapan_pemangku ?? [],
+                        'pengesahan' => [
+                            'tanggal_berita_acara' => $prevTahapAwal->tanggal_berita_acara ? $prevTahapAwal->tanggal_berita_acara->format('Y-m-d') : '',
+                            'nama_pjo' => $prevTahapAwal->nama_pjo ?? '',
+                            'nama_ktt' => $prevTahapAwal->nama_ktt ?? '',
+                        ],
+                        'metadata_dokumen' => [
+                            'no_dokumen_header' => $prevTahapAwal->no_dokumen_header ?? '',
+                            'no_dokumen_footer' => $prevTahapAwal->no_dokumen_footer ?? '',
+                            'no_revisi' => $prevTahapAwal->no_revisi ?? '',
+                            'tanggal_terbit' => $prevTahapAwal->tanggal_terbit ? $prevTahapAwal->tanggal_terbit->format('Y-m-d') : '',
+                            'tanggal_tinjau_ulang' => $prevTahapAwal->tanggal_tinjau_ulang ? $prevTahapAwal->tanggal_tinjau_ulang->format('Y-m-d') : '',
+                        ],
+                    ];
+                }
+            }
+        }
+
+        $isKontraktor = $perusahaan ? $perusahaan->isKontraktor() : false;
+        $pemegangIupList = $isKontraktor
+            ? Perusahaan::where('kategori', 'Pemegang IUP')
+                ->where('is_active', true)
+                ->orderBy('nama_perusahaan')
+                ->get(['id', 'nama_perusahaan', 'nama_ktt_default'])
+            : collect();
+
         $kondisiPenyesuaian = AuditTahapAwal::getDaftarKondisiPenyesuaian();
         $indikatorKelayakan = AuditTahapAwal::getDaftarIndikatorKelayakan();
         $elemenDokumentasi = AuditTahapAwal::getDaftarElemenDokumentasi();
@@ -92,7 +185,11 @@ class AuditTahapAwalController extends Controller
             'tahapAwal',
             'kondisiPenyesuaian',
             'indikatorKelayakan',
-            'elemenDokumentasi'
+            'elemenDokumentasi',
+            'prevTahapAwalData',
+            'prevTahunLabel',
+            'isKontraktor',
+            'pemegangIupList'
         ));
     }
 
@@ -235,6 +332,7 @@ class AuditTahapAwalController extends Controller
                 'tanggal_terbit' => $request->input('tanggal_terbit') ?: null,
                 'tanggal_tinjau_ulang' => $request->input('tanggal_tinjau_ulang') ?: null,
                 'nama_perusahaan_auditi' => trim((string) $request->input('nama_perusahaan_auditi', '')) ?: null,
+                'perusahaan_induk' => trim((string) $request->input('perusahaan_induk', '')) ?: null,
                 'jenis_perizinan' => trim((string) $request->input('jenis_perizinan', '')) ?: null,
                 'jenis_komoditas' => trim((string) $request->input('jenis_komoditas', '')) ?: null,
                 'alamat_kantor_site' => trim((string) $request->input('alamat_kantor_site', '')) ?: null,
@@ -252,6 +350,7 @@ class AuditTahapAwalController extends Controller
                 'alokasi_tahap_2' => trim((string) $request->input('alokasi_tahap_2', '')) ?: null,
                 'no_surat_tugas' => trim((string) $request->input('no_surat_tugas', '')) ?: null,
                 'tanggal_surat_tugas' => $request->input('tanggal_surat_tugas') ?: null,
+                'tanggal_surat_tugas_tahap_2' => $request->input('tanggal_surat_tugas_tahap_2') ?: null,
                 'tim_audit_tahap_1' => $cleanTim1,
                 'kontak_awal' => $request->input('kontak_awal', []),
                 'kelayakan_audit' => $request->input('kelayakan_audit', []),
@@ -268,6 +367,7 @@ class AuditTahapAwalController extends Controller
                 'harapan_pemangku' => $cleanList($request->input('harapan_pemangku', [])),
                 'tanggal_berita_acara' => $request->input('tanggal_berita_acara') ?: null,
                 'ketua_tim_audit' => $ketuaTimVal ?: null,
+                'nama_pjo' => trim((string) $request->input('nama_pjo', '')) ?: null,
                 'nama_ktt' => trim((string) $request->input('nama_ktt', '')) ?: null,
             ];
 
@@ -358,6 +458,7 @@ class AuditTahapAwalController extends Controller
 
         $sesi = $query->findOrFail($id);
         $tahapAwal = AuditTahapAwal::getOrCreateForSesi($sesi);
+        $isKontraktor = $sesi->perusahaan ? $sesi->perusahaan->isKontraktor() : false;
 
         $kondisiPenyesuaian = AuditTahapAwal::getDaftarKondisiPenyesuaian();
         $indikatorKelayakan = AuditTahapAwal::getDaftarIndikatorKelayakan();
@@ -368,7 +469,8 @@ class AuditTahapAwalController extends Controller
             'tahapAwal',
             'kondisiPenyesuaian',
             'indikatorKelayakan',
-            'elemenDokumentasi'
+            'elemenDokumentasi',
+            'isKontraktor'
         ));
     }
 }

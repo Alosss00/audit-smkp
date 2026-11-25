@@ -41,6 +41,14 @@ class Perusahaan extends Model
     }
 
     /**
+     * Check whether this company is labeled as Kontraktor (Perusahaan Jasa Pertambangan).
+     */
+    public function isKontraktor(): bool
+    {
+        return strtolower(trim((string) $this->kategori)) === 'kontraktor';
+    }
+
+    /**
      * Relationship to AuditSesi.
      */
     public function auditSesis(): HasMany

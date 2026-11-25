@@ -31,6 +31,18 @@ $thnSebelumnya = ((int) $thnPeriode) - 1;
 $isKelayakanLayak = ($tahapAwal->kesimpulan_kelayakan ?? '') === 'layak';
 $isKecukupanLanjut = ($tahapAwal->kesimpulan_kecukupan ?? '') === 'dapat_dilanjutkan';
 $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
+
+$isKontraktor = $isKontraktor ?? ($sesi->perusahaan ? $sesi->perusahaan->isKontraktor() : false);
+$pemegangIupList = $pemegangIupList ?? collect();
+
+$hasPrevData = !empty($prevTahapAwalData) && !empty($prevTahunLabel);
+$renderCopyPrevBtn = function (string $section, string $extraClass = '') use ($hasPrevData, $prevTahunLabel): string {
+    if (!$hasPrevData) {
+        return '';
+    }
+    $cls = trim('btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 btn-copy-prev ' . $extraClass);
+    return '<button type="button" class="' . e($cls) . '" data-copy-section="' . e($section) . '" title="Salin data bagian ini dari periode Tahun ' . e($prevTahunLabel) . '"><i class="bi bi-copy me-1"></i> Salin ' . e($prevTahunLabel) . '</button>';
+};
 ?>
 
 <!-- Top Page Header -->
@@ -39,11 +51,16 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
         <a href="<?php echo e(route('admin.audit-sesi.index')); ?>" class="text-decoration-none text-muted small">
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Sesi Audit
         </a>
-        <div class="d-flex align-items-center gap-2 mt-1">
+        <div class="d-flex align-items-center flex-wrap gap-2 mt-1">
             <h2 class="fw-bold text-slate-800 mb-0">
                 <i class="bi bi-journal-bookmark-fill text-primary me-2"></i>Penyusunan Dokumen Tahap Awal Audit (Tahap I)
             </h2>
             <span class="badge bg-primary rounded-pill px-3 py-2"><?php echo e($tahapAwal->no_dokumen_header ?: 'TT-MGT-FRS-026L'); ?></span>
+            <?php if ($isKontraktor): ?>
+                <span class="badge bg-info text-dark rounded-pill px-3 py-2">
+                    <i class="bi bi-truck-front-fill me-1"></i> Form Khusus Kontraktor (IUJP)
+                </span>
+            <?php endif; ?>
         </div>
         <p class="text-muted small mb-0 mt-1">
             Perusahaan Auditi: <strong><?php echo e($tahapAwal->nama_perusahaan_auditi ?: $sesi->area_audit); ?></strong> &bull;
@@ -127,11 +144,14 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                     <i class="bi bi-link-45deg me-1"></i>Otomatis dari Master Perusahaan & Sesi Audit
                                 </span>
                             </div>
-                            <?php if ($sesi->perusahaan): ?>
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-xs" id="btnSyncPerusahaan" title="Sinkronkan ulang data dari Master Perusahaan & Sesi Audit">
-                                    <i class="bi bi-arrow-repeat me-1"></i> Sinkron Data
-                                </button>
-                            <?php endif; ?>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <?php echo $renderCopyPrevBtn('data_perusahaan'); ?>
+                                <?php if ($sesi->perusahaan): ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-xs" id="btnSyncPerusahaan" title="Sinkronkan ulang data dari Master Perusahaan & Sesi Audit">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Sinkron Data
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <?php
                             $comp = $sesi->perusahaan;
@@ -150,44 +170,81 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                             <label class="form-label small fw-bold">Nama Perusahaan Auditi</label>
                             <input type="text" name="nama_perusahaan_auditi" id="input_nama_perusahaan_auditi" class="form-control" value="<?php echo e($valNamaPerusahaan); ?>">
                         </div>
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-7">
-                                <label class="form-label small fw-bold">Jenis Perizinan (Pisahkan baris jika > 1)</label>
-                                <textarea name="jenis_perizinan" id="input_jenis_perizinan" class="form-control" rows="2" placeholder="Contoh: IUP Operasi Produksi No. ... (Tekan Enter untuk baris baru)"><?php echo e($valJenisPerizinan); ?></textarea>
+                        <?php if ($isKontraktor): ?>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Area Pemegang IUP / Perusahaan Induk (Klien Audit)</label>
+                                <input type="text" name="perusahaan_induk" id="input_perusahaan_induk" class="form-control" list="listPemegangIup"
+                                       placeholder="Contoh: PT Meares Soputan Mining"
+                                       value="<?php echo e($tahapAwal->perusahaan_induk ?? ''); ?>">
+                                <datalist id="listPemegangIup">
+                                    <?php foreach ($pemegangIupList as $iup): ?>
+                                        <option value="<?php echo e($iup->nama_perusahaan); ?>">
+                                    <?php endforeach; ?>
+                                </datalist>
+                                <small class="text-muted">Digunakan pada narasi Surat Pengangkatan Tim Audit KTT &amp; Rencana Audit.</small>
                             </div>
-                            <div class="col-md-5">
-                                <label class="form-label small fw-bold">Jenis Komoditas</label>
-                                <input type="text" name="jenis_komoditas" id="input_jenis_komoditas" class="form-control" value="<?php echo e($valJenisKomoditas); ?>">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Jenis Perizinan (NIB / IUJP)</label>
+                                <textarea name="jenis_perizinan" id="input_jenis_perizinan" class="form-control" rows="2" placeholder="Contoh: NIB 9120204321416"><?php echo e($valJenisPerizinan); ?></textarea>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Alamat Kantor Site</label>
-                            <textarea name="alamat_kantor_site" id="input_alamat_kantor_site" class="form-control" rows="2"><?php echo e($valAlamatSite); ?></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Alamat Lokasi Tambang</label>
-                            <textarea name="alamat_lokasi_tambang" id="input_alamat_lokasi_tambang" class="form-control" rows="2"><?php echo e($valAlamatTambang); ?></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Alamat Kantor Pusat</label>
-                            <textarea name="alamat_kantor_pusat" id="input_alamat_kantor_pusat" class="form-control" rows="3"><?php echo e($valAlamatPusat); ?></textarea>
-                        </div>
-                        <div>
-                            <label class="form-label small fw-bold">Periode Audit</label>
-                            <input type="text" name="periode_audit_label" id="input_periode_audit_label" class="form-control" value="<?php echo e($valPeriodeAudit); ?>">
-                            <small class="text-muted d-block mt-1">
-                                <i class="bi bi-info-circle me-1"></i>Diambil dari tahun periode audit yang dipilih saat sesi dibuat (<?php echo e($thnSesi); ?>).
-                            </small>
-                        </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Jenis Komoditas / Bidang Usaha Jasa</label>
+                                <textarea name="jenis_komoditas" id="input_jenis_komoditas" class="form-control" rows="2" placeholder="Contoh: Aktivitas Penunjang Pertambangan..., Jasa Pengujian Laboratorium"><?php echo e($valJenisKomoditas); ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Alamat Perusahaan</label>
+                                <textarea name="alamat_kantor_site" id="input_alamat_kantor_site" class="form-control" rows="4" placeholder="Contoh: C/O PT Meares Soputan Mining Toka Tindung Project Via Desa Winuri..."><?php echo e($valAlamatSite); ?></textarea>
+                            </div>
+                            <div>
+                                <label class="form-label small fw-bold">Periode Audit</label>
+                                <input type="text" name="periode_audit_label" id="input_periode_audit_label" class="form-control" placeholder="Contoh: 10 Oktober 2024 – 9 Oktober 2025" value="<?php echo e($valPeriodeAudit); ?>">
+                                <small class="text-muted d-block mt-1">
+                                    <i class="bi bi-info-circle me-1"></i>Periode audit kontraktor dapat disesuaikan dengan kontrak / siklus audit (Tahun <?php echo e($thnSesi); ?>).
+                                </small>
+                            </div>
+                        <?php else: ?>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-bold">Jenis Perizinan (Pisahkan baris jika > 1)</label>
+                                    <textarea name="jenis_perizinan" id="input_jenis_perizinan" class="form-control" rows="2" placeholder="Contoh: IUP Operasi Produksi No. ... (Tekan Enter untuk baris baru)"><?php echo e($valJenisPerizinan); ?></textarea>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold">Jenis Komoditas</label>
+                                    <input type="text" name="jenis_komoditas" id="input_jenis_komoditas" class="form-control" value="<?php echo e($valJenisKomoditas); ?>">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Alamat Kantor Site</label>
+                                <textarea name="alamat_kantor_site" id="input_alamat_kantor_site" class="form-control" rows="2"><?php echo e($valAlamatSite); ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Alamat Lokasi Tambang</label>
+                                <textarea name="alamat_lokasi_tambang" id="input_alamat_lokasi_tambang" class="form-control" rows="2"><?php echo e($valAlamatTambang); ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Alamat Kantor Pusat</label>
+                                <textarea name="alamat_kantor_pusat" id="input_alamat_kantor_pusat" class="form-control" rows="3"><?php echo e($valAlamatPusat); ?></textarea>
+                            </div>
+                            <div>
+                                <label class="form-label small fw-bold">Periode Audit</label>
+                                <input type="text" name="periode_audit_label" id="input_periode_audit_label" class="form-control" value="<?php echo e($valPeriodeAudit); ?>">
+                                <small class="text-muted d-block mt-1">
+                                    <i class="bi bi-info-circle me-1"></i>Diambil dari tahun periode audit yang dipilih saat sesi dibuat (<?php echo e($thnSesi); ?>).
+                                </small>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
                 <!-- A.2 Data Kinerja Keselamatan Pertambangan -->
                 <div class="col-lg-6">
                     <div class="card card-custom p-4 h-100">
-                        <h5 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">
-                            <i class="bi bi-activity text-danger me-2"></i>Data Kinerja Keselamatan Pertambangan
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2">
+                            <h5 class="fw-bold text-slate-800 mb-0">
+                                <i class="bi bi-activity text-danger me-2"></i>Data Kinerja Keselamatan Pertambangan
+                            </h5>
+                            <?php echo $renderCopyPrevBtn('kinerja_kp'); ?>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold">Kecelakaan Cidera Ringan</label>
@@ -236,9 +293,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- A.3 Dasar Faktor Penyesuaian -->
                 <div class="col-12">
                     <div class="card card-custom p-4">
-                        <h5 class="fw-bold text-slate-800 mb-3">
-                            <i class="bi bi-sliders text-info me-2"></i>Dasar Faktor Penyesuaian (7 Kondisi Kepdirjen 185)
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="fw-bold text-slate-800 mb-0">
+                                <i class="bi bi-sliders text-info me-2"></i>Dasar Faktor Penyesuaian (7 Kondisi Kepdirjen 185)
+                            </h5>
+                            <?php echo $renderCopyPrevBtn('faktor_penyesuaian'); ?>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle mb-0">
                                 <thead class="table-light text-center">
@@ -280,9 +340,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                             <h5 class="fw-bold text-slate-800 mb-0">
                                 <i class="bi bi-calculator text-primary me-2"></i>I.B. Perhitungan Hari Kerja Audit (Mandays) dan Jumlah Auditor
                             </h5>
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="btnHitungMandaysOtomatis">
-                                <i class="bi bi-magic me-1"></i> Hitung Otomatis Total & Alokasi
-                            </button>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <?php echo $renderCopyPrevBtn('mandays'); ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="btnHitungMandaysOtomatis">
+                                    <i class="bi bi-magic me-1"></i> Hitung Otomatis Total & Alokasi
+                                </button>
+                            </div>
                         </div>
                         <div class="row g-3">
                             <div class="col-md-3">
@@ -346,7 +409,8 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                     </small>
                                 </div>
                             </div>
-                            <div id="jadwalStatusBadge">
+                            <div id="jadwalStatusBadge" class="d-flex flex-wrap gap-2 align-items-center">
+                                <?php echo $renderCopyPrevBtn('jadwal_pelaksanaan'); ?>
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2 fw-semibold" id="badgeDurasiAudit">
                                     <i class="bi bi-clock-history me-1"></i> <span id="textBadgeDurasi">Tersinkronisasi Mandays</span>
                                 </span>
@@ -413,14 +477,21 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                         </div>
 
                         <div class="row g-3 mb-4">
-                            <div class="col-md-6">
+                            <div class="<?php echo $isKontraktor ? 'col-md-4' : 'col-md-6'; ?>">
                                 <label class="form-label small fw-bold">Nomor Surat Pengangkatan Tim Audit (SK KTT)</label>
                                 <input type="text" name="no_surat_tugas" class="form-control" value="<?php echo e($tahapAwal->no_surat_tugas ?? ''); ?>">
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Tanggal Surat Pengangkatan</label>
+                            <div class="<?php echo $isKontraktor ? 'col-md-4' : 'col-md-6'; ?>">
+                                <label class="form-label small fw-bold">Tanggal Surat Pengangkatan<?php echo $isKontraktor ? ' (Tahap I)' : ''; ?></label>
                                 <input type="date" name="tanggal_surat_tugas" class="form-control" value="<?php echo e($tahapAwal->tanggal_surat_tugas ? $tahapAwal->tanggal_surat_tugas->format('Y-m-d') : ''); ?>">
                             </div>
+                            <?php if ($isKontraktor): ?>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Tanggal Surat Pengangkatan (Tahap II)</label>
+                                    <input type="date" name="tanggal_surat_tugas_tahap_2" class="form-control" value="<?php echo e($tahapAwal->tanggal_surat_tugas_tahap_2 ? $tahapAwal->tanggal_surat_tugas_tahap_2->format('Y-m-d') : ''); ?>">
+                                    <small class="text-muted">Opsional jika berbeda dengan Tahap I.</small>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="table-responsive">
@@ -444,6 +515,7 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                                     <option value="" <?php echo e(empty($anggota['jabatan']) ? 'selected' : ''); ?>>-- Pilih Jabatan --</option>
                                                     <option value="Ketua Tim Audit" <?php echo e(($anggota['jabatan'] ?? '') === 'Ketua Tim Audit' ? 'selected' : ''); ?>>Ketua Tim Audit</option>
                                                     <option value="Auditor" <?php echo e(($anggota['jabatan'] ?? '') === 'Auditor' ? 'selected' : ''); ?>>Auditor</option>
+                                                    <option value="Observer" <?php echo e(($anggota['jabatan'] ?? '') === 'Observer' ? 'selected' : ''); ?>>Observer</option>
                                                 </select>
                                             </td>
                                             <td><input type="text" name="tim_audit_tahap_1[<?php echo e($idx); ?>][no_registrasi]" class="form-control form-control-sm font-monospace" value="<?php echo e($anggota['no_registrasi'] ?? ''); ?>"></td>
@@ -461,9 +533,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- II.B Pelaksanaan Kontak Awal dengan Auditi -->
                 <div class="col-12">
                     <div class="card card-custom p-4">
-                        <h5 class="fw-bold text-slate-800 mb-3">
-                            <i class="bi bi-calendar2-event text-info me-2"></i>II.B. Pelaksanaan Kontak Awal dengan Auditi
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="fw-bold text-slate-800 mb-0">
+                                <i class="bi bi-calendar2-event text-info me-2"></i>II.B. Pelaksanaan Kontak Awal dengan Auditi
+                            </h5>
+                            <?php echo $renderCopyPrevBtn('kontak_awal'); ?>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Hari / Tanggal Kontak Awal & Evaluasi Kelayakan</label>
@@ -474,12 +549,22 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                 <input type="text" name="kontak_awal[media]" class="form-control" value="<?php echo e($kontak['media'] ?? ''); ?>">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small fw-bold">Perwakilan Auditi</label>
-                                <input type="text" name="kontak_awal[perwakilan_auditi]" class="form-control" value="<?php echo e($kontak['perwakilan_auditi'] ?? ''); ?>">
+                                <label class="form-label small fw-bold">Perwakilan Auditi<?php echo $isKontraktor ? ' (PJO)' : ''; ?></label>
+                                <input type="text" name="kontak_awal[perwakilan_auditi]" class="form-control"
+                                       placeholder="<?php echo $isKontraktor ? 'Contoh: Mus Hermawan' : ''; ?>"
+                                       value="<?php echo e($kontak['perwakilan_auditi'] ?? ''); ?>">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold">Jabatan Perwakilan Auditi</label>
-                                <input type="text" name="kontak_awal[jabatan_perwakilan]" class="form-control" value="<?php echo e($kontak['jabatan_perwakilan'] ?? ''); ?>">
+                                <input type="text" name="kontak_awal[jabatan_perwakilan]" class="form-control"
+                                       list="listJabatanPerwakilan"
+                                       placeholder="<?php echo $isKontraktor ? 'Contoh: PJO' : ''; ?>"
+                                       value="<?php echo e($kontak['jabatan_perwakilan'] ?? ''); ?>">
+                                <datalist id="listJabatanPerwakilan">
+                                    <option value="PJO">
+                                    <option value="Penanggung Jawab Operasional">
+                                    <option value="Kepala Teknik Tambang">
+                                </datalist>
                             </div>
                         </div>
                     </div>
@@ -488,9 +573,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- II.C Penentuan Kelayakan Audit -->
                 <div class="col-lg-6">
                     <div class="card card-custom p-4 h-100">
-                        <h5 class="fw-bold text-slate-800 mb-3">
-                            <i class="bi bi-clipboard2-check text-success me-2"></i>II.C. Penentuan Kelayakan Audit (7 Indikator)
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="fw-bold text-slate-800 mb-0">
+                                <i class="bi bi-clipboard2-check text-success me-2"></i>II.C. Penentuan Kelayakan Audit (7 Indikator)
+                            </h5>
+                            <?php echo $renderCopyPrevBtn('kelayakan_audit'); ?>
+                        </div>
                         <div class="table-responsive mb-3">
                             <table class="table table-bordered align-middle mb-0">
                                 <thead class="table-light text-center">
@@ -535,9 +623,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- II.D Penentuan Kecukupan Dokumentasi -->
                 <div class="col-lg-6">
                     <div class="card card-custom p-4 h-100">
-                        <h5 class="fw-bold text-slate-800 mb-3">
-                            <i class="bi bi-folder-check text-primary me-2"></i>II.D. Penentuan Kecukupan Dokumentasi (7 Elemen SMKP)
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="fw-bold text-slate-800 mb-0">
+                                <i class="bi bi-folder-check text-primary me-2"></i>II.D. Penentuan Kecukupan Dokumentasi (7 Elemen SMKP)
+                            </h5>
+                            <?php echo $renderCopyPrevBtn('kecukupan_dokumen'); ?>
+                        </div>
                         <div class="table-responsive mb-3">
                             <table class="table table-bordered align-middle mb-0">
                                 <thead class="table-light text-center">
@@ -633,6 +724,7 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                                     <option value="" <?php echo e(empty($anggota['jabatan']) ? 'selected' : ''); ?>>-- Pilih Jabatan --</option>
                                                     <option value="Ketua Tim Audit" <?php echo e(($anggota['jabatan'] ?? '') === 'Ketua Tim Audit' ? 'selected' : ''); ?>>Ketua Tim Audit</option>
                                                     <option value="Auditor" <?php echo e(($anggota['jabatan'] ?? '') === 'Auditor' ? 'selected' : ''); ?>>Auditor</option>
+                                                    <option value="Observer" <?php echo e(($anggota['jabatan'] ?? '') === 'Observer' ? 'selected' : ''); ?>>Observer</option>
                                                 </select>
                                             </td>
                                             <td><input type="text" name="tim_audit_tahap_2[<?php echo e($idx); ?>][no_registrasi]" class="form-control form-control-sm font-monospace" value="<?php echo e($anggota['no_registrasi'] ?? ''); ?>"></td>
@@ -657,9 +749,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                 </h5>
                                 <small class="text-muted">Critical point untuk penetapan metode dan sampel pembuktian primer pada periode berjalan.</small>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-3" id="btnAddRiskPresent">
-                                <i class="bi bi-plus-lg me-1"></i> Tambah Baris Risiko
-                            </button>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <?php echo $renderCopyPrevBtn('top_risks_present'); ?>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-3" id="btnAddRiskPresent">
+                                    <i class="bi bi-plus-lg me-1"></i> Tambah Baris Risiko
+                                </button>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle mb-0" id="tableRiskPresent">
@@ -668,8 +763,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                         <th style="width: 50px;">No</th>
                                         <th>Kegiatan</th>
                                         <th style="width: 260px;">Risiko</th>
-                                        <th style="width: 140px;">Nilai Risiko Awal</th>
-                                        <th style="width: 140px;">Nilai Risiko Sisa</th>
+                                        <?php if ($isKontraktor): ?>
+                                            <th style="width: 160px;">Nilai Risiko</th>
+                                        <?php else: ?>
+                                            <th style="width: 140px;">Nilai Risiko Awal</th>
+                                            <th style="width: 140px;">Nilai Risiko Sisa</th>
+                                        <?php endif; ?>
                                         <th style="width: 55px;">Hapus</th>
                                     </tr>
                                 </thead>
@@ -680,7 +779,9 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                             <td><textarea name="top_risks_present[<?php echo e($idx); ?>][kegiatan]" class="form-control form-control-sm" rows="2"><?php echo e($rp['kegiatan'] ?? ''); ?></textarea></td>
                                             <td><input type="text" name="top_risks_present[<?php echo e($idx); ?>][risiko]" class="form-control form-control-sm" value="<?php echo e($rp['risiko'] ?? ''); ?>"></td>
                                             <td><input type="text" name="top_risks_present[<?php echo e($idx); ?>][nilai_awal]" class="form-control form-control-sm text-center" value="<?php echo e($rp['nilai_awal'] ?? ''); ?>"></td>
-                                            <td><input type="text" name="top_risks_present[<?php echo e($idx); ?>][nilai_sisa]" class="form-control form-control-sm text-center" value="<?php echo e($rp['nilai_sisa'] ?? ''); ?>"></td>
+                                            <?php if (!$isKontraktor): ?>
+                                                <td><input type="text" name="top_risks_present[<?php echo e($idx); ?>][nilai_sisa]" class="form-control form-control-sm text-center" value="<?php echo e($rp['nilai_sisa'] ?? ''); ?>"></td>
+                                            <?php endif; ?>
                                             <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -700,9 +801,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                 </h5>
                                 <small class="text-muted">Penilaian risiko untuk rencana kegiatan operasional tahun berikutnya.</small>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-warning text-dark rounded-3" id="btnAddRiskFuture">
-                                <i class="bi bi-plus-lg me-1"></i> Tambah Baris Risiko
-                            </button>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <?php echo $renderCopyPrevBtn('top_risks_future'); ?>
+                                <button type="button" class="btn btn-sm btn-outline-warning text-dark rounded-3" id="btnAddRiskFuture">
+                                    <i class="bi bi-plus-lg me-1"></i> Tambah Baris Risiko
+                                </button>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle mb-0" id="tableRiskFuture">
@@ -711,8 +815,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                         <th style="width: 50px;">No</th>
                                         <th>Kegiatan</th>
                                         <th style="width: 260px;">Risiko</th>
-                                        <th style="width: 140px;">Nilai Risiko Awal</th>
-                                        <th style="width: 140px;">Nilai Risiko Sisa</th>
+                                        <?php if ($isKontraktor): ?>
+                                            <th style="width: 160px;">Nilai Risiko</th>
+                                        <?php else: ?>
+                                            <th style="width: 140px;">Nilai Risiko Awal</th>
+                                            <th style="width: 140px;">Nilai Risiko Sisa</th>
+                                        <?php endif; ?>
                                         <th style="width: 55px;">Hapus</th>
                                     </tr>
                                 </thead>
@@ -723,7 +831,9 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                             <td><textarea name="top_risks_future[<?php echo e($idx); ?>][kegiatan]" class="form-control form-control-sm" rows="2"><?php echo e($rf['kegiatan'] ?? ''); ?></textarea></td>
                                             <td><input type="text" name="top_risks_future[<?php echo e($idx); ?>][risiko]" class="form-control form-control-sm" value="<?php echo e($rf['risiko'] ?? ''); ?>"></td>
                                             <td><input type="text" name="top_risks_future[<?php echo e($idx); ?>][nilai_awal]" class="form-control form-control-sm text-center" value="<?php echo e($rf['nilai_awal'] ?? ''); ?>"></td>
-                                            <td><input type="text" name="top_risks_future[<?php echo e($idx); ?>][nilai_sisa]" class="form-control form-control-sm text-center" value="<?php echo e($rf['nilai_sisa'] ?? ''); ?>"></td>
+                                            <?php if (!$isKontraktor): ?>
+                                                <td><input type="text" name="top_risks_future[<?php echo e($idx); ?>][nilai_sisa]" class="form-control form-control-sm text-center" value="<?php echo e($rf['nilai_sisa'] ?? ''); ?>"></td>
+                                            <?php endif; ?>
                                             <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -748,11 +858,14 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                     <?php $tItems = !empty($trends[$tKey]) ? $trends[$tKey] : ['']; ?>
                     <div class="col-md-6">
                         <div class="card card-custom p-4 h-100">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
                                 <h6 class="fw-bold text-slate-800 mb-0"><?php echo e($tMeta['title']); ?></h6>
-                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 btn-add-trend" data-trend-key="<?php echo e($tKey); ?>">
-                                    <i class="bi bi-plus"></i> Tambah
-                                </button>
+                                <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                    <?php echo $renderCopyPrevBtn('trend_' . $tKey, 'py-0 px-2'); ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 btn-add-trend" data-trend-key="<?php echo e($tKey); ?>">
+                                        <i class="bi bi-plus"></i> Tambah
+                                    </button>
+                                </div>
                             </div>
                             <table class="table table-sm table-bordered align-middle mb-0" id="tableTrend_<?php echo e($tKey); ?>">
                                 <thead class="table-light text-center">
@@ -779,13 +892,16 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- III.B.4 Data Unjuk Kerja Peralatan Pertambangan (PA & MA) -->
                 <div class="col-lg-7">
                     <div class="card card-custom p-4 h-100">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <h5 class="fw-bold text-slate-800 mb-0">
                                 <i class="bi bi-truck-flatbed text-primary me-2"></i>Data Unjuk Kerja Peralatan Pertambangan (PA & MA)
                             </h5>
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="btnAddPeralatan">
-                                <i class="bi bi-plus-lg me-1"></i> Tambah Peralatan
-                            </button>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <?php echo $renderCopyPrevBtn('unjuk_kerja_peralatan'); ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="btnAddPeralatan">
+                                    <i class="bi bi-plus-lg me-1"></i> Tambah Peralatan
+                                </button>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle mb-0" id="tablePeralatan">
@@ -817,13 +933,16 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- III.B.5 Data Capaian Key Leading Indicator (KLI) -->
                 <div class="col-lg-5">
                     <div class="card card-custom p-4 h-100">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <h5 class="fw-bold text-slate-800 mb-0">
                                 <i class="bi bi-speedometer2 text-success me-2"></i>Capaian <em>Key Leading Indicator</em>
                             </h5>
-                            <button type="button" class="btn btn-sm btn-outline-success rounded-3" id="btnAddKli">
-                                <i class="bi bi-plus-lg me-1"></i> Tambah KLI
-                            </button>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <?php echo $renderCopyPrevBtn('capaian_kli'); ?>
+                                <button type="button" class="btn btn-sm btn-outline-success rounded-3" id="btnAddKli">
+                                    <i class="bi bi-plus-lg me-1"></i> Tambah KLI
+                                </button>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle mb-0" id="tableKli">
@@ -853,9 +972,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- III.B.6 Data Audit Internal SMKP Tahun Sebelumnya -->
                 <div class="col-lg-6">
                     <div class="card card-custom p-4 h-100">
-                        <h5 class="fw-bold text-slate-800 mb-3">
-                            <i class="bi bi-clock-history text-primary me-2"></i>Data Audit Internal SMKP Tahun Sebelumnya
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="fw-bold text-slate-800 mb-0">
+                                <i class="bi bi-clock-history text-primary me-2"></i>Data Audit Internal SMKP Tahun Sebelumnya
+                            </h5>
+                            <?php echo $renderCopyPrevBtn('data_audit_sebelumnya'); ?>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Tahun Audit Sebelumnya</label>
@@ -900,13 +1022,16 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- III.B.7 Daftar Harapan dan Kebutuhan Pemangku Kepentingan -->
                 <div class="col-lg-6">
                     <div class="card card-custom p-4 h-100">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <h5 class="fw-bold text-slate-800 mb-0">
                                 <i class="bi bi-chat-quote text-info me-2"></i>Daftar Harapan & Kebutuhan Pemangku Kepentingan
                             </h5>
-                            <button type="button" class="btn btn-sm btn-outline-info text-dark rounded-3" id="btnAddHarapan">
-                                <i class="bi bi-plus-lg me-1"></i> Tambah Masukan
-                            </button>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <?php echo $renderCopyPrevBtn('harapan_pemangku'); ?>
+                                <button type="button" class="btn btn-sm btn-outline-info text-dark rounded-3" id="btnAddHarapan">
+                                    <i class="bi bi-plus-lg me-1"></i> Tambah Masukan
+                                </button>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle mb-0" id="tableHarapan">
@@ -941,9 +1066,12 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                 <!-- Pengesahan Berita Acara -->
                 <div class="col-lg-6">
                     <div class="card card-custom p-4 h-100">
-                        <h5 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">
-                            <i class="bi bi-award text-primary me-2"></i>Pengesahan Berita Acara (Penutup)
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2">
+                            <h5 class="fw-bold text-slate-800 mb-0">
+                                <i class="bi bi-award text-primary me-2"></i>Pengesahan Berita Acara (Penutup)
+                            </h5>
+                            <?php echo $renderCopyPrevBtn('pengesahan'); ?>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Tanggal Pembuatan Berita Acara Tahap Awal</label>
                             <input type="date" name="tanggal_berita_acara" class="form-control" value="<?php echo e($tahapAwal->tanggal_berita_acara ? $tahapAwal->tanggal_berita_acara->format('Y-m-d') : ''); ?>">
@@ -958,19 +1086,69 @@ $isJadwalDapatDitentukan = $isKelayakanLayak && $isKecukupanLanjut;
                                 <i class="bi bi-link-45deg me-1"></i>Otomatis terhubung dari Auditor dengan jabatan <strong>Ketua Tim Audit</strong> di bagian II.A.
                             </small>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Nama Kepala Teknik Tambang / KTT (Penandatangan 2)</label>
-                            <input type="text" name="nama_ktt" class="form-control" value="<?php echo e($tahapAwal->nama_ktt ?? ''); ?>">
-                        </div>
+                        <?php if ($isKontraktor): ?>
+                            <?php
+                                $valNamaPjo = $tahapAwal->nama_pjo ?: ($sesi->perusahaan->nama_ktt_default ?? '');
+                                $valNamaKtt = $tahapAwal->nama_ktt ?? '';
+                                $kttOptions = [];
+                                foreach ($pemegangIupList as $iup) {
+                                    $kttName = trim((string) ($iup->nama_ktt_default ?? ''));
+                                    if ($kttName !== '') {
+                                        $kttOptions[] = [
+                                            'nama_ktt' => $kttName,
+                                            'nama_perusahaan' => $iup->nama_perusahaan,
+                                        ];
+                                    }
+                                }
+                                $kttValues = array_column($kttOptions, 'nama_ktt');
+                                $hasCustomKtt = $valNamaKtt !== '' && !in_array($valNamaKtt, $kttValues, true);
+                            ?>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Nama Penanggung Jawab Operasional / PJO dari Auditi (Penandatangan 2)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-person-vcard text-info"></i></span>
+                                    <input type="text" name="nama_pjo" id="inpNamaPjo" class="form-control" placeholder="Contoh: Mus Hermawan" value="<?php echo e($valNamaPjo); ?>">
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="bi bi-link-45deg me-1"></i>Diisi otomatis dari Master Data Perusahaan (Nama KTT/PJO) dan dapat ditulis/diubah manual.
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Nama Kepala Teknik Tambang / KTT Pemegang IUP (Penandatangan 3)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-person-check text-primary"></i></span>
+                                    <select name="nama_ktt" id="inpNamaKtt" class="form-select">
+                                        <option value="" <?php echo e($valNamaKtt === '' ? 'selected' : ''); ?>>-- Pilih Nama KTT Pemegang IUP --</option>
+                                        <?php foreach ($kttOptions as $opt): ?>
+                                            <option value="<?php echo e($opt['nama_ktt']); ?>" <?php echo e($valNamaKtt === $opt['nama_ktt'] ? 'selected' : ''); ?>>
+                                                <?php echo e($opt['nama_ktt']); ?> — <?php echo e($opt['nama_perusahaan']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                        <?php if ($hasCustomKtt): ?>
+                                            <option value="<?php echo e($valNamaKtt); ?>" selected><?php echo e($valNamaKtt); ?></option>
+                                        <?php endif; ?>
+                                    </select>
+                                </div>
+                                <small class="text-muted d-block mt-1">Diambil dari daftar Nama KTT/PJO perusahaan berlabel Pemegang IUP.</small>
+                            </div>
+                        <?php else: ?>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Nama Kepala Teknik Tambang / KTT (Penandatangan 2)</label>
+                                <input type="text" name="nama_ktt" class="form-control" value="<?php echo e($tahapAwal->nama_ktt ?? ''); ?>">
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
                 <!-- Metadata Kop & Footer Dokumen Terkendali -->
                 <div class="col-lg-6">
                     <div class="card card-custom p-4 h-100">
-                        <h5 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">
-                            <i class="bi bi-file-earmark-medical text-secondary me-2"></i>Metadata Kop & Footer Dokumen Terkendali
-                        </h5>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2">
+                            <h5 class="fw-bold text-slate-800 mb-0">
+                                <i class="bi bi-file-earmark-medical text-secondary me-2"></i>Metadata Kop & Footer Dokumen Terkendali
+                            </h5>
+                            <?php echo $renderCopyPrevBtn('metadata_dokumen'); ?>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold">No. Dokumen (Header)</label>
@@ -1183,6 +1361,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <option value="" selected>-- Pilih Jabatan --</option>
                     <option value="Ketua Tim Audit">Ketua Tim Audit</option>
                     <option value="Auditor">Auditor</option>
+                    <option value="Observer">Observer</option>
                 </select>
             </td>
             <td><input type="text" name="tim_audit_tahap_1[${idx}][no_registrasi]" class="form-control form-control-sm font-monospace"></td>
@@ -1206,6 +1385,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <option value="" ${!jabatan ? 'selected' : ''}>-- Pilih Jabatan --</option>
                     <option value="Ketua Tim Audit" ${jabatan === 'Ketua Tim Audit' ? 'selected' : ''}>Ketua Tim Audit</option>
                     <option value="Auditor" ${jabatan === 'Auditor' ? 'selected' : ''}>Auditor</option>
+                    <option value="Observer" ${jabatan === 'Observer' ? 'selected' : ''}>Observer</option>
                 </select>
             </td>
             <td><input type="text" name="tim_audit_tahap_2[${idx}][no_registrasi]" class="form-control form-control-sm font-monospace" value="${reg}"></td>
@@ -1233,6 +1413,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    const isKontraktor = <?php echo $isKontraktor ? 'true' : 'false'; ?>;
+
     // Add Risk Present / Future
     let riskCounter = 100;
     function addRiskRow(tableId, fieldPrefix) {
@@ -1240,12 +1422,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const tbody = table.querySelector('tbody');
         const idx = riskCounter++;
         const tr = document.createElement('tr');
+        const nilaiSisaCell = isKontraktor
+            ? ''
+            : `<td><input type="text" name="${fieldPrefix}[${idx}][nilai_sisa]" class="form-control form-control-sm text-center" value=""></td>`;
         tr.innerHTML = `
             <td class="text-center fw-bold row-num"></td>
             <td><textarea name="${fieldPrefix}[${idx}][kegiatan]" class="form-control form-control-sm" rows="2"></textarea></td>
             <td><input type="text" name="${fieldPrefix}[${idx}][risiko]" class="form-control form-control-sm" value=""></td>
             <td><input type="text" name="${fieldPrefix}[${idx}][nilai_awal]" class="form-control form-control-sm text-center" value=""></td>
-            <td><input type="text" name="${fieldPrefix}[${idx}][nilai_sisa]" class="form-control form-control-sm text-center" value=""></td>
+            ${nilaiSisaCell}
             <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
         `;
         tbody.appendChild(tr);
@@ -1482,6 +1667,370 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
+
+    // Salin data per form/section dari Penyusunan Dokumen Tahap Awal periode sebelumnya (kecuali form daftar tim audit)
+    const prevStage1Data = <?php echo json_encode($prevTahapAwalData ?? null, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?>;
+
+    function setInputByName(name, value) {
+        const el = document.querySelector(`[name="${CSS.escape(name)}"]`);
+        if (el) {
+            el.value = value ?? '';
+        }
+    }
+
+    function flashCopyFeedback(btn) {
+        if (!btn) return;
+        const origHtml = btn.dataset.origHtml || btn.innerHTML;
+        btn.dataset.origHtml = origHtml;
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-success', 'text-white');
+        btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Tersalin';
+
+        const card = btn.closest('.card');
+        if (card) {
+            card.classList.add('border-success');
+        }
+
+        clearTimeout(btn._copyResetTimer);
+        btn._copyResetTimer = setTimeout(() => {
+            btn.classList.remove('btn-success', 'text-white');
+            btn.classList.add('btn-outline-secondary');
+            btn.innerHTML = origHtml;
+            if (card) {
+                card.classList.remove('border-success');
+            }
+        }, 1800);
+    }
+
+    function fillRiskTable(tableId, fieldPrefix, rows) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const list = (Array.isArray(rows) && rows.length > 0)
+            ? rows
+            : [{ kegiatan: '', risiko: '', nilai_awal: '', nilai_sisa: '' }];
+
+        list.forEach(item => {
+            const idx = riskCounter++;
+            const tr = document.createElement('tr');
+            const nilaiSisaCell = isKontraktor
+                ? ''
+                : `<td><input type="text" name="${fieldPrefix}[${idx}][nilai_sisa]" class="form-control form-control-sm text-center"></td>`;
+            tr.innerHTML = `
+                <td class="text-center fw-bold row-num"></td>
+                <td><textarea name="${fieldPrefix}[${idx}][kegiatan]" class="form-control form-control-sm" rows="2"></textarea></td>
+                <td><input type="text" name="${fieldPrefix}[${idx}][risiko]" class="form-control form-control-sm"></td>
+                <td><input type="text" name="${fieldPrefix}[${idx}][nilai_awal]" class="form-control form-control-sm text-center"></td>
+                ${nilaiSisaCell}
+                <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
+            `;
+            tr.querySelector('textarea').value = item.kegiatan ?? '';
+            const inputs = tr.querySelectorAll('input');
+            inputs[0].value = item.risiko ?? '';
+            inputs[1].value = item.nilai_awal ?? '';
+            if (!isKontraktor && inputs[2]) {
+                inputs[2].value = item.nilai_sisa ?? '';
+            }
+            tbody.appendChild(tr);
+        });
+        renumberTable(table);
+    }
+
+    function fillTrendTable(trendKey, items) {
+        const table = document.getElementById('tableTrend_' + trendKey);
+        if (!table) return;
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const list = (Array.isArray(items) && items.length > 0) ? items : [''];
+        list.forEach(val => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center fw-bold row-num"></td>
+                <td><input type="text" name="trend_data[${trendKey}][]" class="form-control form-control-sm"></td>
+                <td class="text-center"><button type="button" class="btn btn-sm text-danger btn-remove-row"><i class="bi bi-x-lg"></i></button></td>
+            `;
+            tr.querySelector('input').value = val ?? '';
+            tbody.appendChild(tr);
+        });
+        renumberTable(table);
+    }
+
+    function copySectionFromPrevious(section, btn) {
+        if (!prevStage1Data) return;
+
+        if (section === 'data_perusahaan' && prevStage1Data.data_perusahaan) {
+            const d = prevStage1Data.data_perusahaan;
+            setInputByName('nama_perusahaan_auditi', d.nama_perusahaan_auditi);
+            setInputByName('perusahaan_induk', d.perusahaan_induk);
+            setInputByName('jenis_perizinan', d.jenis_perizinan);
+            setInputByName('jenis_komoditas', d.jenis_komoditas);
+            setInputByName('alamat_kantor_site', d.alamat_kantor_site);
+            setInputByName('alamat_lokasi_tambang', d.alamat_lokasi_tambang);
+            setInputByName('alamat_kantor_pusat', d.alamat_kantor_pusat);
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'kinerja_kp' && prevStage1Data.kinerja_kp) {
+            const k = prevStage1Data.kinerja_kp;
+            ['cidera_ringan', 'cidera_berat', 'mati', 'fr', 'sr', 'kejadian_berbahaya', 'asr', 'mfr', 'penyakit_tk', 'frekuensi_pak'].forEach(key => {
+                setInputByName(`kinerja_kp[${key}]`, k[key] ?? '');
+            });
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'faktor_penyesuaian' && prevStage1Data.faktor_penyesuaian) {
+            const fp = prevStage1Data.faktor_penyesuaian;
+            for (let no = 1; no <= 7; no++) {
+                const rawVal = (fp[no] ?? fp[String(no)] ?? '').toString().toLowerCase();
+                document.querySelectorAll(`input[name="faktor_penyesuaian[${no}]"]`).forEach(radio => {
+                    radio.checked = (radio.value === rawVal);
+                });
+            }
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'mandays' && prevStage1Data.mandays) {
+            const m = prevStage1Data.mandays;
+            setInputByName('jumlah_pekerja', m.jumlah_pekerja);
+            setInputByName('kelas_risiko', m.kelas_risiko);
+            setInputByName('mandays_awal', m.mandays_awal);
+            setInputByName('faktor_penyesuaian_hari', m.faktor_penyesuaian_hari);
+            setInputByName('total_mandays', m.total_mandays);
+            setInputByName('alokasi_tahap_1', m.alokasi_tahap_1);
+            setInputByName('alokasi_tahap_2', m.alokasi_tahap_2);
+            syncTanggalSelesaiOtomatis();
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'jadwal_pelaksanaan' && prevStage1Data.jadwal_pelaksanaan) {
+            const j = prevStage1Data.jadwal_pelaksanaan;
+            setInputByName('tanggal_mulai', j.tanggal_mulai);
+            setInputByName('tanggal_selesai', j.tanggal_selesai);
+            syncTanggalSelesaiOtomatis();
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'kontak_awal' && prevStage1Data.kontak_awal) {
+            const ka = prevStage1Data.kontak_awal;
+            setInputByName('kontak_awal[hari_tanggal]', ka.hari_tanggal);
+            setInputByName('kontak_awal[media]', ka.media);
+            setInputByName('kontak_awal[perwakilan_auditi]', ka.perwakilan_auditi);
+            setInputByName('kontak_awal[jabatan_perwakilan]', ka.jabatan_perwakilan);
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'kelayakan_audit' && prevStage1Data.kelayakan_audit) {
+            const items = prevStage1Data.kelayakan_audit.items || {};
+            for (let no = 1; no <= 7; no++) {
+                setInputByName(`kelayakan_audit[${no}]`, items[no] ?? items[String(no)] ?? '');
+            }
+            setInputByName('kesimpulan_kelayakan', prevStage1Data.kelayakan_audit.kesimpulan ?? '');
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'kecukupan_dokumen' && prevStage1Data.kecukupan_dokumen) {
+            const items = prevStage1Data.kecukupan_dokumen.items || {};
+            const predefined = ['Baik', 'Cukup', 'Kurang'];
+            for (let no = 1; no <= 7; no++) {
+                const val = (items[no] ?? items[String(no)] ?? '').toString();
+                const select = document.getElementById(`sel_kecukupan_${no}`);
+                const wrapper = document.getElementById(`wrapper_desc_${no}`);
+                const textarea = document.getElementById(`txt_desc_${no}`);
+                const hiddenInp = document.getElementById(`inp_kecukupan_${no}`);
+                if (select && wrapper && textarea && hiddenInp) {
+                    if (predefined.includes(val)) {
+                        select.value = val;
+                        wrapper.classList.add('d-none');
+                        textarea.value = '';
+                        hiddenInp.value = val;
+                    } else if (val.trim() !== '') {
+                        select.value = 'custom';
+                        wrapper.classList.remove('d-none');
+                        textarea.value = val;
+                        hiddenInp.value = val;
+                    } else {
+                        select.value = '';
+                        wrapper.classList.add('d-none');
+                        textarea.value = '';
+                        hiddenInp.value = '';
+                    }
+                }
+            }
+            setInputByName('kesimpulan_kecukupan', prevStage1Data.kecukupan_dokumen.kesimpulan ?? '');
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'top_risks_present') {
+            fillRiskTable('tableRiskPresent', 'top_risks_present', prevStage1Data.top_risks_present);
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'top_risks_future') {
+            fillRiskTable('tableRiskFuture', 'top_risks_future', prevStage1Data.top_risks_future);
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section.startsWith('trend_')) {
+            const tKey = section.replace('trend_', '');
+            const trendObj = prevStage1Data.trend_data || {};
+            fillTrendTable(tKey, trendObj[tKey]);
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'unjuk_kerja_peralatan') {
+            const table = document.getElementById('tablePeralatan');
+            const tbody = table?.querySelector('tbody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                const rows = (Array.isArray(prevStage1Data.unjuk_kerja_peralatan) && prevStage1Data.unjuk_kerja_peralatan.length > 0)
+                    ? prevStage1Data.unjuk_kerja_peralatan
+                    : [{ jenis_peralatan: '', pa: '', ma: '' }];
+                rows.forEach(item => {
+                    const idx = alatCounter++;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="text-center fw-bold row-num"></td>
+                        <td><input type="text" name="unjuk_kerja_peralatan[${idx}][jenis_peralatan]" class="form-control form-control-sm"></td>
+                        <td><input type="text" name="unjuk_kerja_peralatan[${idx}][pa]" class="form-control form-control-sm text-center"></td>
+                        <td><input type="text" name="unjuk_kerja_peralatan[${idx}][ma]" class="form-control form-control-sm text-center"></td>
+                        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
+                    `;
+                    const inputs = tr.querySelectorAll('input');
+                    inputs[0].value = item.jenis_peralatan ?? '';
+                    inputs[1].value = item.pa ?? '';
+                    inputs[2].value = item.ma ?? '';
+                    tbody.appendChild(tr);
+                });
+                renumberTable(table);
+            }
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'capaian_kli') {
+            const table = document.getElementById('tableKli');
+            const tbody = table?.querySelector('tbody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                const rows = (Array.isArray(prevStage1Data.capaian_kli) && prevStage1Data.capaian_kli.length > 0)
+                    ? prevStage1Data.capaian_kli
+                    : [{ indikator: '', capaian: '' }];
+                rows.forEach(item => {
+                    const idx = kliCounter++;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="text-center fw-bold row-num"></td>
+                        <td><input type="text" name="capaian_kli[${idx}][indikator]" class="form-control form-control-sm"></td>
+                        <td><input type="text" name="capaian_kli[${idx}][capaian]" class="form-control form-control-sm text-center"></td>
+                        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
+                    `;
+                    const inputs = tr.querySelectorAll('input');
+                    inputs[0].value = item.indikator ?? '';
+                    inputs[1].value = item.capaian ?? '';
+                    tbody.appendChild(tr);
+                });
+                renumberTable(table);
+            }
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'data_audit_sebelumnya' && prevStage1Data.data_audit_sebelumnya) {
+            const prevAudit = prevStage1Data.data_audit_sebelumnya;
+            setInputByName('data_audit_sebelumnya[tahun]', prevAudit.tahun);
+            setInputByName('data_audit_sebelumnya[nilai_audit]', prevAudit.nilai_audit);
+            setInputByName('data_audit_sebelumnya[status_kritikal]', prevAudit.status_kritikal);
+            setInputByName('data_audit_sebelumnya[status_mayor]', prevAudit.status_mayor);
+            setInputByName('data_audit_sebelumnya[status_minor]', prevAudit.status_minor);
+
+            const wrap = document.getElementById('wrapCatatanInstansi');
+            if (wrap) {
+                wrap.innerHTML = '';
+                const catatanList = (Array.isArray(prevAudit.catatan_instansi) && prevAudit.catatan_instansi.length > 0)
+                    ? prevAudit.catatan_instansi
+                    : [''];
+                catatanList.forEach(textVal => {
+                    const div = document.createElement('div');
+                    div.className = 'input-group input-group-sm';
+                    div.innerHTML = `
+                        <input type="text" name="data_audit_sebelumnya[catatan_instansi][]" class="form-control">
+                        <button type="button" class="btn btn-outline-danger btn-remove-item"><i class="bi bi-x-lg"></i></button>
+                    `;
+                    div.querySelector('input').value = textVal ?? '';
+                    wrap.appendChild(div);
+                });
+            }
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'harapan_pemangku') {
+            const table = document.getElementById('tableHarapan');
+            const tbody = table?.querySelector('tbody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                const rows = (Array.isArray(prevStage1Data.harapan_pemangku) && prevStage1Data.harapan_pemangku.length > 0)
+                    ? prevStage1Data.harapan_pemangku
+                    : [''];
+                rows.forEach(hrp => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="text-center fw-bold row-num"></td>
+                        <td><textarea name="harapan_pemangku[]" class="form-control form-control-sm" rows="2"></textarea></td>
+                        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-trash"></i></button></td>
+                    `;
+                    tr.querySelector('textarea').value = hrp ?? '';
+                    tbody.appendChild(tr);
+                });
+                renumberTable(table);
+            }
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'pengesahan' && prevStage1Data.pengesahan) {
+            setInputByName('tanggal_berita_acara', prevStage1Data.pengesahan.tanggal_berita_acara);
+            setInputByName('nama_pjo', prevStage1Data.pengesahan.nama_pjo);
+            setInputByName('nama_ktt', prevStage1Data.pengesahan.nama_ktt);
+            flashCopyFeedback(btn);
+            return;
+        }
+
+        if (section === 'metadata_dokumen' && prevStage1Data.metadata_dokumen) {
+            const md = prevStage1Data.metadata_dokumen;
+            setInputByName('no_dokumen_header', md.no_dokumen_header);
+            setInputByName('no_dokumen_footer', md.no_dokumen_footer);
+            setInputByName('no_revisi', md.no_revisi);
+            setInputByName('tanggal_terbit', md.tanggal_terbit);
+            setInputByName('tanggal_tinjau_ulang', md.tanggal_tinjau_ulang);
+            flashCopyFeedback(btn);
+        }
+    }
+
+    document.querySelectorAll('.btn-copy-prev').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const section = this.getAttribute('data-copy-section');
+            if (section) {
+                copySectionFromPrevious(section, this);
+            }
+        });
+    });
 
     // Inisialisasi awal sinkronisasi durasi & jadwal saat halaman dimuat
     syncTanggalSelesaiOtomatis();
