@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Perusahaan extends Model
@@ -106,5 +107,13 @@ class Perusahaan extends Model
     public function auditSesis(): HasMany
     {
         return $this->hasMany(AuditSesi::class, 'perusahaan_id');
+    }
+
+    /**
+     * Relationship to PerusahaanLegalitas (1-to-1 per perusahaan).
+     */
+    public function legalitas(): HasOne
+    {
+        return $this->hasOne(PerusahaanLegalitas::class, 'perusahaan_id');
     }
 }

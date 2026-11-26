@@ -156,6 +156,9 @@ ob_start();
                             </td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
+                                    <button type="button" class="btn btn-sm btn-light rounded-circle" data-bs-toggle="modal" data-bs-target="#modalLegalitasPerusahaan<?php echo e($perusahaan->id); ?>" title="Data Legalitas (Izin, WIUP, FS, Lingkungan)">
+                                        <i class="bi bi-file-earmark-check-fill <?php echo $perusahaan->legalitas ? 'text-primary' : 'text-secondary'; ?>"></i>
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-light rounded-circle" data-bs-toggle="modal" data-bs-target="#modalEditPerusahaan<?php echo e($perusahaan->id); ?>" title="Edit">
                                         <i class="bi bi-pencil-fill text-warning"></i>
                                     </button>
@@ -267,6 +270,105 @@ ob_start();
                         <div class="modal-footer border-top-0 pt-0">
                             <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
                             <button type="submit" class="btn btn-primary rounded-pill px-4">Simpan Perubahan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Legalitas Perusahaan -->
+        <?php $leg = $perusahaan->legalitas; ?>
+        <div class="modal fade" id="modalLegalitasPerusahaan<?php echo e($perusahaan->id); ?>" tabindex="-1" aria-labelledby="modalLegalitasLabel<?php echo e($perusahaan->id); ?>" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <div>
+                            <h5 class="modal-title fw-bold text-slate-800" id="modalLegalitasLabel<?php echo e($perusahaan->id); ?>">
+                                <i class="bi bi-file-earmark-check-fill text-primary me-2"></i>Data Legalitas &amp; Wilayah Izin
+                            </h5>
+                            <small class="text-muted"><?php echo e($perusahaan->nama_perusahaan); ?> — untuk Bab 2.1 Laporan Audit Internal SMKP</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="<?php echo e(route('admin.perusahaans.legalitas.update', $perusahaan->id)); ?>" method="POST">
+                        <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
+                        <input type="hidden" name="_method" value="PUT">
+                        <div class="modal-body py-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Jenis Izin Usaha</label>
+                                    <select name="jenis_izin" class="form-select">
+                                        <option value="">-- Pilih Jenis Izin --</option>
+                                        <?php foreach (\App\Models\PerusahaanLegalitas::JENIS_IZIN_OPTIONS as $jiKey => $jiLabel): ?>
+                                            <option value="<?php echo e($jiKey); ?>" <?php echo ($leg?->jenis_izin ?? '') === $jiKey ? 'selected' : ''; ?>><?php echo e($jiLabel); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Status Izin</label>
+                                    <input type="text" name="status_izin" class="form-control" value="<?php echo e($leg?->status_izin ?? ''); ?>" placeholder="Contoh: Operasi Produksi / Aktif">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Nomor SK Izin</label>
+                                    <input type="text" name="nomor_sk_izin" class="form-control" value="<?php echo e($leg?->nomor_sk_izin ?? ''); ?>" placeholder="Contoh: 123/1/IUP/PMDN/2020">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Tanggal SK Izin</label>
+                                    <input type="date" name="tanggal_sk" class="form-control" value="<?php echo e($leg?->tanggal_sk ? $leg->tanggal_sk->format('Y-m-d') : ''); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Tanggal Mulai Berlaku</label>
+                                    <input type="date" name="tanggal_mulai_berlaku" class="form-control" value="<?php echo e($leg?->tanggal_mulai_berlaku ? $leg->tanggal_mulai_berlaku->format('Y-m-d') : ''); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Tanggal Berakhir</label>
+                                    <input type="date" name="tanggal_berakhir" class="form-control" value="<?php echo e($leg?->tanggal_berakhir ? $leg->tanggal_berakhir->format('Y-m-d') : ''); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Kode WIUP / Wilayah</label>
+                                    <input type="text" name="kode_wiup" class="form-control font-monospace" value="<?php echo e($leg?->kode_wiup ?? ''); ?>" placeholder="Contoh: 123456789012345">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Luas Wilayah (Ha)</label>
+                                    <input type="number" step="0.01" min="0" name="luas_ha" class="form-control" value="<?php echo e($leg?->luas_ha ?? ''); ?>" placeholder="Contoh: 1250.50">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Lokasi Desa / Kelurahan</label>
+                                    <input type="text" name="lokasi_desa" class="form-control" value="<?php echo e($leg?->lokasi_desa ?? ''); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Lokasi Kecamatan</label>
+                                    <input type="text" name="lokasi_kecamatan" class="form-control" value="<?php echo e($leg?->lokasi_kecamatan ?? ''); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Lokasi Kabupaten / Kota</label>
+                                    <input type="text" name="lokasi_kabupaten" class="form-control" value="<?php echo e($leg?->lokasi_kabupaten ?? ''); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-slate-800">Lokasi Provinsi</label>
+                                    <input type="text" name="lokasi_provinsi" class="form-control" value="<?php echo e($leg?->lokasi_provinsi ?? ''); ?>">
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-bold text-slate-800">Nomor Persetujuan Studi Kelayakan</label>
+                                    <input type="text" name="nomor_persetujuan_studi_kelayakan" class="form-control" value="<?php echo e($leg?->nomor_persetujuan_studi_kelayakan ?? ''); ?>">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold text-slate-800">Tanggal Persetujuan Studi Kelayakan</label>
+                                    <input type="date" name="tanggal_persetujuan_studi_kelayakan" class="form-control" value="<?php echo e($leg?->tanggal_persetujuan_studi_kelayakan ? $leg->tanggal_persetujuan_studi_kelayakan->format('Y-m-d') : ''); ?>">
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-bold text-slate-800">Nomor Persetujuan Dokumen Lingkungan</label>
+                                    <input type="text" name="nomor_persetujuan_dokumen_lingkungan" class="form-control" value="<?php echo e($leg?->nomor_persetujuan_dokumen_lingkungan ?? ''); ?>">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold text-slate-800">Tanggal Persetujuan Dokumen Lingkungan</label>
+                                    <input type="date" name="tanggal_persetujuan_dokumen_lingkungan" class="form-control" value="<?php echo e($leg?->tanggal_persetujuan_dokumen_lingkungan ? $leg->tanggal_persetujuan_dokumen_lingkungan->format('Y-m-d') : ''); ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 pt-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">Simpan Legalitas</button>
                         </div>
                     </form>
                 </div>

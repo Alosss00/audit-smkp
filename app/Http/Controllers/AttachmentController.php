@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditDetail;
+use App\Models\AuditLaporanProfil;
 use App\Models\Pica;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -73,6 +74,29 @@ class AttachmentController extends Controller
             $fullPath = $this->resolveFilePath($matchedPath);
             if (!$fullPath) {
                 abort(404, 'File lampiran kriteria tidak ditemukan pada storage.');
+            }
+
+            return $this->buildSecureFileResponse($fullPath);
+        }
+
+        if ($type === 'struktur_organisasi') {
+            $profil = AuditLaporanProfil::with('laporan.auditSesi')->findOrFail($id);
+
+            if ($user->role === 'auditor') {
+                $sesi = $profil->laporan?->auditSesi;
+                if (!$sesi || !$sesi->matchesUserArea($user->area)) {
+                    abort(403, 'Anda tidak memiliki hak akses untuk melihat berkas struktur organisasi sesi audit ini.');
+                }
+            }
+
+            $path = $profil->struktur_organisasi_path;
+            if (!$path) {
+                abort(404, 'Berkas struktur organisasi belum diunggah.');
+            }
+
+            $fullPath = $this->resolveFilePath($path);
+            if (!$fullPath) {
+                abort(404, 'Berkas struktur organisasi tidak ditemukan pada storage.');
             }
 
             return $this->buildSecureFileResponse($fullPath);

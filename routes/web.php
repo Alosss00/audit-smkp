@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLaporanProfilController;
 use App\Http\Controllers\Admin\AuditOfiController;
 use App\Http\Controllers\Admin\AuditOversightController;
 use App\Http\Controllers\Admin\AuditRencanaController;
@@ -98,6 +99,14 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::put('/audit-sesi/{id}/ofi/{ofiId}', [AuditOfiController::class, 'update'])->name('audit-sesi.ofi.update');
             Route::delete('/audit-sesi/{id}/ofi/{ofiId}', [AuditOfiController::class, 'destroy'])->name('audit-sesi.ofi.destroy');
         });
+
+        // Profil & Informasi Umum Laporan Audit Internal SMKP (Fase L1)
+        Route::get('/audit-sesi/{id}/laporan/profil', [AuditLaporanProfilController::class, 'edit'])->name('audit-sesi.laporan.profil');
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::put('/audit-sesi/{id}/laporan/profil', [AuditLaporanProfilController::class, 'update'])->name('audit-sesi.laporan.profil.update');
+            Route::post('/audit-sesi/{id}/laporan/profil/salin-tahap-awal', [AuditLaporanProfilController::class, 'copyFromTahapAwal'])->name('audit-sesi.laporan.profil.copy-tahap-awal');
+            Route::post('/audit-sesi/{id}/laporan/profil/salin-periode-sebelumnya', [AuditLaporanProfilController::class, 'copyFromPreviousPeriod'])->name('audit-sesi.laporan.profil.copy-prev-period');
+        });
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiAdminController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
         Route::post('/audit-sesi/{id}/restore', [AuditSesiAdminController::class, 'restore'])->name('audit-sesi.restore');
@@ -124,6 +133,9 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::resource('kriterias', KriteriaController::class);
             
             Route::patch('/perusahaans/{id}/toggle-status', [PerusahaanController::class, 'toggleStatus'])->name('perusahaans.toggle-status');
+            Route::put('/perusahaans/{id}/legalitas', [PerusahaanController::class, 'updateLegalitas'])
+                ->middleware('throttle:30,1')
+                ->name('perusahaans.legalitas.update');
             Route::post('/perusahaans/{id}/restore', [PerusahaanController::class, 'restore'])->name('perusahaans.restore');
             Route::delete('/perusahaans/{id}/force-delete', [PerusahaanController::class, 'forceDelete'])->name('perusahaans.force-delete');
             Route::resource('perusahaans', PerusahaanController::class);
@@ -192,6 +204,7 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/cetak-kesesuaian', [AuditSesiController::class, 'cetakKesesuaian'])->name('audit-sesi.cetak-kesesuaian');
         Route::get('/audit-sesi/{id}/ofi', [AuditOfiController::class, 'indexForAuditor'])->name('audit-sesi.ofi.index');
         Route::get('/audit-sesi/{id}/ofi/cetak', [AuditOfiController::class, 'cetak'])->name('audit-sesi.ofi.cetak');
+        Route::get('/audit-sesi/{id}/laporan/profil', [AuditLaporanProfilController::class, 'showForAuditor'])->name('audit-sesi.laporan.profil');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 
         // Modul PICA (Tindak Lanjut Perbaikan Temuan Audit oleh Auditee / PIC Area)

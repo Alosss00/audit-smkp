@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Perusahaan;
+use App\Models\PerusahaanLegalitas;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +18,7 @@ class PerusahaanController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Perusahaan::with('auditSesis')->withCount('auditSesis');
+        $query = Perusahaan::with(['auditSesis', 'legalitas'])->withCount('auditSesis');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -237,5 +239,69 @@ class PerusahaanController extends Controller
             return redirect()->route('admin.perusahaans.index')
                 ->with('error', "Gagal menghapus permanen: Perusahaan terkait dengan data audit yang ada.");
         }
+    }
+
+    /**
+     * Update or create PerusahaanLegalitas (1-to-1 per perusahaan).
+     */
+    public function updateLegalitas(Request $request, int|string $id): RedirectResponse
+    {
+        $perusahaan = Perusahaan::findOrFail($id);
+        $oldData = $perusahaan->legalitas?->toArray();
+
+        $validated = $request->validate([
+            'jenis_izin'                            => ['nullable', Rule::in(array_keys(PerusahaanLegalitas::JENIS_IZIN_OPTIONS))],
+            'nomor_sk_izin'                         => 'nullable|string|max:150',
+            'tanggal_sk'                            => 'nullable|date',
+            'tanggal_mulai_berlaku'                 => 'nullable|date',
+            'tanggal_berakhir'                      => 'nullable|date|after_or_equal:tanggal_mulai_berlaku',
+            'status_izin'                           => 'nullable|string|max:100',
+            'kode_wiup'                             => 'nullable|string|max:100',
+            'luas_ha'                               => 'nullable|numeric|min:0|max:9999999999.99',
+            'lokasi_desa'                           => 'nullable|string|max:150',
+            'lokasi_kecamatan'                      => 'nullable|string|max:150',
+            'lokasi_kabupaten'                      => 'nullable|string|max:150',
+            'lokasi_provinsi'                       => 'nullable|string|max:150',
+            'nomor_persetujuan_studi_kelayakan'     => 'nullable|string|max:150',
+            'tanggal_persetujuan_studi_kelayakan'   => 'nullable|date',
+            'nomor_persetujuan_dokumen_lingkungan'  => 'nullable|string|max:150',
+            'tanggal_persetujuan_dokumen_lingkungan'=> 'nullable|date',
+        ], [
+            'jenis_izin.in'                   => 'Jenis izin usaha tidak valid.',
+            'tanggal_berakhir.after_or_equal' => 'Tanggal berakhir izin tidak boleh lebih awal dari tanggal mulai berlaku.',
+            'luas_ha.numeric'                 => 'Luas wilayah (Ha) harus berupa angka.',
+            'luas_ha.min'                     => 'Luas wilayah (Ha) tidak boleh bernilai negatif.',
+        ]);
+
+        // Normalize empty strings to null
+        $payload = [];
+        foreach ($validated as $k => $v) {
+            $payload[$k] = (is_string($v) && trim($v) === '') ? null : (is_string($v) ? trim($v) : $v);
+        }
+
+        // Restore soft-deleted legalitas if it exists for this perusahaan_id
+        $existingTrashed = PerusahaanLegalitas::onlyTrashed()->where('perusahaan_id', $perusahaan->id)->first();
+        if ($existingTrashed) {
+            $existingTrashed->restore();
+            $existingTrashed->update($payload);
+            $legalitas = $existingTrashed->fresh();
+        } else {
+            $legalitas = PerusahaanLegalitas::updateOrCreate(
+                ['perusahaan_id' => $perusahaan->id],
+                $payload
+            );
+        }
+
+        AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Legalitas Perusahaan',
+            'tindakan'        => "Memperbarui data legalitas perusahaan: {$perusahaan->nama_perusahaan}",
+            'data_lama'       => $oldData,
+            'data_baru'       => $legalitas->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
+        return redirect()->route('admin.perusahaans.index')
+            ->with('success', "Data legalitas '{$perusahaan->nama_perusahaan}' berhasil disimpan!");
     }
 }

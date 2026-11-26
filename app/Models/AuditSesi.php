@@ -93,6 +93,14 @@ class AuditSesi extends Model
     }
 
     /**
+     * Relationship to AuditLaporan (Laporan Audit Internal SMKP).
+     */
+    public function laporan(): HasOne
+    {
+        return $this->hasOne(AuditLaporan::class, 'audit_sesi_id');
+    }
+
+    /**
      * Hitung status 7 langkah Perangkat Audit SMKP untuk sesi ini.
      *
      * @return array<int, array<string, mixed>>

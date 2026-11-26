@@ -11,6 +11,9 @@ $backRoute = $isAuditorRole
     : route('admin.audit-sesi.index');
 
 $dokumenRelevan = !empty($rencana->dokumen_relevan) ? $rencana->dokumen_relevan : [''];
+$areaLingkupList = $rencana->areas->isNotEmpty()
+    ? $rencana->areas->pluck('nama_area')->all()
+    : [''];
 $timList = $rencana->tims->isNotEmpty()
     ? $rencana->tims
     : collect([(object) ['nama' => '', 'jabatan' => '', 'peran' => 'auditor']]);
@@ -189,6 +192,29 @@ $pengesahanList = $rencana->pengesahans->isNotEmpty()
                     <div class="col-md-6">
                         <label class="form-label small fw-bold">Distribusi Laporan Audit</label>
                         <textarea name="distribusi_laporan" class="form-control" rows="2"><?php echo e($rencana->distribusi_laporan ?? ''); ?></textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <label class="form-label small fw-bold mb-0">Daftar Area Lingkup Audit (Terstruktur)</label>
+                                <small class="text-muted d-block">Digunakan pada Bab 3 Ruang Lingkup Laporan Audit Internal SMKP.</small>
+                            </div>
+                            <?php if (! $isReadOnly): ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="btnAddAreaLingkup">
+                                    <i class="bi bi-plus"></i> Tambah Area
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                        <div id="wrapAreaLingkup" class="d-flex flex-column gap-2">
+                            <?php foreach ($areaLingkupList as $areaNama): ?>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" name="areas[]" class="form-control" value="<?php echo e($areaNama); ?>" placeholder="Contoh: Area Pit Tambang / Workshop / Gudang Handak">
+                                    <?php if (! $isReadOnly): ?>
+                                        <button type="button" class="btn btn-outline-danger btn-remove-item"><i class="bi bi-x-lg"></i></button>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -531,6 +557,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const grp = removeItem.closest('.input-group');
             if (grp) grp.remove();
         }
+    });
+
+    // Add Area Lingkup Audit
+    document.getElementById('btnAddAreaLingkup')?.addEventListener('click', function () {
+        const wrap = document.getElementById('wrapAreaLingkup');
+        if (!wrap) return;
+        const div = document.createElement('div');
+        div.className = 'input-group input-group-sm';
+        div.innerHTML = '<input type="text" name="areas[]" class="form-control" placeholder="Contoh: Area Pit Tambang / Workshop / Gudang Handak"><button type="button" class="btn btn-outline-danger btn-remove-item"><i class="bi bi-x-lg"></i></button>';
+        wrap.appendChild(div);
     });
 
     // Add Dokumen Relevan

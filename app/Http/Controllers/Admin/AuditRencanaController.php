@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AuditRencana;
+use App\Models\AuditRencanaArea;
 use App\Models\AuditRencanaJadwal;
 use App\Models\AuditRencanaPengesahan;
 use App\Models\AuditRencanaSampel;
@@ -32,7 +33,7 @@ class AuditRencanaController extends Controller
     {
         $sesi = AuditSesi::with(['perusahaan', 'user'])->findOrFail($id);
         $rencana = AuditRencana::getOrInitializeForSesi($sesi);
-        $rencana->load(['tims', 'jadwals.elemen', 'sampels.subElemen.elemen', 'pengesahans']);
+        $rencana->load(['tims', 'jadwals.elemen', 'sampels.subElemen.elemen', 'pengesahans', 'areas']);
 
         $elemens = Elemen::orderBy('kode_elemen')->get();
         $tahapAwal = AuditTahapAwal::where('audit_sesi_id', $sesi->id)->first();
@@ -67,7 +68,7 @@ class AuditRencanaController extends Controller
             ->findOrFail($id);
 
         $rencana = AuditRencana::where('audit_sesi_id', $sesi->id)
-            ->with(['tims', 'jadwals.elemen', 'sampels.subElemen.elemen', 'pengesahans'])
+            ->with(['tims', 'jadwals.elemen', 'sampels.subElemen.elemen', 'pengesahans', 'areas'])
             ->first();
 
         if (! $rencana) {
@@ -113,6 +114,8 @@ class AuditRencanaController extends Controller
             'pengecualian'            => 'nullable|string|max:5000',
             'dokumen_relevan'         => 'nullable|array',
             'dokumen_relevan.*'       => 'nullable|string|max:500',
+            'areas'                   => 'nullable|array',
+            'areas.*'                 => 'nullable|string|max:255',
             'fasilitas'               => 'nullable|string|max:5000',
             'distribusi_laporan'      => 'nullable|string|max:5000',
             'kelompok_penandatangan'  => ['nullable', Rule::in(array_keys(AuditRencana::KELOMPOK_PENANDATANGAN_OPTIONS))],
@@ -194,6 +197,23 @@ class AuditRencanaController extends Controller
                 'distribusi_laporan'     => trim((string) ($validated['distribusi_laporan'] ?? '')) ?: null,
                 'kelompok_penandatangan' => $kelompok,
             ]);
+
+            // Sync Daftar Area Lingkup Audit
+            $rencana->areas()->delete();
+            $urutanArea = 1;
+            foreach ((array) $request->input('areas', []) as $areaItem) {
+                $namaArea = is_array($areaItem)
+                    ? trim((string) ($areaItem['nama_area'] ?? ''))
+                    : trim((string) $areaItem);
+                if ($namaArea === '') {
+                    continue;
+                }
+                AuditRencanaArea::create([
+                    'audit_rencana_id' => $rencana->id,
+                    'nama_area'        => $namaArea,
+                    'urutan'           => $urutanArea++,
+                ]);
+            }
 
             // Sync Tim Audit
             $rencana->tims()->delete();
@@ -420,7 +440,7 @@ class AuditRencanaController extends Controller
 
         $sesi = $query->findOrFail($id);
         $rencana = AuditRencana::where('audit_sesi_id', $sesi->id)
-            ->with(['tims', 'jadwals.elemen', 'sampels.subElemen.elemen', 'pengesahans'])
+            ->with(['tims', 'jadwals.elemen', 'sampels.subElemen.elemen', 'pengesahans', 'areas'])
             ->first();
 
         if (! $rencana) {
@@ -428,7 +448,7 @@ class AuditRencanaController extends Controller
                 abort(404, 'Rencana Audit untuk sesi ini belum disusun.');
             }
             $rencana = AuditRencana::getOrInitializeForSesi($sesi);
-            $rencana->load(['tims', 'jadwals.elemen', 'sampels.subElemen.elemen', 'pengesahans']);
+            $rencana->load(['tims', 'jadwals.elemen', 'sampels.subElemen.elemen', 'pengesahans', 'areas']);
         }
 
         $tahapAwal = AuditTahapAwal::where('audit_sesi_id', $sesi->id)->first();

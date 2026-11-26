@@ -19,6 +19,7 @@ class AuditRencana extends Model
         'auditor'      => 'Auditor',
         'tenaga_ahli'  => 'Tenaga Ahli',
         'pengamat'     => 'Pengamat (Observer)',
+        'pemandu'      => 'Pemandu',
     ];
 
     public const JENIS_KEGIATAN_OPTIONS = [
@@ -114,6 +115,11 @@ class AuditRencana extends Model
     public function pengesahans(): HasMany
     {
         return $this->hasMany(AuditRencanaPengesahan::class, 'audit_rencana_id')->orderBy('urutan')->orderBy('id');
+    }
+
+    public function areas(): HasMany
+    {
+        return $this->hasMany(AuditRencanaArea::class, 'audit_rencana_id')->orderBy('urutan')->orderBy('id');
     }
 
     public function isFinal(): bool
