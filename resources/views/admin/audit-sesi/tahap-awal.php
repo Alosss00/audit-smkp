@@ -1240,8 +1240,21 @@ $renderCopyPrevBtn = function (string $section, string $extraClass = '') use ($h
                         <h6 class="fw-bold text-slate-800 mb-2">
                             <i class="bi bi-folder2-open text-primary me-1"></i>Daftar Dokumen Kerja Standar (Bab III.C — Tercetak Otomatis Sesuai Format Archi Indonesia)
                         </h6>
-                        <ul class="small text-slate-700 mb-0">
-                            <li>Rencana Sampling pada Formulir Rencana Audit nomor <code>TT-MGT-FRS-026A</code></li>
+                        <ul class="small text-slate-700 mb-3">
+                            <li>
+                                Rencana Sampling pada Formulir Rencana Audit nomor <code>TT-MGT-FRS-026A</code>
+                                <?php $rencanaStatus = isset($rencanaAudit) && $rencanaAudit ? $rencanaAudit->status : null; ?>
+                                <?php if ($rencanaStatus === 'final'): ?>
+                                    <span class="badge bg-success rounded-pill ms-1">Final</span>
+                                <?php elseif ($rencanaStatus === 'draft'): ?>
+                                    <span class="badge bg-warning text-dark rounded-pill ms-1">Draft</span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary rounded-pill ms-1">Belum Dibuat</span>
+                                <?php endif; ?>
+                                <a href="<?php echo e(route('admin.audit-sesi.rencana.edit', $sesi->id)); ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0 ms-2">
+                                    <i class="bi bi-calendar2-check me-1"></i>Buka Rencana Audit (026A)
+                                </a>
+                            </li>
                             <li>Kriteria Audit Lampiran II Kepdirjen Minerba Nomor <code>185.K/37.04/DJB/2019</code></li>
                             <li>Formulir Kesesuaian Audit (<code>TT-MGT-FRS-026E</code>), Formulir Ketidaksesuaian & Tindak Lanjut (<code>TT-MGT-FRS-026M</code>), Rekapitulasi Ketidaksesuaian (<code>TT-MGT-FRS-026F</code>), Rencana Tindak Lanjut Audit (<code>TT-MGT-FRS-026H</code>), Rekomendasi & OFI (<code>TT-MGT-FRS-026G</code>), dan Daftar Hadir (<code>TT-MGT-FRS-011A</code>).</li>
                         </ul>

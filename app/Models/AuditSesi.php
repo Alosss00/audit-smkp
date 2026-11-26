@@ -77,6 +77,14 @@ class AuditSesi extends Model
     }
 
     /**
+     * Relationship to AuditRencana (Formulir 026A).
+     */
+    public function rencana(): HasOne
+    {
+        return $this->hasOne(AuditRencana::class, 'audit_sesi_id');
+    }
+
+    /**
      * Scope a query to only include audit sessions accessible by the given auditor area.
      * Access granted if area_audit matches OR company's nama_perusahaan matches.
      */

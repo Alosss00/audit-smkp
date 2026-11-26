@@ -80,6 +80,27 @@ class Perusahaan extends Model
     }
 
     /**
+     * Map jenis_usaha to signatory matrix group for Rencana Audit (026A).
+     */
+    public function kelompokPenandatangan(): ?string
+    {
+        return match ($this->jenis_usaha) {
+            'tambang'                                                                => 'tambang',
+            'pengolahan_pemurnian'                                                   => 'pengolahan_pemurnian',
+            'jasa_pertambangan_inti', 'jasa_konsultasi_perencanaan', 'jasa_non_inti' => 'jasa_pertambangan',
+            default                                                                  => null,
+        };
+    }
+
+    /**
+     * Accessor alias for kelompokPenandatangan.
+     */
+    public function getKelompokPenandatanganAttribute(): ?string
+    {
+        return $this->kelompokPenandatangan();
+    }
+
+    /**
      * Relationship to AuditSesi.
      */
     public function auditSesis(): HasMany

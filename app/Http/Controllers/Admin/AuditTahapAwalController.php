@@ -188,6 +188,7 @@ class AuditTahapAwalController extends Controller
             ->orderBy('id')
             ->get();
         $saranKelasRisiko = $perusahaan ? $perusahaan->kelasRisikoDefault() : null;
+        $rencanaAudit = \App\Models\AuditRencana::where('audit_sesi_id', $sesi->id)->first();
 
         return view('admin.audit-sesi.tahap-awal', compact(
             'sesi',
@@ -200,7 +201,8 @@ class AuditTahapAwalController extends Controller
             'isKontraktor',
             'pemegangIupList',
             'masterFaktorPenyesuaian',
-            'saranKelasRisiko'
+            'saranKelasRisiko',
+            'rencanaAudit'
         ));
     }
 

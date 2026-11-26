@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditOversightController;
+use App\Http\Controllers\Admin\AuditRencanaController;
 use App\Http\Controllers\Admin\AuditSesiAdminController;
 use App\Http\Controllers\Admin\AuditTahapAwalController;
 use App\Http\Controllers\Admin\ElemenController;
@@ -70,6 +71,15 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             ->name('audit-sesi.tahap-awal.hitung-hari');
         Route::post('/audit-sesi/{id}/tahap-awal/reset', [AuditTahapAwalController::class, 'resetPreset'])->name('audit-sesi.tahap-awal.reset');
         Route::get('/audit-sesi/{id}/tahap-awal/cetak', [AuditTahapAwalController::class, 'cetak'])->name('audit-sesi.tahap-awal.cetak');
+
+        // Rencana Audit (Formulir TT-MGT-FRS-026A)
+        Route::get('/audit-sesi/{id}/rencana', [AuditRencanaController::class, 'edit'])->name('audit-sesi.rencana.edit');
+        Route::get('/audit-sesi/{id}/rencana/cetak', [AuditRencanaController::class, 'cetak'])->name('audit-sesi.rencana.cetak');
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::put('/audit-sesi/{id}/rencana', [AuditRencanaController::class, 'update'])->name('audit-sesi.rencana.update');
+            Route::post('/audit-sesi/{id}/rencana/finalisasi', [AuditRencanaController::class, 'finalize'])->name('audit-sesi.rencana.finalize');
+            Route::post('/audit-sesi/{id}/rencana/salin-tim-tahap-2', [AuditRencanaController::class, 'copyTimTahap2'])->name('audit-sesi.rencana.copy-tim');
+        });
         Route::get('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'matrix'])->name('audit-sesi.matrix');
         Route::post('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'updateMatrix'])->name('audit-sesi.matrix.update');
         Route::get('/audit-sesi/{id}/rekap', [AuditSesiAdminController::class, 'rekap'])->name('audit-sesi.rekap');
@@ -165,6 +175,8 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/cetak-lengkap', [AuditSesiController::class, 'cetakLengkap'])->name('audit-sesi.cetak-lengkap');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiController::class, 'cetak'])->name('audit-sesi.cetak');
         Route::get('/audit-sesi/{id}/cetak-tahap-awal', [AuditTahapAwalController::class, 'cetak'])->name('audit-sesi.cetak-tahap-awal');
+        Route::get('/audit-sesi/{id}/rencana', [AuditRencanaController::class, 'showForAuditor'])->name('audit-sesi.rencana.show');
+        Route::get('/audit-sesi/{id}/rencana/cetak', [AuditRencanaController::class, 'cetak'])->name('audit-sesi.rencana.cetak');
         Route::get('/audit-sesi/{id}/cetak-ketidaksesuaian', [AuditSesiController::class, 'cetakKetidaksesuaian'])->name('audit-sesi.cetak-ketidaksesuaian');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 
