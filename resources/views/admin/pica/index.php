@@ -494,9 +494,74 @@ ob_start();
                                                                         </div>
 
                                                                         <div class="col-12">
-                                                                            <label class="form-label fw-semibold small text-secondary">Deskripsi Ketidaksesuaian <span class="text-danger">*</span></label>
-                                                                            <textarea name="deskripsi_ketidaksesuaian" rows="2" class="form-control bg-light" 
+                                                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                                <label class="form-label fw-semibold small text-secondary mb-0">
+                                                                                    Deskripsi Ketidaksesuaian <span class="text-danger">*</span>
+                                                                                    <?php if ($pica->nomor_urut): ?>
+                                                                                        <span class="badge bg-primary bg-opacity-10 text-primary ms-1">Temuan #<?php echo e($pica->nomor_urut); ?></span>
+                                                                                    <?php endif; ?>
+                                                                                    <?php if (! $pica->isPlorLengkap()): ?>
+                                                                                        <span class="badge bg-warning text-dark ms-1">PLOR belum lengkap</span>
+                                                                                    <?php endif; ?>
+                                                                                </label>
+                                                                                <?php if (empty($pica->plor_problem) && (!empty($pica->deskripsi_ketidaksesuaian) || !empty($pica->deskripsi_temuan))): ?>
+                                                                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 btn-copy-to-problem" data-pica-id="<?php echo e($pica->id); ?>">
+                                                                                        <i class="bi bi-arrow-down-circle me-1"></i>Salin ke Problem
+                                                                                    </button>
+                                                                                <?php endif; ?>
+                                                                            </div>
+                                                                            <textarea name="deskripsi_ketidaksesuaian" id="descOld_<?php echo e($pica->id); ?>" rows="2" class="form-control bg-light" 
                                                                                 placeholder="Isi deskripsi ketidaksesuaian..."><?php echo e(old('deskripsi_ketidaksesuaian', $pica->deskripsi_ketidaksesuaian)); ?></textarea>
+                                                                        </div>
+
+                                                                        <div class="col-12">
+                                                                            <div class="p-3 rounded-3 border bg-white">
+                                                                                <div class="small fw-bold text-primary mb-2"><i class="bi bi-list-ul me-1"></i>Struktur Temuan PLOR</div>
+                                                                                <div class="row g-2">
+                                                                                    <div class="col-md-6">
+                                                                                        <label class="form-label small fw-semibold text-secondary mb-1">Problem (P)</label>
+                                                                                        <textarea name="plor_problem" id="plorProblem_<?php echo e($pica->id); ?>" rows="2" class="form-control form-control-sm bg-light" placeholder="Uraian masalah ketidaksesuaian..."><?php echo e($pica->plor_problem ?? ''); ?></textarea>
+                                                                                    </div>
+                                                                                    <div class="col-md-6">
+                                                                                        <label class="form-label small fw-semibold text-secondary mb-1">Objective Evidence (O)</label>
+                                                                                        <textarea name="plor_objective_evidence" rows="2" class="form-control form-control-sm bg-light" placeholder="Nama &amp; nomor dokumen, tanggal, hasil observasi..."><?php echo e($pica->plor_objective_evidence ?? ''); ?></textarea>
+                                                                                    </div>
+                                                                                    <div class="col-md-6">
+                                                                                        <label class="form-label small fw-semibold text-secondary mb-1">Location (L)</label>
+                                                                                        <input type="text" name="plor_location" class="form-control form-control-sm bg-light" placeholder="Lokasi temuan (Pit, Workshop, Kantor...)" value="<?php echo e($pica->plor_location ?? ''); ?>">
+                                                                                    </div>
+                                                                                    <div class="col-md-6">
+                                                                                        <label class="form-label small fw-semibold text-secondary mb-1">Reference (R)</label>
+                                                                                        <input type="text" name="plor_reference" class="form-control form-control-sm bg-light" placeholder="Kode sub-elemen / pasal acuan..." value="<?php echo e($pica->plor_reference ?? ''); ?>">
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="col-12">
+                                                                            <div class="p-3 rounded-3 border bg-white">
+                                                                                <div class="small fw-bold text-slate-800 mb-2"><i class="bi bi-patch-check me-1 text-success"></i>Persetujuan Lead Auditor &amp; Wakil Auditi</div>
+                                                                                <div class="row g-2 align-items-end">
+                                                                                    <div class="col-md-3">
+                                                                                        <div class="form-check">
+                                                                                            <input class="form-check-input" type="checkbox" name="setujui_lead_auditor" value="1" id="leadApprove_<?php echo e($pica->id); ?>" <?php echo $pica->persetujuan_lead_auditor_oleh ? 'checked' : ''; ?>>
+                                                                                            <label class="form-check-label small fw-semibold" for="leadApprove_<?php echo e($pica->id); ?>">Disetujui Lead Auditor</label>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="col-md-3">
+                                                                                        <label class="form-label small text-secondary mb-1">Tgl Persetujuan Lead</label>
+                                                                                        <input type="date" name="tanggal_persetujuan_lead" class="form-control form-control-sm bg-light" value="<?php echo e($pica->tanggal_persetujuan_lead ? $pica->tanggal_persetujuan_lead->format('Y-m-d') : ''); ?>">
+                                                                                    </div>
+                                                                                    <div class="col-md-3">
+                                                                                        <label class="form-label small text-secondary mb-1">Nama Wakil Auditi</label>
+                                                                                        <input type="text" name="persetujuan_auditi_nama" class="form-control form-control-sm bg-light" value="<?php echo e($pica->persetujuan_auditi_nama ?? ''); ?>">
+                                                                                    </div>
+                                                                                    <div class="col-md-3">
+                                                                                        <label class="form-label small text-secondary mb-1">Tgl Persetujuan Auditi</label>
+                                                                                        <input type="date" name="tanggal_persetujuan_auditi" class="form-control form-control-sm bg-light" value="<?php echo e($pica->tanggal_persetujuan_auditi ? $pica->tanggal_persetujuan_auditi->format('Y-m-d') : ''); ?>">
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
                                                                         </div>
 
                                                                         <div class="col-12">
@@ -1171,6 +1236,19 @@ ob_start();
             btn.innerHTML = origBtnHtml;
             showModalAlert(sesiId, 'danger', `<strong>Peringatan Validasi:</strong> ${err.message}`);
         });
+    });
+
+    // Salin teks lama deskripsi ketidaksesuaian ke kolom PLOR Problem (tanpa inline handler)
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-copy-to-problem');
+        if (!btn) return;
+        const picaId = btn.getAttribute('data-pica-id');
+        const src = document.getElementById('descOld_' + picaId);
+        const dst = document.getElementById('plorProblem_' + picaId);
+        if (src && dst) {
+            dst.value = src.value;
+            dst.focus();
+        }
     });
 
     // Refresh background table & statistics when modal closes if changes were saved

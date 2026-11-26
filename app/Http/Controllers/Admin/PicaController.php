@@ -145,6 +145,10 @@ class PicaController extends Controller
 
         $request->validate([
             'deskripsi_ketidaksesuaian'  => 'nullable|string',
+            'plor_problem'               => 'nullable|string|max:5000',
+            'plor_location'              => 'nullable|string|max:255',
+            'plor_objective_evidence'    => 'nullable|string|max:5000',
+            'plor_reference'             => 'nullable|string|max:255',
             'kategori_temuan'            => 'nullable|in:kritikal,mayor,minor',
             'justifikasi_kategori'       => 'required_if:kategori_temuan,kritikal|nullable|string',
             'akar_masalah'               => 'nullable|string',
@@ -154,6 +158,11 @@ class PicaController extends Controller
             'tenggat_waktu'              => 'nullable|date',
             'status'                     => 'required|in:open,in_progress,closed',
             'catatan_verifikasi_auditor' => 'required_if:status,closed|nullable|string',
+            'tanggal_verifikasi'         => 'nullable|date',
+            'setujui_lead_auditor'       => 'nullable|boolean',
+            'tanggal_persetujuan_lead'   => 'nullable|date',
+            'persetujuan_auditi_nama'    => 'nullable|string|max:255',
+            'tanggal_persetujuan_auditi' => 'nullable|date',
         ], [
             'status.required'                    => 'Status PICA wajib dipilih.',
             'status.in'                          => 'Pilihan status tidak valid.',
@@ -190,18 +199,42 @@ class PicaController extends Controller
             }
         }
 
+        $verifOleh = $pica->diverifikasi_oleh;
+        $tglVerif = $request->filled('tanggal_verifikasi') ? $request->tanggal_verifikasi : $pica->tanggal_verifikasi;
+        if ($status === 'closed' && ! $verifOleh) {
+            $verifOleh = auth()->id();
+            $tglVerif = $tglVerif ?: now()->toDateString();
+        }
+
+        $leadOleh = $pica->persetujuan_lead_auditor_oleh;
+        $tglLead = $request->filled('tanggal_persetujuan_lead') ? $request->tanggal_persetujuan_lead : $pica->tanggal_persetujuan_lead;
+        if ($request->boolean('setujui_lead_auditor')) {
+            $leadOleh = auth()->id();
+            $tglLead = $tglLead ?: now()->toDateString();
+        }
+
         $pica->update([
-            'deskripsi_ketidaksesuaian'  => $request->deskripsi_ketidaksesuaian,
-            'kategori_temuan'            => $kategoriTemuan,
-            'kategori_ditetapkan_manual' => $isManual,
-            'justifikasi_kategori'       => $justifikasi,
-            'akar_masalah'               => $request->akar_masalah,
-            'tindakan_koreksi'           => $request->tindakan_koreksi,
-            'tindakan_pencegahan'        => $request->tindakan_pencegahan,
-            'pic_perbaikan'              => $request->pic_perbaikan,
-            'tenggat_waktu'              => $request->tenggat_waktu,
-            'status'                     => $status,
-            'catatan_verifikasi_auditor' => $request->catatan_verifikasi_auditor,
+            'deskripsi_ketidaksesuaian'     => $request->deskripsi_ketidaksesuaian,
+            'plor_problem'                  => $request->has('plor_problem') ? $request->plor_problem : $pica->plor_problem,
+            'plor_location'                 => $request->has('plor_location') ? $request->plor_location : $pica->plor_location,
+            'plor_objective_evidence'       => $request->has('plor_objective_evidence') ? $request->plor_objective_evidence : $pica->plor_objective_evidence,
+            'plor_reference'                => $request->has('plor_reference') ? $request->plor_reference : $pica->plor_reference,
+            'kategori_temuan'               => $kategoriTemuan,
+            'kategori_ditetapkan_manual'    => $isManual,
+            'justifikasi_kategori'          => $justifikasi,
+            'akar_masalah'                  => $request->akar_masalah,
+            'tindakan_koreksi'              => $request->tindakan_koreksi,
+            'tindakan_pencegahan'           => $request->tindakan_pencegahan,
+            'pic_perbaikan'                 => $request->pic_perbaikan,
+            'tenggat_waktu'                 => $request->tenggat_waktu,
+            'status'                        => $status,
+            'catatan_verifikasi_auditor'    => $request->catatan_verifikasi_auditor,
+            'diverifikasi_oleh'             => $verifOleh,
+            'tanggal_verifikasi'            => $tglVerif,
+            'persetujuan_lead_auditor_oleh' => $leadOleh,
+            'tanggal_persetujuan_lead'      => $tglLead,
+            'persetujuan_auditi_nama'       => $request->has('persetujuan_auditi_nama') ? $request->persetujuan_auditi_nama : $pica->persetujuan_auditi_nama,
+            'tanggal_persetujuan_auditi'    => $request->has('tanggal_persetujuan_auditi') ? ($request->tanggal_persetujuan_auditi ?: null) : $pica->tanggal_persetujuan_auditi,
         ]);
 
         if ($pica->wasChanged()) {
@@ -321,18 +354,42 @@ class PicaController extends Controller
                     }
                 }
 
+                $verifOleh = $pica->diverifikasi_oleh;
+                $tglVerif = !empty($item['tanggal_verifikasi']) ? $item['tanggal_verifikasi'] : $pica->tanggal_verifikasi;
+                if ($status === 'closed' && ! $verifOleh) {
+                    $verifOleh = auth()->id();
+                    $tglVerif = $tglVerif ?: now()->toDateString();
+                }
+
+                $leadOleh = $pica->persetujuan_lead_auditor_oleh;
+                $tglLead = !empty($item['tanggal_persetujuan_lead']) ? $item['tanggal_persetujuan_lead'] : $pica->tanggal_persetujuan_lead;
+                if (!empty($item['setujui_lead_auditor'])) {
+                    $leadOleh = auth()->id();
+                    $tglLead = $tglLead ?: now()->toDateString();
+                }
+
                 $pica->update([
-                    'deskripsi_ketidaksesuaian'  => $item['deskripsi_ketidaksesuaian'] ?? null,
-                    'kategori_temuan'            => $kategoriTemuan,
-                    'kategori_ditetapkan_manual' => $isManual,
-                    'justifikasi_kategori'       => $justifikasi,
-                    'akar_masalah'               => $akarMasalah,
-                    'tindakan_koreksi'           => $item['tindakan_koreksi'] ?? null,
-                    'tindakan_pencegahan'        => $item['tindakan_pencegahan'] ?? null,
-                    'pic_perbaikan'              => $item['pic_perbaikan'] ?? null,
-                    'tenggat_waktu'              => !empty($item['tenggat_waktu']) ? $item['tenggat_waktu'] : null,
-                    'status'                     => $status,
-                    'catatan_verifikasi_auditor' => $item['catatan_verifikasi_auditor'] ?? null,
+                    'deskripsi_ketidaksesuaian'     => $item['deskripsi_ketidaksesuaian'] ?? null,
+                    'plor_problem'                  => array_key_exists('plor_problem', $item) ? $item['plor_problem'] : $pica->plor_problem,
+                    'plor_location'                 => array_key_exists('plor_location', $item) ? $item['plor_location'] : $pica->plor_location,
+                    'plor_objective_evidence'       => array_key_exists('plor_objective_evidence', $item) ? $item['plor_objective_evidence'] : $pica->plor_objective_evidence,
+                    'plor_reference'                => array_key_exists('plor_reference', $item) ? $item['plor_reference'] : $pica->plor_reference,
+                    'kategori_temuan'               => $kategoriTemuan,
+                    'kategori_ditetapkan_manual'    => $isManual,
+                    'justifikasi_kategori'          => $justifikasi,
+                    'akar_masalah'                  => $akarMasalah,
+                    'tindakan_koreksi'              => $item['tindakan_koreksi'] ?? null,
+                    'tindakan_pencegahan'           => $item['tindakan_pencegahan'] ?? null,
+                    'pic_perbaikan'                 => $item['pic_perbaikan'] ?? null,
+                    'tenggat_waktu'                 => !empty($item['tenggat_waktu']) ? $item['tenggat_waktu'] : null,
+                    'status'                        => $status,
+                    'catatan_verifikasi_auditor'    => $item['catatan_verifikasi_auditor'] ?? null,
+                    'diverifikasi_oleh'             => $verifOleh,
+                    'tanggal_verifikasi'            => $tglVerif,
+                    'persetujuan_lead_auditor_oleh' => $leadOleh,
+                    'tanggal_persetujuan_lead'      => $tglLead,
+                    'persetujuan_auditi_nama'       => array_key_exists('persetujuan_auditi_nama', $item) ? $item['persetujuan_auditi_nama'] : $pica->persetujuan_auditi_nama,
+                    'tanggal_persetujuan_auditi'    => array_key_exists('tanggal_persetujuan_auditi', $item) ? (!empty($item['tanggal_persetujuan_auditi']) ? $item['tanggal_persetujuan_auditi'] : null) : $pica->tanggal_persetujuan_auditi,
                 ]);
 
                 if ($pica->wasChanged()) {

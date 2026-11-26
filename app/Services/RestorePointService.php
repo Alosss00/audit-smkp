@@ -34,6 +34,7 @@ class RestorePointService
         'audit_rencana_pengesahans',
         'audit_details',
         'picas',
+        'audit_ofis',
         'audit_logs',
     ];
 

@@ -131,18 +131,22 @@ class PicaController extends Controller
         $pica = Pica::whereHas('auditDetail.auditSesi', fn ($q) => $q->forUserArea($userArea))->findOrFail($id);
 
         $request->validate([
-            'akar_masalah'        => 'nullable|string',
-            'tindakan_koreksi'    => 'nullable|string',
-            'tindakan_pencegahan' => 'nullable|string',
-            'bukti_perbaikan'     => 'nullable|file|mimes:jpeg,jpg,png,pdf,doc,docx,zip|max:5012',
+            'akar_masalah'               => 'nullable|string',
+            'tindakan_koreksi'           => 'nullable|string',
+            'tindakan_pencegahan'        => 'nullable|string',
+            'bukti_perbaikan'            => 'nullable|file|mimes:jpeg,jpg,png,pdf,doc,docx,zip|max:5012',
+            'persetujuan_auditi_nama'    => 'nullable|string|max:255',
+            'tanggal_persetujuan_auditi' => 'nullable|date',
         ]);
 
         $originalData = $pica->getOriginal();
 
         $updatePayload = [
-            'akar_masalah'        => $request->akar_masalah,
-            'tindakan_koreksi'    => $request->tindakan_koreksi,
-            'tindakan_pencegahan' => $request->tindakan_pencegahan,
+            'akar_masalah'               => $request->akar_masalah,
+            'tindakan_koreksi'           => $request->tindakan_koreksi,
+            'tindakan_pencegahan'        => $request->tindakan_pencegahan,
+            'persetujuan_auditi_nama'    => $request->has('persetujuan_auditi_nama') ? $request->persetujuan_auditi_nama : $pica->persetujuan_auditi_nama,
+            'tanggal_persetujuan_auditi' => $request->has('tanggal_persetujuan_auditi') ? ($request->tanggal_persetujuan_auditi ?: null) : $pica->tanggal_persetujuan_auditi,
         ];
 
         // Handle proof attachment upload to private attachments disk

@@ -85,6 +85,14 @@ class AuditSesi extends Model
     }
 
     /**
+     * Relationship to AuditOfi (Formulir 026G).
+     */
+    public function ofis(): HasMany
+    {
+        return $this->hasMany(AuditOfi::class, 'audit_sesi_id')->orderBy('nomor_urut');
+    }
+
+    /**
      * Scope a query to only include audit sessions accessible by the given auditor area.
      * Access granted if area_audit matches OR company's nama_perusahaan matches.
      */

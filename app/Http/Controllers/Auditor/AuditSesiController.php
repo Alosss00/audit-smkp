@@ -187,6 +187,33 @@ class AuditSesiController extends Controller
     }
 
     /**
+     * Render printable Formulir Kesesuaian Audit (TT-MGT-FRS-026E) scoped to auditor area.
+     */
+    public function cetakKesesuaian(Request $request, int|string $id): View
+    {
+        $sesi = $this->findAuditorSession($id);
+        $sesuaiList = $sesi->getSubElemenPraktekTerbaik();
+        $noDokumen = config('audit.no_dokumen_kesesuaian', 'TT-MGT-FRS-026E');
+
+        $tanggalTtd = $request->query('tanggal_ttd');
+        $tanggalTtdObj = null;
+        if (! empty($tanggalTtd)) {
+            try {
+                $tanggalTtdObj = \Carbon\Carbon::parse($tanggalTtd)->startOfDay();
+            } catch (\Throwable $e) {
+                $tanggalTtdObj = null;
+            }
+        }
+
+        $peringatanTanggal = null;
+        if ($tanggalTtdObj && $sesi->tanggal_selesai && $tanggalTtdObj->lt($sesi->tanggal_selesai->copy()->startOfDay())) {
+            $peringatanTanggal = 'Peringatan: Tanggal tanda tangan formulir (' . $tanggalTtdObj->format('d/m/Y') . ') lebih awal dari tanggal selesai audit sesi (' . $sesi->tanggal_selesai->format('d/m/Y') . ').';
+        }
+
+        return view('laporan.cetak_kesesuaian', compact('sesi', 'sesuaiList', 'noDokumen', 'tanggalTtdObj', 'peringatanTanggal'));
+    }
+
+    /**
      * Helper to find audit session scoped to auditor's area.
      */
     private function findAuditorSession(int|string $id): AuditSesi

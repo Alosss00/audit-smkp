@@ -309,11 +309,14 @@ class AuditSesiAdminController extends Controller
                             : ($detail->catatan ?? 'Ketidaksesuaian kriteria ' . ($detail->kriteria ? $detail->kriteria->kode_kriteria : '') . ' (Skor ' . $nilai . ' / ' . $max . ')');
 
                         if (!$pica) {
-                            Pica::create([
+                            $newPica = new Pica([
                                 'audit_detail_id'  => $detail->id,
                                 'deskripsi_temuan' => $deskripsiTemuan,
                                 'status'           => 'open',
                             ]);
+                            $newPica->audit_sesi_id = $sesi->id;
+                            $newPica->nomor_urut = Pica::nextNomorUrutForSesi($sesi->id);
+                            $newPica->save();
                         } else {
                             $pica->update(['deskripsi_temuan' => $deskripsiTemuan]);
                         }
@@ -524,6 +527,33 @@ class AuditSesiAdminController extends Controller
     }
 
     /**
+     * Render printable Formulir Kesesuaian Audit (TT-MGT-FRS-026E).
+     */
+    public function cetakKesesuaian(Request $request, int|string $id): View
+    {
+        $sesi = AuditSesi::with(['user', 'perusahaan', 'auditDetails.kriteria.subElemen.elemen'])->findOrFail($id);
+        $sesuaiList = $sesi->getSubElemenPraktekTerbaik();
+        $noDokumen = config('audit.no_dokumen_kesesuaian', 'TT-MGT-FRS-026E');
+
+        $tanggalTtd = $request->query('tanggal_ttd');
+        $tanggalTtdObj = null;
+        if (! empty($tanggalTtd)) {
+            try {
+                $tanggalTtdObj = \Carbon\Carbon::parse($tanggalTtd)->startOfDay();
+            } catch (\Throwable $e) {
+                $tanggalTtdObj = null;
+            }
+        }
+
+        $peringatanTanggal = null;
+        if ($tanggalTtdObj && $sesi->tanggal_selesai && $tanggalTtdObj->lt($sesi->tanggal_selesai->copy()->startOfDay())) {
+            $peringatanTanggal = 'Peringatan: Tanggal tanda tangan formulir (' . $tanggalTtdObj->format('d/m/Y') . ') lebih awal dari tanggal selesai audit sesi (' . $sesi->tanggal_selesai->format('d/m/Y') . ').';
+        }
+
+        return view('laporan.cetak_kesesuaian', compact('sesi', 'sesuaiList', 'noDokumen', 'tanggalTtdObj', 'peringatanTanggal'));
+    }
+
+    /**
      * Finalize audit session with AuditLog.
      */
     public function finalisasi(int|string $id): RedirectResponse
@@ -532,6 +562,18 @@ class AuditSesiAdminController extends Controller
 
         if ($sesi->status === 'selesai') {
             return back()->with('info', 'Sesi audit ini sudah dalam status selesai.');
+        }
+
+        if (config('audit.plor_wajib_saat_finalisasi', false)) {
+            $incompletePicas = Pica::whereHas('auditDetail', fn ($q) => $q->where('audit_sesi_id', $sesi->id))
+                ->orderBy('nomor_urut')
+                ->get()
+                ->filter(fn (Pica $p) => ! $p->isPlorLengkap());
+
+            if ($incompletePicas->isNotEmpty()) {
+                $nomorList = $incompletePicas->map(fn (Pica $p) => '#' . ($p->nomor_urut ?: $p->id))->implode(', ');
+                return back()->with('error', "Finalisasi ditolak: terdapat temuan dengan PLOR belum lengkap ({$nomorList}). Lengkapi PLOR terlebih dahulu.");
+            }
         }
 
         $originalStatus = $sesi->status;

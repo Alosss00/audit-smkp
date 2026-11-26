@@ -585,30 +585,38 @@ $allPicas = collect()
         <table class="table-pica mb-4">
             <thead>
                 <tr>
-                    <th style="width: 13%;">Elemen</th>
-                    <th style="width: 16%;">Sub Elemen</th>
-                    <th style="width: 19%;">Deskripsi Ketidaksesuaian</th>
-                    <th style="width: 14%;">Akar Masalah</th>
-                    <th style="width: 16%;">Tindakan Koreksi &amp; Pencegahan</th>
-                    <th style="width: 9%;">Penanggung Jawab</th>
-                    <th style="width: 7%;">Batas Waktu</th>
-                    <th style="width: 6%;">Status</th>
+                    <th style="width: 4%;">No</th>
+                    <th style="width: 11%;">Elemen</th>
+                    <th style="width: 15%;">Sub Elemen</th>
+                    <th style="width: 7%;">Kategori</th>
+                    <th style="width: 21%;">Deskripsi Ketidaksesuaian / PLOR</th>
+                    <th style="width: 13%;">Akar Masalah</th>
+                    <th style="width: 14%;">Tindakan Koreksi &amp; Pencegahan</th>
+                    <th style="width: 7%;">PIC</th>
+                    <th style="width: 4%;">Tenggat</th>
+                    <th style="width: 4%;">Status</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if($allPicas->isEmpty()): ?>
                     <tr>
-                        <td colspan="8" class="text-center py-3 text-muted fst-italic">
+                        <td colspan="10" class="text-center py-3 text-muted fst-italic">
                             Tidak ditemukan ketidaksesuaian (PICA) pada sesi audit ini.
                         </td>
                     </tr>
                 <?php else: ?>
+                    <?php $rowIdxPica = 1; ?>
                     <?php foreach($allPicas as $pica): ?>
                         <?php
                             $detail = $pica->auditDetail ?? null;
                             $kri = $detail->kriteria ?? null;
                             $sub = $kri->subElemen ?? null;
                             $elemen = $sub->elemen ?? null;
+
+                            $nomorTemuan = $pica->nomor_urut ?: $rowIdxPica;
+                            $rowIdxPica++;
+                            $katLabel = ucfirst((string) ($pica->kategori_temuan ?: 'minor'));
+                            $hasPlor = !empty($pica->plor_problem) || !empty($pica->plor_location) || !empty($pica->plor_objective_evidence) || !empty($pica->plor_reference);
 
                             $elemKode = $elemen->kode_elemen ?? '-';
                             $elemNama = $elemen->nama_elemen ?? '-';
@@ -644,6 +652,7 @@ $allPicas = collect()
                             $stLabel = $status === 'closed' ? 'Closed' : ($status === 'in_progress' ? 'In Progress' : 'Open');
                         ?>
                         <tr>
+                            <td class="text-center small fw-bold"><?php echo e($nomorTemuan); ?></td>
                             <td class="small fw-bold">
                                 Elemen <?php echo e($elemKode); ?>: <?php echo e($elemNama); ?>
                             </td>
@@ -655,7 +664,17 @@ $allPicas = collect()
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td class="small"><?php echo nl2br(e($deskripsiTemuan)); ?></td>
+                            <td class="text-center small fw-bold"><?php echo e($katLabel); ?></td>
+                            <td class="small">
+                                <?php if ($hasPlor): ?>
+                                    <div><strong>P:</strong> <?php echo nl2br(e($pica->plor_problem ?: '-')); ?></div>
+                                    <div><strong>L:</strong> <?php echo e($pica->plor_location ?: '-'); ?></div>
+                                    <div><strong>O:</strong> <?php echo nl2br(e($pica->plor_objective_evidence ?: '-')); ?></div>
+                                    <div><strong>R:</strong> <?php echo e($pica->plor_reference ?: '-'); ?></div>
+                                <?php else: ?>
+                                    <?php echo nl2br(e($deskripsiTemuan)); ?>
+                                <?php endif; ?>
+                            </td>
                             <td class="small"><?php echo nl2br(e($akarMasalah)); ?></td>
                             <td class="small">
                                 <div class="mb-1">

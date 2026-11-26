@@ -478,12 +478,77 @@ $tanggalAuditFormatted = formatTanggalAuditIndo($sesi->tanggal_mulai, $sesi->tan
                 </table>
             </div>
 
+            <?php
+                $rekapKategori = $sesi->getTemuanPerKategori();
+                $rekapPerElemen = [];
+                foreach (['kritikal', 'mayor', 'minor'] as $katKey) {
+                    foreach ($rekapKategori[$katKey] as $pItem) {
+                        $el = $pItem->auditDetail->kriteria->subElemen->elemen ?? null;
+                        $elKey = $el ? ($el->kode_elemen . ' - ' . $el->nama_elemen) : 'Lainnya';
+                        if (! isset($rekapPerElemen[$elKey])) {
+                            $rekapPerElemen[$elKey] = ['kritikal' => 0, 'mayor' => 0, 'minor' => 0];
+                        }
+                        $rekapPerElemen[$elKey][$katKey]++;
+                    }
+                }
+            ?>
+
+            <!-- Rekapitulasi Temuan per Kategori & Elemen -->
+            <div style="margin-bottom: 14px;">
+                <div style="font-weight: 700; font-size: 9.5pt; margin-bottom: 6px;">Rekapitulasi Temuan Ketidaksesuaian</div>
+                <table class="pica-table" style="margin-bottom: 8px;">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Kategori Kritikal</th>
+                            <th class="text-center">Kategori Mayor</th>
+                            <th class="text-center">Kategori Minor</th>
+                            <th class="text-center">Total Sub-Elemen Temuan</th>
+                            <th class="text-center">Total Item Temuan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center fw-bold"><?php echo e($rekapKategori['kritikal_count']); ?></td>
+                            <td class="text-center fw-bold"><?php echo e($rekapKategori['mayor_count']); ?></td>
+                            <td class="text-center fw-bold"><?php echo e($rekapKategori['minor_count']); ?></td>
+                            <td class="text-center fw-bold"><?php echo e($rekapKategori['total_temuan']); ?></td>
+                            <td class="text-center fw-bold"><?php echo e($rekapKategori['total_items']); ?></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <?php if (!empty($rekapPerElemen)): ?>
+                    <table class="pica-table" style="margin-bottom: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Elemen SMKP</th>
+                                <th class="text-center" style="width: 90px;">Kritikal</th>
+                                <th class="text-center" style="width: 90px;">Mayor</th>
+                                <th class="text-center" style="width: 90px;">Minor</th>
+                                <th class="text-center" style="width: 90px;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($rekapPerElemen as $elLabel => $cnt): ?>
+                                <tr>
+                                    <td><?php echo e($elLabel); ?></td>
+                                    <td class="text-center"><?php echo e($cnt['kritikal']); ?></td>
+                                    <td class="text-center"><?php echo e($cnt['mayor']); ?></td>
+                                    <td class="text-center"><?php echo e($cnt['minor']); ?></td>
+                                    <td class="text-center fw-bold"><?php echo e($cnt['kritikal'] + $cnt['mayor'] + $cnt['minor']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
+
             <!-- Table of Nonconformity / PICA -->
             <table class="pica-table">
                 <thead>
                     <tr>
                         <th class="col-no text-center">No.</th>
-                        <th class="col-deskripsi">Deskripsi Ketidaksesuaian</th>
+                        <th class="text-center" style="width: 75px;">Kategori</th>
+                        <th class="col-deskripsi">Deskripsi Ketidaksesuaian / PLOR</th>
                         <th class="col-akar">Akar Permasalahan</th>
                         <th class="col-koreksi">Tindakan Koreksi</th>
                         <th class="col-pic text-center">Penanggung<br>jawab</th>
@@ -493,7 +558,7 @@ $tanggalAuditFormatted = formatTanggalAuditIndo($sesi->tanggal_mulai, $sesi->tan
                 <tbody>
                     <?php if($picas->isEmpty()): ?>
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted fst-italic">
+                            <td colspan="7" class="text-center py-4 text-muted fst-italic">
                                 Tidak ada temuan ketidaksesuaian yang tercatat untuk sesi audit ini.
                             </td>
                         </tr>
@@ -503,6 +568,10 @@ $tanggalAuditFormatted = formatTanggalAuditIndo($sesi->tanggal_mulai, $sesi->tan
                             <?php
                                 $detail = $pica->auditDetail ?? null;
                                 $kriteria = $detail->kriteria ?? null;
+                                $nomorTemuan = $pica->nomor_urut ?: $itemNo;
+                                $itemNo++;
+                                $kategoriLabel = ucfirst((string) ($pica->kategori_temuan ?: 'minor'));
+                                $hasPlor = !empty($pica->plor_problem) || !empty($pica->plor_location) || !empty($pica->plor_objective_evidence) || !empty($pica->plor_reference);
                                 
                                 // Deskripsi Ketidaksesuaian
                                 $deskripsi = !empty($pica->deskripsi_ketidaksesuaian)
@@ -520,8 +589,18 @@ $tanggalAuditFormatted = formatTanggalAuditIndo($sesi->tanggal_mulai, $sesi->tan
                                 $batasWaktu = formatBatasWaktu($pica->tenggat_waktu);
                             ?>
                             <tr>
-                                <td class="col-no"><?php echo e($itemNo++); ?>.</td>
-                                <td class="col-deskripsi"><?php echo nl2br(e($deskripsi)); ?></td>
+                                <td class="col-no"><?php echo e($nomorTemuan); ?>.</td>
+                                <td class="text-center fw-bold"><?php echo e($kategoriLabel); ?></td>
+                                <td class="col-deskripsi">
+                                    <?php if ($hasPlor): ?>
+                                        <div><strong>P (Problem):</strong> <?php echo nl2br(e($pica->plor_problem ?: '-')); ?></div>
+                                        <div><strong>L (Location):</strong> <?php echo e($pica->plor_location ?: '-'); ?></div>
+                                        <div><strong>O (Objective Evidence):</strong> <?php echo nl2br(e($pica->plor_objective_evidence ?: '-')); ?></div>
+                                        <div><strong>R (Reference):</strong> <?php echo e($pica->plor_reference ?: '-'); ?></div>
+                                    <?php else: ?>
+                                        <?php echo nl2br(e($deskripsi)); ?>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="col-akar"><?php echo renderPicaListFormatted($pica->akar_masalah); ?></td>
                                 <td class="col-koreksi"><?php echo renderPicaListFormatted($pica->tindakan_koreksi); ?></td>
                                 <td class="col-pic"><?php echo nl2br(e($pic)); ?></td>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditOfiController;
 use App\Http\Controllers\Admin\AuditOversightController;
 use App\Http\Controllers\Admin\AuditRencanaController;
 use App\Http\Controllers\Admin\AuditSesiAdminController;
@@ -87,6 +88,16 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/cetak-lengkap', [AuditSesiAdminController::class, 'cetakLengkap'])->name('audit-sesi.cetak-lengkap');
         Route::get('/audit-sesi/{id}/cetak', [AuditSesiAdminController::class, 'cetak'])->name('audit-sesi.cetak');
         Route::get('/audit-sesi/{id}/cetak-ketidaksesuaian', [AuditSesiAdminController::class, 'cetakKetidaksesuaian'])->name('audit-sesi.cetak-ketidaksesuaian');
+        Route::get('/audit-sesi/{id}/cetak-kesesuaian', [AuditSesiAdminController::class, 'cetakKesesuaian'])->name('audit-sesi.cetak-kesesuaian');
+
+        // Formulir OFI (TT-MGT-FRS-026G)
+        Route::get('/audit-sesi/{id}/ofi', [AuditOfiController::class, 'index'])->name('audit-sesi.ofi.index');
+        Route::get('/audit-sesi/{id}/ofi/cetak', [AuditOfiController::class, 'cetak'])->name('audit-sesi.ofi.cetak');
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::post('/audit-sesi/{id}/ofi', [AuditOfiController::class, 'store'])->name('audit-sesi.ofi.store');
+            Route::put('/audit-sesi/{id}/ofi/{ofiId}', [AuditOfiController::class, 'update'])->name('audit-sesi.ofi.update');
+            Route::delete('/audit-sesi/{id}/ofi/{ofiId}', [AuditOfiController::class, 'destroy'])->name('audit-sesi.ofi.destroy');
+        });
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiAdminController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
         Route::post('/audit-sesi/{id}/restore', [AuditSesiAdminController::class, 'restore'])->name('audit-sesi.restore');
@@ -178,6 +189,9 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/rencana', [AuditRencanaController::class, 'showForAuditor'])->name('audit-sesi.rencana.show');
         Route::get('/audit-sesi/{id}/rencana/cetak', [AuditRencanaController::class, 'cetak'])->name('audit-sesi.rencana.cetak');
         Route::get('/audit-sesi/{id}/cetak-ketidaksesuaian', [AuditSesiController::class, 'cetakKetidaksesuaian'])->name('audit-sesi.cetak-ketidaksesuaian');
+        Route::get('/audit-sesi/{id}/cetak-kesesuaian', [AuditSesiController::class, 'cetakKesesuaian'])->name('audit-sesi.cetak-kesesuaian');
+        Route::get('/audit-sesi/{id}/ofi', [AuditOfiController::class, 'indexForAuditor'])->name('audit-sesi.ofi.index');
+        Route::get('/audit-sesi/{id}/ofi/cetak', [AuditOfiController::class, 'cetak'])->name('audit-sesi.ofi.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 
         // Modul PICA (Tindak Lanjut Perbaikan Temuan Audit oleh Auditee / PIC Area)
