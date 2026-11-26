@@ -95,6 +95,22 @@ class AuditLaporan extends Model
         return $this->hasMany(AuditLaporanDistribusi::class, 'audit_laporan_id')->orderByDesc('tanggal_distribusi')->orderByDesc('id');
     }
 
+    public function iujps(): HasMany
+    {
+        return $this->hasMany(AuditLaporanIujp::class, 'audit_laporan_id')->orderBy('id');
+    }
+
+    /**
+     * Lampiran hasil audit IUJP hanya berlaku bagi perusahaan Pertambangan atau Pengolahan/Pemurnian.
+     */
+    public function isEligibleForIujp(): bool
+    {
+        $this->loadMissing('auditSesi.perusahaan');
+        $jenisUsaha = $this->auditSesi?->perusahaan?->jenis_usaha;
+
+        return in_array($jenisUsaha, ['tambang', 'pengolahan_pemurnian'], true);
+    }
+
     public function pengaju(): BelongsTo
     {
         return $this->belongsTo(User::class, 'diajukan_oleh');

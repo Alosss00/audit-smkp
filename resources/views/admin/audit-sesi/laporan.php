@@ -13,6 +13,9 @@ $profilRoute = $isAuditorRole
 $cetakLaporanRoute = $isAuditorRole
     ? route('auditor.audit-sesi.laporan.cetak', $sesi->id)
     : route('admin.audit-sesi.laporan.cetak', $sesi->id);
+$lampiranRoute = $isAuditorRole
+    ? route('auditor.audit-sesi.laporan.lampiran', $sesi->id)
+    : route('admin.audit-sesi.laporan.lampiran', $sesi->id);
 
 $statusBadgeMap = [
     'draft'           => 'bg-secondary',
@@ -59,6 +62,9 @@ $hariTersisa = $laporan->getHariTersisa();
         </a>
         <a href="<?php echo e($profilRoute); ?>" class="btn btn-outline-primary rounded-3 px-3 fw-semibold">
             <i class="bi bi-building-gear me-1"></i> Profil &amp; Gambaran Umum
+        </a>
+        <a href="<?php echo e($lampiranRoute); ?>" class="btn btn-outline-secondary rounded-3 px-3 fw-semibold">
+            <i class="bi bi-paperclip me-1"></i> Lampiran (Daftar Hadir, Respon, IUJP)
         </a>
     </div>
 </div>

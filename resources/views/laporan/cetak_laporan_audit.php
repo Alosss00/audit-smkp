@@ -622,13 +622,105 @@ $routeKesesuaian = $isAuditorRole
             <?php endif; ?>
         </div>
 
-        <!-- DAFTAR LAMPIRAN -->
-        <div class="bab-title">LAMPIRAN</div>
-        <ol class="small">
-            <li>Formulir Kriteria Audit SMKP — <a href="<?php echo e($routeKriteria); ?>" target="_blank" class="d-print-none">Buka Formulir Kriteria</a></li>
-            <li>Formulir Kesesuaian (Praktik Terbaik) — <a href="<?php echo e($routeKesesuaian); ?>" target="_blank" class="d-print-none">Buka Formulir Kesesuaian</a></li>
-            <li>Rencana Tindak Lanjut (RTL) &amp; Rekapitulasi Ketidaksesuaian — <a href="<?php echo e($routeRtl); ?>" target="_blank" class="d-print-none">Buka Formulir RTL</a></li>
-        </ol>
+        <!-- DAFTAR LAMPIRAN A–F -->
+        <?php
+        $lampiran = $payload['lampiran'] ?? [];
+        $dhP = $lampiran['daftar_hadir_pembukaan'] ?? null;
+        $dhT = $lampiran['daftar_hadir_penutupan'] ?? null;
+        $rm  = $lampiran['respon_manajemen'] ?? null;
+        $iujpEligible = (bool) ($lampiran['iujp_eligible'] ?? false);
+        $iujpList = $lampiran['iujps'] ?? [];
+        $routeDhPembukaan = $isAuditorRole
+            ? route('auditor.audit-sesi.laporan.daftar-hadir.cetak', [$sesi->id, 'pembukaan'])
+            : route('admin.audit-sesi.laporan.daftar-hadir.cetak', [$sesi->id, 'pembukaan']);
+        $routeDhPenutupan = $isAuditorRole
+            ? route('auditor.audit-sesi.laporan.daftar-hadir.cetak', [$sesi->id, 'penutupan'])
+            : route('admin.audit-sesi.laporan.daftar-hadir.cetak', [$sesi->id, 'penutupan']);
+        ?>
+        <div class="bab-title">LAMPIRAN (A–<?php echo $iujpEligible ? 'F' : 'E'; ?>)</div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th style="width: 95px;">Lampiran</th>
+                    <th>Nama Dokumen Lampiran</th>
+                    <th>Ringkasan / Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center fw-bold">Lampiran A</td>
+                    <td>Formulir Kriteria Audit SMKP &amp; Formulir Kesesuaian</td>
+                    <td>
+                        Tersedia &nbsp;
+                        <a href="<?php echo e($routeKriteria); ?>" target="_blank" class="d-print-none">[Kriteria]</a>
+                        <a href="<?php echo e($routeKesesuaian); ?>" target="_blank" class="d-print-none">[Kesesuaian]</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center fw-bold">Lampiran B</td>
+                    <td>Rencana Tindak Lanjut (RTL) &amp; Rekapitulasi Ketidaksesuaian</td>
+                    <td>
+                        <?php echo e((int) ($temuan['total_temuan'] ?? 0)); ?> sub-elemen temuan &nbsp;
+                        <a href="<?php echo e($routeRtl); ?>" target="_blank" class="d-print-none">[Buka RTL]</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center fw-bold">Lampiran C</td>
+                    <td>Daftar Hadir Pembukaan Audit Internal SMKP</td>
+                    <td>
+                        <?php if ($dhP): ?>
+                            <?php echo e(($dhP['hari'] ?? '-') . ', ' . ($dhP['tanggal'] ?? '-') . ' (' . (int) ($dhP['jumlah_peserta'] ?? 0) . ' peserta)'); ?>
+                        <?php else: ?>
+                            Belum diisi
+                        <?php endif; ?>
+                        &nbsp;<a href="<?php echo e($routeDhPembukaan); ?>" target="_blank" class="d-print-none">[Cetak]</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center fw-bold">Lampiran D</td>
+                    <td>Daftar Hadir Penutupan Audit Internal SMKP</td>
+                    <td>
+                        <?php if ($dhT): ?>
+                            <?php echo e(($dhT['hari'] ?? '-') . ', ' . ($dhT['tanggal'] ?? '-') . ' (' . (int) ($dhT['jumlah_peserta'] ?? 0) . ' peserta)'); ?>
+                        <?php else: ?>
+                            Belum diisi
+                        <?php endif; ?>
+                        &nbsp;<a href="<?php echo e($routeDhPenutupan); ?>" target="_blank" class="d-print-none">[Cetak]</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center fw-bold">Lampiran E</td>
+                    <td>Respon Manajemen terhadap Hasil Audit</td>
+                    <td>
+                        <?php if ($rm && ! empty($rm['isi_respon'])): ?>
+                            <div><strong><?php echo e(($rm['nama_penandatangan'] ?? '-') . ' (' . ($rm['tanggal_respon'] ?? '-') . ')'); ?>:</strong></div>
+                            <div><?php echo e($rm['isi_respon']); ?></div>
+                        <?php else: ?>
+                            Belum diisi
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php if ($iujpEligible): ?>
+                    <tr>
+                        <td class="text-center fw-bold">Lampiran F</td>
+                        <td>Hasil Audit Internal Perusahaan Jasa Pertambangan (IUJP)</td>
+                        <td>
+                            <?php if (! empty($iujpList)): ?>
+                                <?php foreach ($iujpList as $iu): ?>
+                                    <div>
+                                        <strong><?php echo e($iu['nama_perusahaan_iujp'] ?? '-'); ?></strong>
+                                        (Skor: <?php echo $iu['skor_pencapaian'] !== null ? e(number_format((float) $iu['skor_pencapaian'], 2, ',', '.')) . '%' : '-'; ?>,
+                                        Temuan K/My/Mn: <?php echo e(($iu['jumlah_temuan_kritikal'] ?? 0) . '/' . ($iu['jumlah_temuan_mayor'] ?? 0) . '/' . ($iu['jumlah_temuan_minor'] ?? 0)); ?>)
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                Belum ada hasil audit IUJP yang dilampirkan.
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
 
         <?php if ($isFromSnapshot && $snapshot): ?>
             <div class="snapshot-footer">

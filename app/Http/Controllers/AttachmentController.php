@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditDaftarHadir;
 use App\Models\AuditDetail;
 use App\Models\AuditLaporanDistribusi;
+use App\Models\AuditLaporanIujp;
 use App\Models\AuditLaporanProfil;
+use App\Models\AuditResponManajemen;
 use App\Models\Pica;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -121,6 +124,49 @@ class AttachmentController extends Controller
             $fullPath = $this->resolveFilePath($path);
             if (!$fullPath) {
                 abort(404, 'Berkas bukti distribusi tidak ditemukan pada storage.');
+            }
+
+            return $this->buildSecureFileResponse($fullPath);
+        }
+
+        if ($type === 'daftar_hadir_scan') {
+            $dh = AuditDaftarHadir::with('auditSesi')->findOrFail($id);
+            if ($user->role === 'auditor') {
+                if (!$dh->auditSesi || !$dh->auditSesi->matchesUserArea($user->area)) {
+                    abort(403, 'Anda tidak memiliki hak akses untuk melihat scan daftar hadir sesi audit ini.');
+                }
+            }
+            if (!$dh->scan_path || !($fullPath = $this->resolveFilePath($dh->scan_path))) {
+                abort(404, 'Berkas scan daftar hadir tidak ditemukan.');
+            }
+
+            return $this->buildSecureFileResponse($fullPath);
+        }
+
+        if ($type === 'respon_manajemen') {
+            $rm = AuditResponManajemen::with('auditSesi')->findOrFail($id);
+            if ($user->role === 'auditor') {
+                if (!$rm->auditSesi || !$rm->auditSesi->matchesUserArea($user->area)) {
+                    abort(403, 'Anda tidak memiliki hak akses untuk melihat dokumen respon manajemen sesi audit ini.');
+                }
+            }
+            if (!$rm->dokumen_path || !($fullPath = $this->resolveFilePath($rm->dokumen_path))) {
+                abort(404, 'Berkas respon manajemen tidak ditemukan.');
+            }
+
+            return $this->buildSecureFileResponse($fullPath);
+        }
+
+        if ($type === 'laporan_iujp') {
+            $iujp = AuditLaporanIujp::with('laporan.auditSesi')->findOrFail($id);
+            if ($user->role === 'auditor') {
+                $sesi = $iujp->laporan?->auditSesi;
+                if (!$sesi || !$sesi->matchesUserArea($user->area)) {
+                    abort(403, 'Anda tidak memiliki hak akses untuk melihat dokumen hasil audit IUJP sesi ini.');
+                }
+            }
+            if (!$iujp->dokumen_path || !($fullPath = $this->resolveFilePath($iujp->dokumen_path))) {
+                abort(404, 'Berkas hasil audit IUJP tidak ditemukan.');
             }
 
             return $this->buildSecureFileResponse($fullPath);

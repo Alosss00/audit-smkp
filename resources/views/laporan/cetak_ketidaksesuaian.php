@@ -611,6 +611,29 @@ $tanggalAuditFormatted = formatTanggalAuditIndo($sesi->tanggal_mulai, $sesi->tan
                 </tbody>
             </table>
 
+            <!-- Blok Tanda Tangan Persetujuan RTL (Slide 61) -->
+            <table style="width: 100%; border-collapse: collapse; margin-top: 18px; page-break-inside: avoid;">
+                <tr>
+                    <td style="width: 50%; border: 1px solid #000; padding: 10px; text-align: center; vertical-align: top;">
+                        <div style="font-weight: 700; font-size: 9.5px; margin-bottom: 42px;">Disetujui Oleh,<br>Ketua Tim Auditor (Lead Auditor)</div>
+                        <div style="font-weight: 700; font-size: 9.5px; text-decoration: underline;">
+                            <?php
+                            $leadTim = $sesi->rencana?->tims?->firstWhere('peran', 'lead_auditor');
+                            echo e($leadTim?->nama ?? ($sesi->laporan?->penanggung_jawab_nama ?? '..................................................'));
+                            ?>
+                        </div>
+                        <div style="font-size: 8.5px; color: #334155;">Tanggal: ............................</div>
+                    </td>
+                    <td style="width: 50%; border: 1px solid #000; padding: 10px; text-align: center; vertical-align: top;">
+                        <div style="font-weight: 700; font-size: 9.5px; margin-bottom: 42px;">Disepakati Oleh,<br>Perwakilan Auditi (KTT / PJO / Penanggung Jawab)</div>
+                        <div style="font-weight: 700; font-size: 9.5px; text-decoration: underline;">
+                            <?php echo e($sesi->perusahaan?->nama_ktt_default ?: '..................................................'); ?>
+                        </div>
+                        <div style="font-size: 8.5px; color: #334155;">Tanggal: ............................</div>
+                    </td>
+                </tr>
+            </table>
+
             <!-- Footer for screen & print -->
             <div class="report-footer d-flex d-print-none">
                 <div>

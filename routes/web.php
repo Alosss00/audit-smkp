@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLampiranLaporanController;
 use App\Http\Controllers\Admin\AuditLaporanController;
 use App\Http\Controllers\Admin\AuditLaporanProfilController;
 use App\Http\Controllers\Admin\AuditOfiController;
@@ -126,6 +127,18 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::post('/audit-sesi/{id}/laporan/dilaporkan', [AuditLaporanController::class, 'markReported'])->name('audit-sesi.laporan.mark-reported');
             Route::patch('/audit-sesi/{id}/laporan/jadwal-status', [AuditLaporanController::class, 'updateJadwalStatus'])->name('audit-sesi.laporan.jadwal-status');
         });
+
+        // Formulir Lampiran Laporan (Fase L4: Daftar Hadir, Respon Manajemen, Hasil Audit IUJP)
+        Route::get('/audit-sesi/{id}/laporan/lampiran', [AuditLampiranLaporanController::class, 'index'])->name('audit-sesi.laporan.lampiran');
+        Route::get('/audit-sesi/{id}/laporan/daftar-hadir/{jenis}/cetak', [AuditLampiranLaporanController::class, 'cetakDaftarHadir'])->name('audit-sesi.laporan.daftar-hadir.cetak');
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::put('/audit-sesi/{id}/laporan/daftar-hadir/{jenis}', [AuditLampiranLaporanController::class, 'saveDaftarHadir'])->name('audit-sesi.laporan.daftar-hadir.save');
+            Route::post('/audit-sesi/{id}/laporan/daftar-hadir/{jenis}/prefill', [AuditLampiranLaporanController::class, 'prefillDaftarHadir'])->name('audit-sesi.laporan.daftar-hadir.prefill');
+            Route::put('/audit-sesi/{id}/laporan/respon-manajemen', [AuditLampiranLaporanController::class, 'saveResponManajemen'])->name('audit-sesi.laporan.respon-manajemen.save');
+            Route::post('/audit-sesi/{id}/laporan/respon-manajemen/prefill', [AuditLampiranLaporanController::class, 'prefillResponManajemen'])->name('audit-sesi.laporan.respon-manajemen.prefill');
+            Route::post('/audit-sesi/{id}/laporan/iujp', [AuditLampiranLaporanController::class, 'storeIujp'])->name('audit-sesi.laporan.iujp.store');
+            Route::delete('/audit-sesi/{id}/laporan/iujp/{iujpId}', [AuditLampiranLaporanController::class, 'destroyIujp'])->name('audit-sesi.laporan.iujp.destroy');
+        });
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiAdminController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
         Route::post('/audit-sesi/{id}/restore', [AuditSesiAdminController::class, 'restore'])->name('audit-sesi.restore');
@@ -248,6 +261,8 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/laporan/profil', [AuditLaporanProfilController::class, 'showForAuditor'])->name('audit-sesi.laporan.profil');
         Route::get('/audit-sesi/{id}/laporan', [AuditLaporanController::class, 'showForAuditor'])->name('audit-sesi.laporan.show');
         Route::get('/audit-sesi/{id}/laporan/cetak', [AuditLaporanController::class, 'cetak'])->name('audit-sesi.laporan.cetak');
+        Route::get('/audit-sesi/{id}/laporan/lampiran', [AuditLampiranLaporanController::class, 'showForAuditor'])->name('audit-sesi.laporan.lampiran');
+        Route::get('/audit-sesi/{id}/laporan/daftar-hadir/{jenis}/cetak', [AuditLampiranLaporanController::class, 'cetakDaftarHadir'])->name('audit-sesi.laporan.daftar-hadir.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 
         // Modul PICA (Tindak Lanjut Perbaikan Temuan Audit oleh Auditee / PIC Area)

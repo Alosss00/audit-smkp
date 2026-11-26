@@ -101,6 +101,22 @@ class AuditSesi extends Model
     }
 
     /**
+     * Relationship to AuditDaftarHadir (Pembukaan & Penutupan).
+     */
+    public function daftarHadirs(): HasMany
+    {
+        return $this->hasMany(AuditDaftarHadir::class, 'audit_sesi_id');
+    }
+
+    /**
+     * Relationship to AuditResponManajemen.
+     */
+    public function responManajemen(): HasOne
+    {
+        return $this->hasOne(AuditResponManajemen::class, 'audit_sesi_id');
+    }
+
+    /**
      * Hitung status 7 langkah Perangkat Audit SMKP untuk sesi ini.
      *
      * @return array<int, array<string, mixed>>

@@ -103,9 +103,12 @@ class LaporanAuditWorkflowService
             'auditSesi.rencana.areas',
             'auditSesi.rencana.jadwals.elemen',
             'auditSesi.ofis',
+            'auditSesi.daftarHadirs.pesertas',
+            'auditSesi.responManajemen',
             'profil',
             'peralatans',
             'narasiElemens.elemen',
+            'iujps',
         ]);
 
         $sesi = $laporan->auditSesi;
@@ -270,6 +273,43 @@ class LaporanAuditWorkflowService
                 'deskripsi_temuan' => $o->deskripsi_temuan,
                 'rekomendasi'      => $o->rekomendasi,
             ])->values()->all(),
+            'lampiran' => [
+                'daftar_hadir_pembukaan' => ($dhP = $sesi->daftarHadirs->firstWhere('jenis', 'pembukaan')) ? [
+                    'tanggal'        => $dhP->tanggal ? $dhP->tanggal->format('Y-m-d') : null,
+                    'hari'           => $dhP->nama_hari_indonesia,
+                    'lokasi'         => $dhP->lokasi,
+                    'judul_kegiatan' => $dhP->judul_otomatis,
+                    'jumlah_peserta' => $dhP->pesertas->count(),
+                    'has_scan'       => ! empty($dhP->scan_path),
+                ] : null,
+                'daftar_hadir_penutupan' => ($dhT = $sesi->daftarHadirs->firstWhere('jenis', 'penutupan')) ? [
+                    'tanggal'        => $dhT->tanggal ? $dhT->tanggal->format('Y-m-d') : null,
+                    'hari'           => $dhT->nama_hari_indonesia,
+                    'lokasi'         => $dhT->lokasi,
+                    'judul_kegiatan' => $dhT->judul_otomatis,
+                    'jumlah_peserta' => $dhT->pesertas->count(),
+                    'has_scan'       => ! empty($dhT->scan_path),
+                ] : null,
+                'respon_manajemen' => ($rm = $sesi->responManajemen) ? [
+                    'tanggal_respon'        => $rm->tanggal_respon ? $rm->tanggal_respon->format('Y-m-d') : null,
+                    'nama_penandatangan'    => $rm->nama_penandatangan,
+                    'jabatan_penandatangan' => $rm->jabatan_penandatangan,
+                    'isi_respon'            => $rm->isi_respon,
+                    'has_dokumen'           => ! empty($rm->dokumen_path),
+                ] : null,
+                'iujp_eligible' => $laporan->isEligibleForIujp(),
+                'iujps'         => $laporan->iujps->map(fn ($iu) => [
+                    'nama_perusahaan_iujp'   => $iu->nama_perusahaan_iujp,
+                    'nomor_iujp'             => $iu->nomor_iujp,
+                    'bidang_usaha'           => $iu->bidang_usaha,
+                    'tanggal_audit'          => $iu->tanggal_audit ? $iu->tanggal_audit->format('Y-m-d') : null,
+                    'skor_pencapaian'        => $iu->skor_pencapaian !== null ? (float) $iu->skor_pencapaian : null,
+                    'jumlah_temuan_kritikal' => (int) $iu->jumlah_temuan_kritikal,
+                    'jumlah_temuan_mayor'    => (int) $iu->jumlah_temuan_mayor,
+                    'jumlah_temuan_minor'    => (int) $iu->jumlah_temuan_minor,
+                    'ringkasan'              => $iu->ringkasan,
+                ])->values()->all(),
+            ],
         ];
 
         return $this->sortRecursive($payload);
