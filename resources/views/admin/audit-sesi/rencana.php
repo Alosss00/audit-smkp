@@ -98,6 +98,7 @@ $pengesahanList = $rencana->pengesahans->isNotEmpty()
 <?php endif; ?>
 
 <!-- 5 Navigation Tabs -->
+<?php echo view('partials.perangkat_audit_nav', ['sesi' => $sesi, 'activeStep' => 'rencana'])->render(); ?>
 <div class="card card-custom p-2 mb-4 bg-white">
     <ul class="nav nav-pills nav-fill gap-2" id="rencanaTabs" role="tablist">
         <li class="nav-item" role="presentation">

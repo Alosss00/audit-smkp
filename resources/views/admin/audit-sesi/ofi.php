@@ -41,6 +41,8 @@ $backRoute = $isAuditorRole
     </div>
 </div>
 
+<?php echo view('partials.perangkat_audit_nav', ['sesi' => $sesi, 'activeStep' => 'ofi'])->render(); ?>
+
 <div class="card card-custom p-4">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">

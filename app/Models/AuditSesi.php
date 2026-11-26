@@ -93,6 +93,127 @@ class AuditSesi extends Model
     }
 
     /**
+     * Hitung status 7 langkah Perangkat Audit SMKP untuk sesi ini.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getPerangkatAuditSteps(): array
+    {
+        $tahapAwal = AuditTahapAwal::where('audit_sesi_id', $this->id)->first();
+        $rencana = AuditRencana::where('audit_sesi_id', $this->id)->first();
+        $progress = $this->hitungProgressPenilaian();
+        $sesuaiCount = $this->getSubElemenPraktekTerbaik()->count();
+        $picas = Pica::whereHas('auditDetail', fn ($q) => $q->where('audit_sesi_id', $this->id))->get();
+        $ofiCount = AuditOfi::where('audit_sesi_id', $this->id)->count();
+
+        // 1. Tahap Awal
+        $tahapAwalFilled = $tahapAwal && (
+            $tahapAwal->jumlah_pekerja !== null
+            || ! empty($tahapAwal->tim_audit_tahap_1)
+            || ! empty($tahapAwal->kesimpulan_kelayakan)
+        );
+        $tahapAwalStatus = ! $tahapAwalFilled
+            ? 'belum diisi'
+            : ($this->status === 'selesai' ? 'final' : 'draft');
+
+        // 2. Rencana Audit
+        $rencanaStatus = ! $rencana
+            ? 'belum diisi'
+            : ($rencana->status === 'final' ? 'final' : 'draft');
+
+        // 3. Matriks Penilaian
+        $matriksStatus = $progress <= 0
+            ? 'belum diisi'
+            : ($this->status === 'selesai' ? 'final' : 'draft');
+
+        // 4. Kesesuaian
+        $kesesuaianStatus = $sesuaiCount === 0
+            ? 'belum diisi'
+            : ($this->status === 'selesai' ? 'final' : 'draft');
+
+        // 5. Ketidaksesuaian & PICA
+        $picaStatus = $picas->isEmpty()
+            ? 'belum diisi'
+            : ($picas->every(fn ($p) => $p->status === 'closed') ? 'final' : 'draft');
+
+        // 6. OFI (opsional)
+        $ofiStatus = $ofiCount === 0
+            ? 'belum diisi'
+            : ($this->status === 'selesai' ? 'final' : 'draft');
+
+        // 7. Rekap
+        $rekapStatus = $progress <= 0
+            ? 'belum diisi'
+            : ($this->status === 'selesai' ? 'final' : 'draft');
+
+        return [
+            [
+                'key'     => 'tahap_awal',
+                'no'      => 1,
+                'label'   => 'Tahap Awal',
+                'kode'    => '026L',
+                'status'  => $tahapAwalStatus,
+                'icon'    => 'bi-journal-bookmark',
+                'count'   => null,
+            ],
+            [
+                'key'     => 'rencana',
+                'no'      => 2,
+                'label'   => 'Rencana Audit',
+                'kode'    => $rencana->no_dokumen ?? '026A',
+                'status'  => $rencanaStatus,
+                'icon'    => 'bi-calendar2-check',
+                'count'   => null,
+            ],
+            [
+                'key'     => 'matrix',
+                'no'      => 3,
+                'label'   => 'Matriks Penilaian',
+                'kode'    => number_format($progress, 0) . '%',
+                'status'  => $matriksStatus,
+                'icon'    => 'bi-grid-3x3-gap',
+                'count'   => null,
+            ],
+            [
+                'key'     => 'kesesuaian',
+                'no'      => 4,
+                'label'   => 'Kesesuaian',
+                'kode'    => config('audit.no_dokumen_kesesuaian', '026E'),
+                'status'  => $kesesuaianStatus,
+                'icon'    => 'bi-patch-check',
+                'count'   => $sesuaiCount,
+            ],
+            [
+                'key'     => 'pica',
+                'no'      => 5,
+                'label'   => 'Ketidaksesuaian & PICA',
+                'kode'    => '026M',
+                'status'  => $picaStatus,
+                'icon'    => 'bi-exclamation-triangle',
+                'count'   => $picas->count(),
+            ],
+            [
+                'key'     => 'ofi',
+                'no'      => 6,
+                'label'   => 'OFI',
+                'kode'    => config('audit.no_dokumen_ofi', '026G'),
+                'status'  => $ofiStatus,
+                'icon'    => 'bi-lightbulb',
+                'count'   => $ofiCount,
+            ],
+            [
+                'key'     => 'rekap',
+                'no'      => 7,
+                'label'   => 'Rekap',
+                'kode'    => number_format((float) $this->skor_akhir, 1) . '%',
+                'status'  => $rekapStatus,
+                'icon'    => 'bi-bar-chart-line',
+                'count'   => null,
+            ],
+        ];
+    }
+
+    /**
      * Scope a query to only include audit sessions accessible by the given auditor area.
      * Access granted if area_audit matches OR company's nama_perusahaan matches.
      */

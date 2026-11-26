@@ -45,6 +45,8 @@ ob_start();
     </div>
 </div>
 
+<?php echo view('partials.perangkat_audit_nav', ['sesi' => $sesi, 'activeStep' => 'rekap'])->render(); ?>
+
 <!-- Score Overview Card -->
 <div class="row g-4 mb-4">
     <div class="col-md-6 col-lg-8">

@@ -88,6 +88,7 @@ $renderCopyPrevBtn = function (string $section, string $extraClass = '') use ($h
 </div>
 
 <!-- Navigation Tabs (4 Steps) -->
+<?php echo view('partials.perangkat_audit_nav', ['sesi' => $sesi, 'activeStep' => 'tahap_awal'])->render(); ?>
 <div class="card card-custom p-2 mb-4 bg-white">
     <ul class="nav nav-pills nav-fill gap-2" id="tahapAwalTabs" role="tablist">
         <li class="nav-item" role="presentation">

@@ -365,6 +365,32 @@ $allPicas = collect()
             </tbody>
         </table>
 
+        <!-- DAFTAR FORMULIR PERANGKAT AUDIT TERSEDIA -->
+        <?php $daftarFormulir = $sesi->getPerangkatAuditSteps(); ?>
+        <div class="section-title" style="margin-top: 8px;">Daftar Formulir Perangkat Audit Tersedia</div>
+        <table class="meta-table mb-3">
+            <thead>
+                <tr>
+                    <th style="width: 6%; text-align: center; background: #e2e8f0;">No</th>
+                    <th style="width: 34%; background: #e2e8f0;">Langkah / Formulir</th>
+                    <th style="width: 24%; text-align: center; background: #e2e8f0;">Kode / Capaian</th>
+                    <th style="width: 18%; text-align: center; background: #e2e8f0;">Jumlah Item</th>
+                    <th style="width: 18%; text-align: center; background: #e2e8f0;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($daftarFormulir as $df): ?>
+                    <tr>
+                        <td class="text-center fw-bold"><?php echo e($df['no']); ?></td>
+                        <td class="fw-semibold"><?php echo e($df['label']); ?></td>
+                        <td class="text-center font-monospace"><?php echo e($df['kode']); ?></td>
+                        <td class="text-center"><?php echo e($df['count'] !== null ? $df['count'] : '-'); ?></td>
+                        <td class="text-center fw-bold text-uppercase"><?php echo e($df['status']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
         <!-- =========================================================================
              BAGIAN I: TABEL PENILAIAN AUDIT SMKP (FORMAT KEPDIRJEN 185)
              ========================================================================= -->
