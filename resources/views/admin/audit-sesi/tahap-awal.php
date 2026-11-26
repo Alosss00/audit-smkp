@@ -334,19 +334,47 @@ $renderCopyPrevBtn = function (string $section, string $extraClass = '') use ($h
                 </div>
 
                 <!-- B. Perhitungan Hari Kerja Audit dan Jumlah Auditor -->
+                <?php
+                    $masterFaktorPenyesuaian = $masterFaktorPenyesuaian ?? collect();
+                    $saranKelasRisiko = $saranKelasRisiko ?? ($sesi->perusahaan ? $sesi->perusahaan->kelasRisikoDefault() : null);
+                    $savedMasterFaktorIds = [];
+                    if (!empty($faktorPenyesuaian['master_faktor_terpilih']) && is_array($faktorPenyesuaian['master_faktor_terpilih'])) {
+                        $savedMasterFaktorIds = array_map(fn ($f) => (int) ($f['id'] ?? 0), $faktorPenyesuaian['master_faktor_terpilih']);
+                    }
+                    $currentSumberPerhitungan = $tahapAwal->sumber_perhitungan ?? '';
+                ?>
                 <div class="col-12">
                     <div class="card card-custom p-4 border-start border-4 border-primary">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                            <h5 class="fw-bold text-slate-800 mb-0">
-                                <i class="bi bi-calculator text-primary me-2"></i>I.B. Perhitungan Hari Kerja Audit (Mandays) dan Jumlah Auditor
-                            </h5>
+                            <div>
+                                <h5 class="fw-bold text-slate-800 mb-0">
+                                    <i class="bi bi-calculator text-primary me-2"></i>I.B. Perhitungan Hari Kerja Audit (Mandays) dan Jumlah Auditor
+                                </h5>
+                                <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
+                                    <span id="badgeSumberPerhitungan" class="badge rounded-pill px-2.5 py-1 <?php echo $currentSumberPerhitungan === 'tabel' ? 'bg-success bg-opacity-10 text-success border border-success border-opacity-25' : 'bg-secondary bg-opacity-10 text-secondary border'; ?>">
+                                        <i class="bi <?php echo $currentSumberPerhitungan === 'tabel' ? 'bi-table' : 'bi-pencil'; ?> me-1"></i>
+                                        Sumber: <strong id="lblSumberPerhitungan"><?php echo $currentSumberPerhitungan === 'tabel' ? 'Tabel Acuan' : ($currentSumberPerhitungan === 'manual' ? 'Manual' : 'Belum dihitung'); ?></strong>
+                                    </span>
+                                    <?php if (!empty($saranKelasRisiko)): ?>
+                                        <span class="badge bg-info bg-opacity-10 text-dark border border-info border-opacity-25 rounded-pill px-2.5 py-1">
+                                            <i class="bi bi-lightbulb text-info me-1"></i>Saran Kelas Risiko (Jenis Usaha): <strong><?php echo e($saranKelasRisiko); ?></strong>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
                             <div class="d-flex flex-wrap gap-2 align-items-center">
                                 <?php echo $renderCopyPrevBtn('mandays'); ?>
+                                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" id="btnHitungDariTabelAcuan"
+                                        data-endpoint="<?php echo e(route('admin.audit-sesi.tahap-awal.hitung-hari', $sesi->id)); ?>">
+                                    <i class="bi bi-table me-1"></i> Hitung dari Tabel Acuan
+                                </button>
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="btnHitungMandaysOtomatis">
                                     <i class="bi bi-magic me-1"></i> Hitung Otomatis Total & Alokasi
                                 </button>
                             </div>
                         </div>
+                        <input type="hidden" name="sumber_perhitungan" id="inpSumberPerhitungan" value="<?php echo e($currentSumberPerhitungan); ?>">
+                        <div id="alertHitungAcuan" class="alert d-none py-2 px-3 small mb-3 rounded-3" role="alert"></div>
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold">Jumlah Pekerja Auditi</label>
@@ -354,25 +382,57 @@ $renderCopyPrevBtn = function (string $section, string $extraClass = '') use ($h
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-bold">Kelas Risiko</label>
+                                <?php $selectedKelasRisiko = $tahapAwal->kelas_risiko ?: ($saranKelasRisiko ?? ''); ?>
                                 <select name="kelas_risiko" id="inpKelasRisiko" class="form-select">
-                                    <option value="" <?php echo e(empty($tahapAwal->kelas_risiko) ? 'selected' : ''); ?>>-- Pilih Kelas Risiko --</option>
-                                    <?php foreach(['Tinggi', 'Sedang', 'Rendah'] as $kr): ?>
-                                        <option value="<?php echo e($kr); ?>" <?php echo e(($tahapAwal->kelas_risiko ?? '') === $kr ? 'selected' : ''); ?>><?php echo e($kr); ?></option>
+                                    <option value="" <?php echo e(empty($selectedKelasRisiko) ? 'selected' : ''); ?>>-- Pilih Kelas Risiko --</option>
+                                    <?php foreach(['Tinggi', 'Menengah', 'Sedang', 'Rendah'] as $kr): ?>
+                                        <option value="<?php echo e($kr); ?>" <?php echo e($selectedKelasRisiko === $kr ? 'selected' : ''); ?>><?php echo e($kr); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-bold">Mandays (Hari)</label>
-                                <input type="number" step="0.1" name="mandays_awal" id="inpMandaysAwal" class="form-control" value="<?php echo e($tahapAwal->mandays_awal ?? ''); ?>">
+                                <input type="number" step="0.1" name="mandays_awal" id="inpMandaysAwal" class="form-control mandays-manual-watch" value="<?php echo e($tahapAwal->mandays_awal ?? ''); ?>">
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-bold">Faktor Penyesuaian (Hari)</label>
-                                <input type="number" step="0.1" name="faktor_penyesuaian_hari" id="inpFaktorHari" class="form-control" value="<?php echo e($tahapAwal->faktor_penyesuaian_hari ?? ''); ?>">
+                                <input type="number" step="0.1" name="faktor_penyesuaian_hari" id="inpFaktorHari" class="form-control mandays-manual-watch" value="<?php echo e($tahapAwal->faktor_penyesuaian_hari ?? ''); ?>">
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-bold">Total Mandays (Hari)</label>
-                                <input type="number" step="0.1" name="total_mandays" id="inpTotalMandays" class="form-control bg-light fw-bold" value="<?php echo e($tahapAwal->total_mandays ?? ''); ?>">
+                                <input type="number" step="0.1" name="total_mandays" id="inpTotalMandays" class="form-control bg-light fw-bold mandays-manual-watch" value="<?php echo e($tahapAwal->total_mandays ?? ''); ?>">
                             </div>
+
+                            <?php if ($masterFaktorPenyesuaian->isNotEmpty()): ?>
+                                <div class="col-12">
+                                    <div class="p-3 rounded-3 bg-light border">
+                                        <div class="small fw-bold text-slate-800 mb-2">
+                                            <i class="bi bi-check2-square text-primary me-1"></i>Faktor Penyesuaian (Master Acuan) — Pilih faktor yang berlaku sebelum klik "Hitung dari Tabel Acuan":
+                                        </div>
+                                        <div class="row g-2">
+                                            <?php foreach ($masterFaktorPenyesuaian as $mf): ?>
+                                                <?php $isChecked = in_array((int) $mf->id, $savedMasterFaktorIds, true); ?>
+                                                <div class="col-md-6">
+                                                    <div class="form-check small">
+                                                        <input class="form-check-input chk-master-faktor" type="checkbox"
+                                                               name="master_faktor_ids[]"
+                                                               value="<?php echo e($mf->id); ?>"
+                                                               id="mf_<?php echo e($mf->id); ?>"
+                                                               <?php echo $isChecked ? 'checked' : ''; ?>>
+                                                        <label class="form-check-label" for="mf_<?php echo e($mf->id); ?>">
+                                                            <span class="badge <?php echo $mf->tipe === 'tambah' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-success bg-opacity-10 text-success'; ?> me-1">
+                                                                <?php echo $mf->tipe === 'tambah' ? '+' : '−'; ?><?php echo $mf->nilai_hari !== null ? e(number_format((float) $mf->nilai_hari, 1)) . ' hr' : 'belum diisi'; ?>
+                                                            </span>
+                                                            <?php echo e($mf->nama); ?>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Alokasi Mandays Tahap I (Maks. 10% Total)</label>
                                 <div class="input-group">
@@ -2031,6 +2091,115 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // Hitung Hari Kerja Audit dari Tabel Acuan via fetch + CSRF
+    const btnHitungAcuan = document.getElementById('btnHitungDariTabelAcuan');
+    const alertHitungAcuan = document.getElementById('alertHitungAcuan');
+    const inpSumberPerhitungan = document.getElementById('inpSumberPerhitungan');
+    const lblSumberPerhitungan = document.getElementById('lblSumberPerhitungan');
+    const badgeSumberPerhitungan = document.getElementById('badgeSumberPerhitungan');
+
+    function setSumberPerhitungan(mode) {
+        if (inpSumberPerhitungan) inpSumberPerhitungan.value = mode;
+        if (lblSumberPerhitungan) {
+            lblSumberPerhitungan.textContent = mode === 'tabel' ? 'Tabel Acuan' : 'Manual';
+        }
+        if (badgeSumberPerhitungan) {
+            badgeSumberPerhitungan.className = mode === 'tabel'
+                ? 'badge rounded-pill px-2.5 py-1 bg-success bg-opacity-10 text-success border border-success border-opacity-25'
+                : 'badge rounded-pill px-2.5 py-1 bg-secondary bg-opacity-10 text-secondary border';
+        }
+    }
+
+    function showAlertAcuan(type, message) {
+        if (!alertHitungAcuan) return;
+        alertHitungAcuan.className = `alert alert-${type} py-2 px-3 small mb-3 rounded-3`;
+        alertHitungAcuan.textContent = message;
+    }
+
+    document.querySelectorAll('.mandays-manual-watch').forEach(inp => {
+        inp.addEventListener('input', function () {
+            setSumberPerhitungan('manual');
+        });
+    });
+
+    if (btnHitungAcuan) {
+        btnHitungAcuan.addEventListener('click', async function () {
+            const endpoint = this.getAttribute('data-endpoint');
+            const jumlahPekerja = parseInt(document.getElementById('inpJumlahPekerja')?.value || '', 10);
+            const kelasRisiko = document.getElementById('inpKelasRisiko')?.value || '';
+            const faktorIds = Array.from(document.querySelectorAll('.chk-master-faktor:checked'))
+                .map(el => parseInt(el.value, 10))
+                .filter(v => !isNaN(v) && v > 0);
+
+            if (isNaN(jumlahPekerja) || jumlahPekerja < 1) {
+                showAlertAcuan('danger', 'Isi Jumlah Pekerja Auditi (minimal 1) sebelum menghitung dari tabel acuan.');
+                return;
+            }
+            if (!kelasRisiko) {
+                showAlertAcuan('danger', 'Pilih Kelas Risiko terlebih dahulu sebelum menghitung dari tabel acuan.');
+                return;
+            }
+
+            const csrfToken = document.querySelector('#formTahapAwal input[name="_token"]')?.value
+                || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                || '';
+
+            btnHitungAcuan.disabled = true;
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        jumlah_pekerja: jumlahPekerja,
+                        kelas_risiko: kelasRisiko,
+                        faktor_ids: faktorIds,
+                    }),
+                });
+                const payload = await res.json();
+                if (!res.ok || !payload.success) {
+                    showAlertAcuan('danger', payload.message || 'Gagal menghitung hari kerja dari tabel acuan.');
+                    return;
+                }
+
+                const d = payload.data;
+                const inpMandays = document.getElementById('inpMandaysAwal');
+                const inpFaktor = document.getElementById('inpFaktorHari');
+                const inpTotal = document.getElementById('inpTotalMandays');
+                if (inpMandays) inpMandays.value = Number(d.mandays_awal).toFixed(1);
+                if (inpFaktor) inpFaktor.value = Number(d.faktor_hari).toFixed(1);
+                if (inpTotal) inpTotal.value = Number(d.total_mandays).toFixed(1);
+
+                const tahap1 = Math.round(Number(d.total_mandays) * 0.1 * 10) / 10;
+                const sisa = Math.max(0, Number(d.total_mandays) - tahap1);
+                const jmlAuditor = document.querySelectorAll('#tableTim2 tbody tr').length || 1;
+                const hariPerAuditor = (sisa / jmlAuditor).toFixed(1);
+                const inpT1 = document.getElementById('inpAlokasiTahap1');
+                const inpT2 = document.getElementById('inpAlokasiTahap2');
+                if (inpT1) inpT1.value = tahap1.toFixed(1);
+                if (inpT2) inpT2.value = `${sisa.toFixed(1).replace('.', ',')} Hari ( ${hariPerAuditor} Hari, ${jmlAuditor} Auditor)`;
+
+                setSumberPerhitungan('tabel');
+                if (typeof syncTanggalSelesaiOtomatis === 'function') {
+                    syncTanggalSelesaiOtomatis();
+                }
+
+                if (d.warning) {
+                    showAlertAcuan('warning', `Perhitungan berhasil (${d.rentang_label}). ${d.warning}`);
+                } else {
+                    showAlertAcuan('success', `Perhitungan berhasil dari tabel acuan (${d.rentang_label}). Anda tetap dapat menyesuaikan angka secara manual bila diperlukan.`);
+                }
+            } catch (err) {
+                showAlertAcuan('danger', 'Terjadi kesalahan jaringan saat menghitung dari tabel acuan.');
+            } finally {
+                btnHitungAcuan.disabled = false;
+            }
+        });
+    }
 
     // Inisialisasi awal sinkronisasi durasi & jadwal saat halaman dimuat
     syncTanggalSelesaiOtomatis();

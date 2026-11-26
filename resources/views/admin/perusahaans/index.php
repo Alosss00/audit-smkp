@@ -225,6 +225,16 @@ ob_start();
                                     </select>
                                 </div>
                                 <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-slate-800">Klasifikasi Jenis Usaha (SMKP)</label>
+                                    <select name="jenis_usaha" class="form-select">
+                                        <option value="">-- Belum Ditentukan --</option>
+                                        <?php foreach (\App\Models\Perusahaan::JENIS_USAHA_OPTIONS as $juKey => $juLabel): ?>
+                                            <option value="<?php echo e($juKey); ?>" <?php echo $perusahaan->jenis_usaha === $juKey ? 'selected' : ''; ?>><?php echo e($juLabel); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="text-muted">Menentukan saran Kelas Risiko &amp; matriks penandatangan Rencana Audit.</small>
+                                </div>
+                                <div class="col-md-6">
                                     <label class="form-label fw-semibold text-slate-800">Nama KTT/PJO</label>
                                     <input type="text" name="nama_ktt_default" class="form-control" value="<?php echo e($perusahaan->nama_ktt_default); ?>" placeholder="Contoh: Tejo Prihantoro">
                                 </div>
@@ -295,6 +305,16 @@ ob_start();
                                 <option value="Pemegang IUP">Pemegang IUP</option>
                                 <option value="Lainnya">Lainnya</option>
                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-800">Klasifikasi Jenis Usaha (SMKP)</label>
+                            <select name="jenis_usaha" class="form-select">
+                                <option value="">-- Belum Ditentukan --</option>
+                                <?php foreach (\App\Models\Perusahaan::JENIS_USAHA_OPTIONS as $juKey => $juLabel): ?>
+                                    <option value="<?php echo e($juKey); ?>"><?php echo e($juLabel); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="text-muted">Menentukan saran Kelas Risiko &amp; matriks penandatangan Rencana Audit.</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-slate-800">Nama KTT/PJO</label>

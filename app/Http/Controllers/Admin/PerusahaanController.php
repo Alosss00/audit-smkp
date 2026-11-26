@@ -45,6 +45,7 @@ class PerusahaanController extends Controller
             'nama_perusahaan'       => ['required', 'string', 'max:255', Rule::unique('perusahaans', 'nama_perusahaan')->whereNull('deleted_at')],
             'kode_perusahaan'       => 'nullable|string|max:50',
             'kategori'              => 'required|in:Pemegang IUP,Kontraktor,Subkontraktor,Lainnya',
+            'jenis_usaha'           => ['nullable', Rule::in(array_keys(Perusahaan::JENIS_USAHA_OPTIONS))],
             'nama_ktt_default'      => 'nullable|string|max:255',
             'jenis_perizinan'       => 'nullable|string',
             'jenis_komoditas'       => 'nullable|string|max:255',
@@ -56,12 +57,14 @@ class PerusahaanController extends Controller
             'nama_perusahaan.unique'   => 'Nama perusahaan ini sudah terdaftar dalam sistem.',
             'kategori.required'        => 'Kategori perusahaan wajib dipilih.',
             'kategori.in'              => 'Kategori perusahaan tidak valid.',
+            'jenis_usaha.in'           => 'Klasifikasi jenis usaha tidak valid.',
         ]);
 
         $perusahaan = Perusahaan::create([
             'nama_perusahaan'       => $request->nama_perusahaan,
             'kode_perusahaan'       => $request->kode_perusahaan,
             'kategori'              => $request->kategori,
+            'jenis_usaha'           => $request->jenis_usaha ?: null,
             'nama_ktt_default'      => $request->nama_ktt_default,
             'jenis_perizinan'       => $request->jenis_perizinan,
             'jenis_komoditas'       => $request->jenis_komoditas,
@@ -96,6 +99,7 @@ class PerusahaanController extends Controller
             'nama_perusahaan'       => ['required', 'string', 'max:255', Rule::unique('perusahaans', 'nama_perusahaan')->ignore($perusahaan->id)->whereNull('deleted_at')],
             'kode_perusahaan'       => 'nullable|string|max:50',
             'kategori'              => 'required|in:Pemegang IUP,Kontraktor,Subkontraktor,Lainnya',
+            'jenis_usaha'           => ['nullable', Rule::in(array_keys(Perusahaan::JENIS_USAHA_OPTIONS))],
             'nama_ktt_default'      => 'nullable|string|max:255',
             'jenis_perizinan'       => 'nullable|string',
             'jenis_komoditas'       => 'nullable|string|max:255',
@@ -107,12 +111,14 @@ class PerusahaanController extends Controller
             'nama_perusahaan.unique'   => 'Nama perusahaan ini sudah terdaftar dalam sistem.',
             'kategori.required'        => 'Kategori perusahaan wajib dipilih.',
             'kategori.in'              => 'Kategori perusahaan tidak valid.',
+            'jenis_usaha.in'           => 'Klasifikasi jenis usaha tidak valid.',
         ]);
 
         $perusahaan->update([
             'nama_perusahaan'       => $request->nama_perusahaan,
             'kode_perusahaan'       => $request->kode_perusahaan,
             'kategori'              => $request->kategori,
+            'jenis_usaha'           => $request->jenis_usaha ?: null,
             'nama_ktt_default'      => $request->nama_ktt_default,
             'jenis_perizinan'       => $request->jenis_perizinan,
             'jenis_komoditas'       => $request->jenis_komoditas,

@@ -13,10 +13,19 @@ class Perusahaan extends Model
 
     protected $table = 'perusahaans';
 
+    public const JENIS_USAHA_OPTIONS = [
+        'tambang'                     => 'Pertambangan (Operasi Produksi / Eksplorasi)',
+        'pengolahan_pemurnian'        => 'Pengolahan dan/atau Pemurnian',
+        'jasa_pertambangan_inti'      => 'Jasa Pertambangan Inti',
+        'jasa_konsultasi_perencanaan' => 'Jasa Konsultasi & Perencanaan',
+        'jasa_non_inti'               => 'Jasa Pertambangan Non-Inti',
+    ];
+
     protected $fillable = [
         'nama_perusahaan',
         'kode_perusahaan',
         'kategori',
+        'jenis_usaha',
         'jenis_perizinan',
         'jenis_komoditas',
         'alamat_kantor_site',
@@ -46,6 +55,28 @@ class Perusahaan extends Model
     public function isKontraktor(): bool
     {
         return strtolower(trim((string) $this->kategori)) === 'kontraktor';
+    }
+
+    /**
+     * Suggested default risk class based on jenis_usaha classification (Kepdirjen 185 / materi pelatihan).
+     * Can be overridden manually on the Stage I form.
+     */
+    public function kelasRisikoDefault(): ?string
+    {
+        return match ($this->jenis_usaha) {
+            'tambang', 'pengolahan_pemurnian', 'jasa_pertambangan_inti' => 'Tinggi',
+            'jasa_konsultasi_perencanaan'                               => 'Menengah',
+            'jasa_non_inti'                                             => 'Rendah',
+            default                                                     => null,
+        };
+    }
+
+    /**
+     * Accessor alias for kelasRisikoDefault.
+     */
+    public function getKelasRisikoDefaultAttribute(): ?string
+    {
+        return $this->kelasRisikoDefault();
     }
 
     /**

@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AuditSesi;
 use App\Models\AuditTahapAwal;
+use App\Models\MasterFaktorPenyesuaian;
 use App\Models\Perusahaan;
+use App\Services\HariKerjaAuditService;
+use DomainException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -179,6 +183,11 @@ class AuditTahapAwalController extends Controller
         $kondisiPenyesuaian = AuditTahapAwal::getDaftarKondisiPenyesuaian();
         $indikatorKelayakan = AuditTahapAwal::getDaftarIndikatorKelayakan();
         $elemenDokumentasi = AuditTahapAwal::getDaftarElemenDokumentasi();
+        $masterFaktorPenyesuaian = MasterFaktorPenyesuaian::where('is_active', true)
+            ->orderBy('urutan')
+            ->orderBy('id')
+            ->get();
+        $saranKelasRisiko = $perusahaan ? $perusahaan->kelasRisikoDefault() : null;
 
         return view('admin.audit-sesi.tahap-awal', compact(
             'sesi',
@@ -189,7 +198,9 @@ class AuditTahapAwalController extends Controller
             'prevTahapAwalData',
             'prevTahunLabel',
             'isKontraktor',
-            'pemegangIupList'
+            'pemegangIupList',
+            'masterFaktorPenyesuaian',
+            'saranKelasRisiko'
         ));
     }
 
@@ -325,6 +336,36 @@ class AuditTahapAwalController extends Controller
                 }
             }
 
+            $faktorInput = $request->input('faktor_penyesuaian', []);
+            if (! is_array($faktorInput)) {
+                $faktorInput = [];
+            }
+
+            // Simpan snapshot faktor terpilih dari master_faktor_penyesuaian ke dalam JSON faktor_penyesuaian
+            $selectedMasterFaktorIds = array_values(array_unique(array_filter(
+                array_map('intval', (array) $request->input('master_faktor_ids', [])),
+                fn (int $fid) => $fid > 0
+            )));
+            if (! empty($selectedMasterFaktorIds)) {
+                $masterFaktors = MasterFaktorPenyesuaian::whereIn('id', $selectedMasterFaktorIds)
+                    ->orderBy('urutan')
+                    ->get();
+                $faktorInput['master_faktor_terpilih'] = $masterFaktors->map(fn ($f) => [
+                    'id'         => $f->id,
+                    'kode'       => $f->kode,
+                    'nama'       => $f->nama,
+                    'tipe'       => $f->tipe,
+                    'nilai_hari' => $f->nilai_hari !== null ? (float) $f->nilai_hari : null,
+                ])->values()->all();
+            } else {
+                unset($faktorInput['master_faktor_terpilih']);
+            }
+
+            $sumberPerhitungan = $request->input('sumber_perhitungan');
+            if (! in_array($sumberPerhitungan, ['tabel', 'manual'], true)) {
+                $sumberPerhitungan = $tahapAwal->sumber_perhitungan;
+            }
+
             $payload = [
                 'no_dokumen_header' => trim((string) $request->input('no_dokumen_header', '')) ?: null,
                 'no_dokumen_footer' => trim((string) $request->input('no_dokumen_footer', '')) ?: null,
@@ -340,7 +381,7 @@ class AuditTahapAwalController extends Controller
                 'alamat_kantor_pusat' => trim((string) $request->input('alamat_kantor_pusat', '')) ?: null,
                 'periode_audit_label' => trim((string) $request->input('periode_audit_label', '')) ?: null,
                 'kinerja_kp' => $request->input('kinerja_kp', []),
-                'faktor_penyesuaian' => $request->input('faktor_penyesuaian', []),
+                'faktor_penyesuaian' => $faktorInput,
                 'jumlah_pekerja' => $request->filled('jumlah_pekerja') ? (int) $request->input('jumlah_pekerja') : null,
                 'kelas_risiko' => trim((string) $request->input('kelas_risiko', '')) ?: null,
                 'mandays_awal' => $request->filled('mandays_awal') ? (float) $request->input('mandays_awal') : null,
@@ -348,6 +389,7 @@ class AuditTahapAwalController extends Controller
                 'total_mandays' => $request->filled('total_mandays') ? (float) $request->input('total_mandays') : null,
                 'alokasi_tahap_1' => $request->filled('alokasi_tahap_1') ? (float) $request->input('alokasi_tahap_1') : null,
                 'alokasi_tahap_2' => trim((string) $request->input('alokasi_tahap_2', '')) ?: null,
+                'sumber_perhitungan' => $sumberPerhitungan,
                 'no_surat_tugas' => trim((string) $request->input('no_surat_tugas', '')) ?: null,
                 'tanggal_surat_tugas' => $request->input('tanggal_surat_tugas') ?: null,
                 'tanggal_surat_tugas_tahap_2' => $request->input('tanggal_surat_tugas_tahap_2') ?: null,
@@ -410,6 +452,45 @@ class AuditTahapAwalController extends Controller
             DB::rollBack();
 
             return back()->withInput()->with('error', 'Gagal menyimpan dokumen Tahap Awal Audit: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Hitung hari kerja audit berdasarkan tabel acuan & faktor penyesuaian (JSON endpoint).
+     */
+    public function hitungHariKerja(Request $request, int|string $id, HariKerjaAuditService $service): JsonResponse
+    {
+        AuditSesi::findOrFail($id);
+
+        $validated = $request->validate([
+            'jumlah_pekerja' => 'required|integer|min:1',
+            'kelas_risiko'   => 'required|string|in:Tinggi,Menengah,Sedang,Rendah',
+            'faktor_ids'     => 'nullable|array',
+            'faktor_ids.*'   => 'integer|min:1',
+        ], [
+            'jumlah_pekerja.required' => 'Jumlah pekerja auditi wajib diisi.',
+            'jumlah_pekerja.integer'  => 'Jumlah pekerja harus berupa bilangan bulat.',
+            'jumlah_pekerja.min'      => 'Jumlah pekerja minimal 1 orang.',
+            'kelas_risiko.required'   => 'Kelas risiko wajib dipilih.',
+            'kelas_risiko.in'         => 'Kelas risiko tidak valid.',
+        ]);
+
+        try {
+            $result = $service->hitung(
+                (int) $validated['jumlah_pekerja'],
+                (string) $validated['kelas_risiko'],
+                $validated['faktor_ids'] ?? []
+            );
+
+            return response()->json([
+                'success' => true,
+                'data'    => $result,
+            ]);
+        } catch (DomainException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
     }
 

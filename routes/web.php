@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AuditSesiAdminController;
 use App\Http\Controllers\Admin\AuditTahapAwalController;
 use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
+use App\Http\Controllers\Admin\MasterFaktorPenyesuaianController;
+use App\Http\Controllers\Admin\MasterHariKerjaAuditController;
 use App\Http\Controllers\Admin\PicaController as AdminPicaController;
 use App\Http\Controllers\Admin\PerusahaanController;
 use App\Http\Controllers\Admin\SubElemenController;
@@ -63,6 +65,9 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         // Audit Sesi & Matrix Scoring & Tahap Awal Audit (TT-MGT-FRS-026L)
         Route::get('/audit-sesi/{id}/tahap-awal', [AuditTahapAwalController::class, 'edit'])->name('audit-sesi.tahap-awal');
         Route::put('/audit-sesi/{id}/tahap-awal', [AuditTahapAwalController::class, 'update'])->name('audit-sesi.tahap-awal.update');
+        Route::post('/audit-sesi/{id}/tahap-awal/hitung-hari', [AuditTahapAwalController::class, 'hitungHariKerja'])
+            ->middleware('throttle:30,1')
+            ->name('audit-sesi.tahap-awal.hitung-hari');
         Route::post('/audit-sesi/{id}/tahap-awal/reset', [AuditTahapAwalController::class, 'resetPreset'])->name('audit-sesi.tahap-awal.reset');
         Route::get('/audit-sesi/{id}/tahap-awal/cetak', [AuditTahapAwalController::class, 'cetak'])->name('audit-sesi.tahap-awal.cetak');
         Route::get('/audit-sesi/{id}/matrix', [AuditSesiAdminController::class, 'matrix'])->name('audit-sesi.matrix');
@@ -101,6 +106,28 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::post('/perusahaans/{id}/restore', [PerusahaanController::class, 'restore'])->name('perusahaans.restore');
             Route::delete('/perusahaans/{id}/force-delete', [PerusahaanController::class, 'forceDelete'])->name('perusahaans.force-delete');
             Route::resource('perusahaans', PerusahaanController::class);
+
+            // Master Hari Kerja Audit & Faktor Penyesuaian (Fase 1 Perangkat Audit SMKP)
+            Route::get('/master-hari-kerja', [MasterHariKerjaAuditController::class, 'index'])->name('master-hari-kerja.index');
+            Route::get('/master-hari-kerja/template', [MasterHariKerjaAuditController::class, 'downloadTemplate'])->name('master-hari-kerja.template');
+            Route::get('/master-faktor-penyesuaian', [MasterFaktorPenyesuaianController::class, 'index'])->name('master-faktor-penyesuaian.index');
+            Route::middleware('throttle:30,1')->group(function () {
+                Route::post('/master-hari-kerja', [MasterHariKerjaAuditController::class, 'store'])->name('master-hari-kerja.store');
+                Route::put('/master-hari-kerja/{id}', [MasterHariKerjaAuditController::class, 'update'])->name('master-hari-kerja.update');
+                Route::patch('/master-hari-kerja/{id}/toggle-verify', [MasterHariKerjaAuditController::class, 'toggleVerify'])->name('master-hari-kerja.toggle-verify');
+                Route::delete('/master-hari-kerja/{id}', [MasterHariKerjaAuditController::class, 'destroy'])->name('master-hari-kerja.destroy');
+                Route::post('/master-hari-kerja/{id}/restore', [MasterHariKerjaAuditController::class, 'restore'])->name('master-hari-kerja.restore');
+                Route::delete('/master-hari-kerja/{id}/force-delete', [MasterHariKerjaAuditController::class, 'forceDelete'])->name('master-hari-kerja.force-delete');
+                Route::post('/master-hari-kerja/import-preview', [MasterHariKerjaAuditController::class, 'importPreview'])->name('master-hari-kerja.import-preview');
+                Route::post('/master-hari-kerja/import-confirm', [MasterHariKerjaAuditController::class, 'importConfirm'])->name('master-hari-kerja.import-confirm');
+
+                Route::post('/master-faktor-penyesuaian', [MasterFaktorPenyesuaianController::class, 'store'])->name('master-faktor-penyesuaian.store');
+                Route::put('/master-faktor-penyesuaian/{id}', [MasterFaktorPenyesuaianController::class, 'update'])->name('master-faktor-penyesuaian.update');
+                Route::patch('/master-faktor-penyesuaian/{id}/toggle-active', [MasterFaktorPenyesuaianController::class, 'toggleActive'])->name('master-faktor-penyesuaian.toggle-active');
+                Route::delete('/master-faktor-penyesuaian/{id}', [MasterFaktorPenyesuaianController::class, 'destroy'])->name('master-faktor-penyesuaian.destroy');
+                Route::post('/master-faktor-penyesuaian/{id}/restore', [MasterFaktorPenyesuaianController::class, 'restore'])->name('master-faktor-penyesuaian.restore');
+                Route::delete('/master-faktor-penyesuaian/{id}/force-delete', [MasterFaktorPenyesuaianController::class, 'forceDelete'])->name('master-faktor-penyesuaian.force-delete');
+            });
 
             // Log Aktivitas User & Audit Trail Perubahan File
             Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
