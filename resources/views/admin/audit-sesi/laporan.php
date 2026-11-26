@@ -10,6 +10,9 @@ $backRoute = $isAuditorRole
 $profilRoute = $isAuditorRole
     ? route('auditor.audit-sesi.laporan.profil', $sesi->id)
     : route('admin.audit-sesi.laporan.profil', $sesi->id);
+$cetakLaporanRoute = $isAuditorRole
+    ? route('auditor.audit-sesi.laporan.cetak', $sesi->id)
+    : route('admin.audit-sesi.laporan.cetak', $sesi->id);
 
 $statusBadgeMap = [
     'draft'           => 'bg-secondary',
@@ -51,6 +54,9 @@ $hariTersisa = $laporan->getHariTersisa();
     </div>
 
     <div class="d-flex flex-wrap gap-2">
+        <a href="<?php echo e($cetakLaporanRoute); ?>" target="_blank" class="btn btn-dark rounded-3 px-3 fw-semibold shadow-sm">
+            <i class="bi bi-printer-fill me-1"></i> Cetak Laporan Audit
+        </a>
         <a href="<?php echo e($profilRoute); ?>" class="btn btn-outline-primary rounded-3 px-3 fw-semibold">
             <i class="bi bi-building-gear me-1"></i> Profil &amp; Gambaran Umum
         </a>
@@ -154,6 +160,14 @@ $hariTersisa = $laporan->getHariTersisa();
                         Snapshot Revisi #<?php echo e($integrity['revisi_ke']); ?>: <?php echo $integrity['valid'] ? 'Integritas SHA-256 Valid' : 'Integritas Tidak Cocok!'; ?>
                     </div>
                     <div class="font-monospace text-muted small text-break mt-1"><?php echo e($integrity['hash_stored']); ?></div>
+                    <?php if (! $isReadOnly): ?>
+                        <form action="<?php echo e(route('admin.audit-sesi.laporan.verify-hash', $sesi->id)); ?>" method="POST" class="mt-2">
+                            <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                <i class="bi bi-fingerprint me-1"></i> Verifikasi Integritas Hash
+                            </button>
+                        </form>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
 
@@ -193,6 +207,48 @@ $hariTersisa = $laporan->getHariTersisa();
         </div>
     </div>
 </div>
+
+<!-- Penyesuaian Narasi (teks_override — khusus Draft) -->
+<?php if (! $isReadOnly): ?>
+<?php $override = is_array($laporan->teks_override) ? $laporan->teks_override : []; ?>
+<div class="card card-custom p-4 mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 border-bottom pb-2">
+        <div>
+            <h5 class="fw-bold text-slate-800 mb-0">
+                <i class="bi bi-pencil-square text-primary me-2"></i>Penyesuaian Narasi Laporan (Opsional)
+            </h5>
+            <small class="text-muted">Kosongkan untuk menggunakan template otomatis dari Master Template Laporan. Hanya dapat diubah saat status Draft.</small>
+        </div>
+    </div>
+    <form action="<?php echo e(route('admin.audit-sesi.laporan.teks-override', $sesi->id)); ?>" method="POST">
+        <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
+        <input type="hidden" name="_method" value="PUT">
+        <fieldset <?php echo $laporan->status !== 'draft' ? 'disabled' : ''; ?>>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Override Bab 1 — Latar Belakang</label>
+                    <textarea name="teks_override[latar_belakang]" class="form-control" rows="3" placeholder="Biarkan kosong untuk menggunakan template otomatis..."><?php echo e($override['latar_belakang'] ?? ''); ?></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Override Tujuan Audit</label>
+                    <textarea name="teks_override[tujuan_audit]" class="form-control" rows="2" placeholder="Biarkan kosong untuk menggunakan template otomatis..."><?php echo e($override['tujuan_audit'] ?? ''); ?></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Override Bab 6 — Penutup</label>
+                    <textarea name="teks_override[penutup]" class="form-control" rows="3" placeholder="Biarkan kosong untuk menggunakan template otomatis..."><?php echo e($override['penutup'] ?? ''); ?></textarea>
+                </div>
+            </div>
+        </fieldset>
+        <?php if ($laporan->status === 'draft'): ?>
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold">
+                    <i class="bi bi-save me-1"></i> Simpan Penyesuaian Narasi
+                </button>
+            </div>
+        <?php endif; ?>
+    </form>
+</div>
+<?php endif; ?>
 
 <!-- Distribusi & Penyampaian Laporan -->
 <div class="card card-custom p-4 mb-4">

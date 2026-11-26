@@ -112,10 +112,13 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::post('/audit-sesi/{id}/laporan/profil/salin-periode-sebelumnya', [AuditLaporanProfilController::class, 'copyFromPreviousPeriod'])->name('audit-sesi.laporan.profil.copy-prev-period');
         });
 
-        // Alur Pengesahan, Snapshot, & Distribusi Laporan Audit Internal SMKP (Fase L2)
+        // Alur Pengesahan, Snapshot, & Distribusi Laporan Audit Internal SMKP (Fase L2 & L3)
         Route::get('/audit-sesi/{id}/laporan', [AuditLaporanController::class, 'show'])->name('audit-sesi.laporan.show');
+        Route::get('/audit-sesi/{id}/laporan/cetak', [AuditLaporanController::class, 'cetak'])->name('audit-sesi.laporan.cetak');
         Route::middleware('throttle:30,1')->group(function () {
             Route::put('/audit-sesi/{id}/laporan/metadata', [AuditLaporanController::class, 'updateMetadata'])->name('audit-sesi.laporan.metadata');
+            Route::put('/audit-sesi/{id}/laporan/teks-override', [AuditLaporanController::class, 'updateTeksOverride'])->name('audit-sesi.laporan.teks-override');
+            Route::post('/audit-sesi/{id}/laporan/verifikasi-hash', [AuditLaporanController::class, 'verifyHash'])->name('audit-sesi.laporan.verify-hash');
             Route::post('/audit-sesi/{id}/laporan/ajukan-tinjauan', [AuditLaporanController::class, 'submitReview'])->name('audit-sesi.laporan.submit-review');
             Route::post('/audit-sesi/{id}/laporan/sahkan', [AuditLaporanController::class, 'approve'])->name('audit-sesi.laporan.approve');
             Route::post('/audit-sesi/{id}/laporan/distribusi', [AuditLaporanController::class, 'storeDistribusi'])->name('audit-sesi.laporan.distribusi.store');
@@ -244,6 +247,7 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/ofi/cetak', [AuditOfiController::class, 'cetak'])->name('audit-sesi.ofi.cetak');
         Route::get('/audit-sesi/{id}/laporan/profil', [AuditLaporanProfilController::class, 'showForAuditor'])->name('audit-sesi.laporan.profil');
         Route::get('/audit-sesi/{id}/laporan', [AuditLaporanController::class, 'showForAuditor'])->name('audit-sesi.laporan.show');
+        Route::get('/audit-sesi/{id}/laporan/cetak', [AuditLaporanController::class, 'cetak'])->name('audit-sesi.laporan.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 
         // Modul PICA (Tindak Lanjut Perbaikan Temuan Audit oleh Auditee / PIC Area)

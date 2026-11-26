@@ -10,6 +10,7 @@ use App\Models\AuditRencana;
 use App\Models\AuditRencanaJadwal;
 use App\Models\AuditSesi;
 use App\Services\LaporanAuditWorkflowService;
+use App\Services\RadarChartSvg;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -332,5 +333,130 @@ class AuditLaporanController extends Controller
 
         return redirect()->route('admin.audit-sesi.laporan.show', $sesi->id)
             ->with('success', "Status pelaksanaan jadwal ({$updatedCount} perubahan) berhasil disimpan.");
+    }
+
+    /**
+     * Simpan penyesuaian teks narasi (teks_override) — hanya diperbolehkan saat status Draft.
+     */
+    public function updateTeksOverride(Request $request, int|string $id): RedirectResponse
+    {
+        $sesi = AuditSesi::findOrFail($id);
+        $laporan = AuditLaporan::getOrCreateForSesi($sesi);
+
+        if ($laporan->status !== 'draft') {
+            return redirect()->route('admin.audit-sesi.laporan.show', $sesi->id)
+                ->with('error', 'Penyesuaian narasi hanya dapat diubah saat laporan berstatus Draft.');
+        }
+
+        $validated = $request->validate([
+            'teks_override'                => 'nullable|array',
+            'teks_override.latar_belakang' => 'nullable|string|max:20000',
+            'teks_override.tujuan_audit'   => 'nullable|string|max:20000',
+            'teks_override.penutup'        => 'nullable|string|max:20000',
+        ]);
+
+        $old = $laporan->teks_override;
+        $cleaned = [];
+        foreach (['latar_belakang', 'tujuan_audit', 'penutup'] as $key) {
+            $val = trim((string) ($validated['teks_override'][$key] ?? ''));
+            if ($val !== '') {
+                $cleaned[$key] = $val;
+            }
+        }
+
+        $laporan->update(['teks_override' => ! empty($cleaned) ? $cleaned : null]);
+
+        AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Laporan Audit',
+            'tindakan'        => "Memperbarui penyesuaian narasi (teks_override) Laporan Audit #{$laporan->id}",
+            'data_lama'       => $old,
+            'data_baru'       => $cleaned,
+            'waktu_perubahan' => now(),
+        ]);
+
+        return redirect()->route('admin.audit-sesi.laporan.show', $sesi->id)
+            ->with('success', 'Penyesuaian narasi laporan berhasil disimpan.');
+    }
+
+    /**
+     * Verifikasi integritas hash SHA-256 snapshot terbaru.
+     */
+    public function verifyHash(int|string $id): RedirectResponse
+    {
+        $sesi = AuditSesi::findOrFail($id);
+        $laporan = AuditLaporan::getOrCreateForSesi($sesi);
+        $result = $laporan->verifyLatestSnapshotIntegrity();
+
+        if (! $result['has_snapshot']) {
+            return redirect()->route('admin.audit-sesi.laporan.show', $sesi->id)
+                ->with('info', 'Belum ada snapshot pengesahan untuk diverifikasi.');
+        }
+
+        if ($result['valid']) {
+            return redirect()->route('admin.audit-sesi.laporan.show', $sesi->id)
+                ->with('success', 'Verifikasi SHA-256 VALID (Revisi #' . $result['revisi_ke'] . '): ' . $result['hash_stored']);
+        }
+
+        return redirect()->route('admin.audit-sesi.laporan.show', $sesi->id)
+            ->with('error', 'PERINGATAN INTEGRITAS: Hash SHA-256 snapshot tidak cocok dengan payload tersimpan!');
+    }
+
+    /**
+     * Halaman cetak Laporan Audit Internal SMKP (A4 Portrait).
+     * - Sebelum disahkan: dirender dari data hidup + watermark DRAFT.
+     * - Setelah disahkan: dirender sepenuhnya dari snapshot JSON tersimpan.
+     */
+    public function cetak(int|string $id, RadarChartSvg $radarSvg): View
+    {
+        $query = AuditSesi::with(['perusahaan.legalitas', 'user']);
+
+        if (auth()->check() && auth()->user()->role === 'auditor') {
+            $userArea = auth()->user()->area;
+            if (empty($userArea)) {
+                abort(403, 'Akun Anda belum ditugaskan ke area kerja manapun. Hubungi Administrator.');
+            }
+            $query->forUserArea($userArea);
+        }
+
+        $sesi = $query->findOrFail($id);
+        $laporan = AuditLaporan::where('audit_sesi_id', $sesi->id)->first();
+
+        if (! $laporan) {
+            if (auth()->user()->role === 'auditor') {
+                abort(404, 'Laporan Audit untuk sesi ini belum disusun.');
+            }
+            $laporan = AuditLaporan::getOrCreateForSesi($sesi);
+        }
+
+        $isFromSnapshot = false;
+        $snapshot = null;
+        $integrity = null;
+
+        if ($laporan->isDisahkanAtauLebih()) {
+            $snapshot = $laporan->latestSnapshot()->first();
+            if ($snapshot) {
+                $payload = $snapshot->payload;
+                $isFromSnapshot = true;
+                $integrity = $laporan->verifyLatestSnapshotIntegrity();
+            } else {
+                $payload = $this->workflow->buildCanonicalSnapshotPayload($laporan);
+            }
+        } else {
+            $payload = $this->workflow->buildCanonicalSnapshotPayload($laporan);
+        }
+
+        $rekapElemen = $payload['pencapaian']['rekap_elemen'] ?? [];
+        $radarChartSvg = $radarSvg->render($rekapElemen);
+
+        return view('laporan.cetak_laporan_audit', compact(
+            'sesi',
+            'laporan',
+            'payload',
+            'isFromSnapshot',
+            'snapshot',
+            'integrity',
+            'radarChartSvg'
+        ));
     }
 }

@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\MasterDasarHukum;
 use App\Models\MasterTemplateLaporan;
 use App\Models\User;
+use App\Support\Terbilang;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -16,6 +17,22 @@ class LaporanAuditWorkflowService
 {
     public function __construct(protected LaporanTemplateRenderer $renderer)
     {
+    }
+
+    /**
+     * Format kode temuan seragam untuk seluruh kategori (NC-KRT-001, NC-MYR-001, NC-MNR-001).
+     */
+    public static function formatKodeTemuan(string $kategori, int $urutan): string
+    {
+        $prefixes = (array) config('laporan.kode_temuan_prefix', [
+            'kritikal' => 'NC-KRT',
+            'mayor'    => 'NC-MYR',
+            'minor'    => 'NC-MNR',
+        ]);
+        $pad = (int) config('laporan.kode_temuan_padding', 3);
+        $prefix = $prefixes[strtolower($kategori)] ?? 'NC-GEN';
+
+        return sprintf('%s-%0' . $pad . 'd', $prefix, max(1, $urutan));
     }
 
     /**
@@ -101,28 +118,33 @@ class LaporanAuditWorkflowService
         $praktikTerbaik = $sesi->getSubElemenPraktekTerbaik()->values()->all();
         $temuan = $sesi->getTemuanPerKategori();
 
-        $mapPica = function ($collection): array {
-            return collect($collection)->map(function ($pica) {
+        $mapPica = function ($collection, string $kategori): array {
+            $seq = 1;
+
+            return collect($collection)->map(function ($pica) use ($kategori, &$seq) {
                 $krit = $pica->auditDetail?->kriteria;
                 $sub = $krit?->subElemen;
                 $el = $sub?->elemen;
+                $urutan = $pica->nomor_urut ? (int) $pica->nomor_urut : $seq;
+                $seq++;
 
                 return [
-                    'id'              => $pica->id,
-                    'nomor_urut'      => $pica->nomor_urut,
-                    'kategori_temuan' => $pica->kategori_temuan,
-                    'elemen_kode'     => $el?->kode_elemen,
-                    'sub_elemen_kode' => $sub?->kode_sub,
-                    'kriteria_kode'   => $krit?->kode_kriteria,
-                    'plor_problem'    => $pica->plor_problem,
-                    'plor_location'   => $pica->plor_location,
-                    'plor_objective'  => $pica->plor_objective,
-                    'plor_reference'  => $pica->plor_reference,
-                    'temuan_masalah'  => $pica->temuan_masalah,
-                    'tindakan_perbaikan' => $pica->tindakan_perbaikan,
-                    'pic_penanggung_jawab' => $pica->pic_penanggung_jawab,
-                    'target_selesai'  => $pica->target_selesai ? $pica->target_selesai->format('Y-m-d') : null,
-                    'status'          => $pica->status,
+                    'id'                      => $pica->id,
+                    'nomor_urut'              => $pica->nomor_urut,
+                    'kode_temuan'             => self::formatKodeTemuan($kategori, $urutan),
+                    'kategori_temuan'         => $pica->kategori_temuan,
+                    'elemen_kode'             => $el?->kode_elemen,
+                    'sub_elemen_kode'         => $sub?->kode_sub,
+                    'kriteria_kode'           => $krit?->kode_kriteria,
+                    'plor_problem'            => $pica->plor_problem,
+                    'plor_location'           => $pica->plor_location,
+                    'plor_objective_evidence' => $pica->plor_objective_evidence,
+                    'plor_reference'          => $pica->plor_reference,
+                    'deskripsi_temuan'        => $pica->deskripsi_temuan,
+                    'tindakan_koreksi'        => $pica->tindakan_koreksi,
+                    'pic_perbaikan'           => $pica->pic_perbaikan,
+                    'tenggat_waktu'           => $pica->tenggat_waktu ? $pica->tenggat_waktu->format('Y-m-d') : null,
+                    'status'                  => $pica->status,
                 ];
             })->values()->all();
         };
@@ -192,6 +214,7 @@ class LaporanAuditWorkflowService
                 ] : null,
             ],
             'profil' => $laporan->profil ? [
+                'id'                       => $laporan->profil->id,
                 'kapasitas_produksi'       => $laporan->profil->kapasitas_produksi !== null ? (float) $laporan->profil->kapasitas_produksi : null,
                 'realisasi_produksi'       => $laporan->profil->realisasi_produksi !== null ? (float) $laporan->profil->realisasi_produksi : null,
                 'satuan_produksi'          => $laporan->profil->satuan_produksi,
@@ -228,8 +251,9 @@ class LaporanAuditWorkflowService
             'dasar_hukum'    => $dasarHukum,
             'narasi_template'=> $renderedTemplates,
             'pencapaian' => [
-                'skor_akhir'   => $skorAkhir,
-                'rekap_elemen' => $rekapElemen,
+                'skor_akhir'           => $skorAkhir,
+                'skor_akhir_terbilang' => Terbilang::decimal($skorAkhir, 2, true),
+                'rekap_elemen'         => $rekapElemen,
             ],
             'praktik_terbaik' => $praktikTerbaik,
             'temuan' => [
@@ -237,9 +261,9 @@ class LaporanAuditWorkflowService
                 'mayor_count'    => (int) ($temuan['mayor_count'] ?? 0),
                 'minor_count'    => (int) ($temuan['minor_count'] ?? 0),
                 'total_temuan'   => (int) ($temuan['total_temuan'] ?? 0),
-                'kritikal'       => $mapPica($temuan['kritikal'] ?? []),
-                'mayor'          => $mapPica($temuan['mayor'] ?? []),
-                'minor'          => $mapPica($temuan['minor'] ?? []),
+                'kritikal'       => $mapPica($temuan['kritikal'] ?? [], 'kritikal'),
+                'mayor'          => $mapPica($temuan['mayor'] ?? [], 'mayor'),
+                'minor'          => $mapPica($temuan['minor'] ?? [], 'minor'),
             ],
             'ofis' => $sesi->ofis->map(fn ($o) => [
                 'nomor_urut'       => $o->nomor_urut,
