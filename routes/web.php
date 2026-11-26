@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLaporanController;
 use App\Http\Controllers\Admin\AuditLaporanProfilController;
 use App\Http\Controllers\Admin\AuditOfiController;
 use App\Http\Controllers\Admin\AuditOversightController;
@@ -8,8 +9,11 @@ use App\Http\Controllers\Admin\AuditSesiAdminController;
 use App\Http\Controllers\Admin\AuditTahapAwalController;
 use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
+use App\Http\Controllers\Admin\MasterAturanPelaporanController;
+use App\Http\Controllers\Admin\MasterDasarHukumController;
 use App\Http\Controllers\Admin\MasterFaktorPenyesuaianController;
 use App\Http\Controllers\Admin\MasterHariKerjaAuditController;
+use App\Http\Controllers\Admin\MasterTemplateLaporanController;
 use App\Http\Controllers\Admin\PicaController as AdminPicaController;
 use App\Http\Controllers\Admin\PerusahaanController;
 use App\Http\Controllers\Admin\SubElemenController;
@@ -107,6 +111,18 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::post('/audit-sesi/{id}/laporan/profil/salin-tahap-awal', [AuditLaporanProfilController::class, 'copyFromTahapAwal'])->name('audit-sesi.laporan.profil.copy-tahap-awal');
             Route::post('/audit-sesi/{id}/laporan/profil/salin-periode-sebelumnya', [AuditLaporanProfilController::class, 'copyFromPreviousPeriod'])->name('audit-sesi.laporan.profil.copy-prev-period');
         });
+
+        // Alur Pengesahan, Snapshot, & Distribusi Laporan Audit Internal SMKP (Fase L2)
+        Route::get('/audit-sesi/{id}/laporan', [AuditLaporanController::class, 'show'])->name('audit-sesi.laporan.show');
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::put('/audit-sesi/{id}/laporan/metadata', [AuditLaporanController::class, 'updateMetadata'])->name('audit-sesi.laporan.metadata');
+            Route::post('/audit-sesi/{id}/laporan/ajukan-tinjauan', [AuditLaporanController::class, 'submitReview'])->name('audit-sesi.laporan.submit-review');
+            Route::post('/audit-sesi/{id}/laporan/sahkan', [AuditLaporanController::class, 'approve'])->name('audit-sesi.laporan.approve');
+            Route::post('/audit-sesi/{id}/laporan/distribusi', [AuditLaporanController::class, 'storeDistribusi'])->name('audit-sesi.laporan.distribusi.store');
+            Route::delete('/audit-sesi/{id}/laporan/distribusi/{distId}', [AuditLaporanController::class, 'destroyDistribusi'])->name('audit-sesi.laporan.distribusi.destroy');
+            Route::post('/audit-sesi/{id}/laporan/dilaporkan', [AuditLaporanController::class, 'markReported'])->name('audit-sesi.laporan.mark-reported');
+            Route::patch('/audit-sesi/{id}/laporan/jadwal-status', [AuditLaporanController::class, 'updateJadwalStatus'])->name('audit-sesi.laporan.jadwal-status');
+        });
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiAdminController::class, 'exportExcel'])->name('audit-sesi.export-excel');
         Route::post('/audit-sesi/{id}/finalisasi', [AuditSesiAdminController::class, 'finalisasi'])->name('audit-sesi.finalisasi');
         Route::post('/audit-sesi/{id}/restore', [AuditSesiAdminController::class, 'restore'])->name('audit-sesi.restore');
@@ -144,6 +160,28 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::get('/master-hari-kerja', [MasterHariKerjaAuditController::class, 'index'])->name('master-hari-kerja.index');
             Route::get('/master-hari-kerja/template', [MasterHariKerjaAuditController::class, 'downloadTemplate'])->name('master-hari-kerja.template');
             Route::get('/master-faktor-penyesuaian', [MasterFaktorPenyesuaianController::class, 'index'])->name('master-faktor-penyesuaian.index');
+
+            // Master Dasar Hukum, Template Laporan, & Aturan Pelaporan + Revisi Laporan (Fase L2)
+            Route::get('/master-dasar-hukum', [MasterDasarHukumController::class, 'index'])->name('master-dasar-hukum.index');
+            Route::get('/master-template-laporan', [MasterTemplateLaporanController::class, 'index'])->name('master-template-laporan.index');
+            Route::get('/master-aturan-pelaporan', [MasterAturanPelaporanController::class, 'index'])->name('master-aturan-pelaporan.index');
+
+            Route::middleware('throttle:30,1')->group(function () {
+                Route::post('/audit-sesi/{id}/laporan/revisi', [AuditLaporanController::class, 'reopenRevision'])->name('audit-sesi.laporan.reopen-revision');
+
+                Route::post('/master-dasar-hukum', [MasterDasarHukumController::class, 'store'])->name('master-dasar-hukum.store');
+                Route::put('/master-dasar-hukum/{id}', [MasterDasarHukumController::class, 'update'])->name('master-dasar-hukum.update');
+                Route::patch('/master-dasar-hukum/{id}/toggle-verify', [MasterDasarHukumController::class, 'toggleVerify'])->name('master-dasar-hukum.toggle-verify');
+                Route::delete('/master-dasar-hukum/{id}', [MasterDasarHukumController::class, 'destroy'])->name('master-dasar-hukum.destroy');
+
+                Route::put('/master-template-laporan/{id}', [MasterTemplateLaporanController::class, 'update'])->name('master-template-laporan.update');
+                Route::patch('/master-template-laporan/{id}/toggle-verify', [MasterTemplateLaporanController::class, 'toggleVerify'])->name('master-template-laporan.toggle-verify');
+
+                Route::post('/master-aturan-pelaporan', [MasterAturanPelaporanController::class, 'store'])->name('master-aturan-pelaporan.store');
+                Route::put('/master-aturan-pelaporan/{id}', [MasterAturanPelaporanController::class, 'update'])->name('master-aturan-pelaporan.update');
+                Route::patch('/master-aturan-pelaporan/{id}/toggle-verify', [MasterAturanPelaporanController::class, 'toggleVerify'])->name('master-aturan-pelaporan.toggle-verify');
+                Route::delete('/master-aturan-pelaporan/{id}', [MasterAturanPelaporanController::class, 'destroy'])->name('master-aturan-pelaporan.destroy');
+            });
             Route::middleware('throttle:30,1')->group(function () {
                 Route::post('/master-hari-kerja', [MasterHariKerjaAuditController::class, 'store'])->name('master-hari-kerja.store');
                 Route::put('/master-hari-kerja/{id}', [MasterHariKerjaAuditController::class, 'update'])->name('master-hari-kerja.update');
@@ -205,6 +243,7 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/ofi', [AuditOfiController::class, 'indexForAuditor'])->name('audit-sesi.ofi.index');
         Route::get('/audit-sesi/{id}/ofi/cetak', [AuditOfiController::class, 'cetak'])->name('audit-sesi.ofi.cetak');
         Route::get('/audit-sesi/{id}/laporan/profil', [AuditLaporanProfilController::class, 'showForAuditor'])->name('audit-sesi.laporan.profil');
+        Route::get('/audit-sesi/{id}/laporan', [AuditLaporanController::class, 'showForAuditor'])->name('audit-sesi.laporan.show');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
 
         // Modul PICA (Tindak Lanjut Perbaikan Temuan Audit oleh Auditee / PIC Area)

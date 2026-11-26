@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditDetail;
+use App\Models\AuditLaporanDistribusi;
 use App\Models\AuditLaporanProfil;
 use App\Models\Pica;
 use Illuminate\Http\Request;
@@ -97,6 +98,29 @@ class AttachmentController extends Controller
             $fullPath = $this->resolveFilePath($path);
             if (!$fullPath) {
                 abort(404, 'Berkas struktur organisasi tidak ditemukan pada storage.');
+            }
+
+            return $this->buildSecureFileResponse($fullPath);
+        }
+
+        if ($type === 'distribusi_laporan') {
+            $distribusi = AuditLaporanDistribusi::with('laporan.auditSesi')->findOrFail($id);
+
+            if ($user->role === 'auditor') {
+                $sesi = $distribusi->laporan?->auditSesi;
+                if (!$sesi || !$sesi->matchesUserArea($user->area)) {
+                    abort(403, 'Anda tidak memiliki hak akses untuk melihat bukti distribusi laporan sesi audit ini.');
+                }
+            }
+
+            $path = $distribusi->bukti_path;
+            if (!$path) {
+                abort(404, 'Berkas bukti distribusi tidak ditemukan.');
+            }
+
+            $fullPath = $this->resolveFilePath($path);
+            if (!$fullPath) {
+                abort(404, 'Berkas bukti distribusi tidak ditemukan pada storage.');
             }
 
             return $this->buildSecureFileResponse($fullPath);

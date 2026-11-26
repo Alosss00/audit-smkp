@@ -12,6 +12,13 @@ class AuditRencanaJadwal extends Model
 
     protected $table = 'audit_rencana_jadwals';
 
+    public const STATUS_PELAKSANAAN_OPTIONS = [
+        'direncanakan' => 'Direncanakan',
+        'terlaksana'   => 'Terlaksana',
+        'ditunda'      => 'Ditunda',
+        'dibatalkan'   => 'Dibatalkan',
+    ];
+
     protected $fillable = [
         'audit_rencana_id',
         'hari_ke',
@@ -24,6 +31,7 @@ class AuditRencanaJadwal extends Model
         'auditor',
         'auditi_pic',
         'lokasi',
+        'status_pelaksanaan',
     ];
 
     protected $casts = [
