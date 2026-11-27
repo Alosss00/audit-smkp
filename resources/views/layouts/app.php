@@ -410,6 +410,10 @@ $cspNonce = $cspNonce ?? request()->attributes->get('cspNonce') ?? view()->share
                         <i class="bi bi-journal-check"></i>
                         <span>Sesi Audit Area Saya</span>
                     </a>
+                    <a href="<?php echo route('auditor.laporan.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('auditor.laporan.*') ? 'active' : ''; ?>">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>Laporan Audit Disahkan</span>
+                    </a>
                     <a href="<?php echo route('auditor.pica.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('auditor.pica.*') ? 'active' : ''; ?>">
                         <i class="bi bi-tools"></i>
                         <span>Tindak Lanjut PICA</span>
@@ -448,6 +452,21 @@ $cspNonce = $cspNonce ?? request()->attributes->get('cspNonce') ?? view()->share
                     <a href="<?php echo route('admin.master-faktor-penyesuaian.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.master-faktor-penyesuaian.*') ? 'active' : ''; ?>">
                         <i class="bi bi-sliders"></i>
                         <span>Faktor Penyesuaian</span>
+                    </a>
+
+                    <a href="<?php echo route('admin.master-dasar-hukum.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.master-dasar-hukum.*') ? 'active' : ''; ?>">
+                        <i class="bi bi-journal-text"></i>
+                        <span>Master Dasar Hukum</span>
+                    </a>
+
+                    <a href="<?php echo route('admin.master-template-laporan.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.master-template-laporan.*') ? 'active' : ''; ?>">
+                        <i class="bi bi-file-earmark-richtext"></i>
+                        <span>Template Laporan</span>
+                    </a>
+
+                    <a href="<?php echo route('admin.master-aturan-pelaporan.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.master-aturan-pelaporan.*') ? 'active' : ''; ?>">
+                        <i class="bi bi-calendar-event"></i>
+                        <span>Aturan Pelaporan</span>
                     </a>
 
                     <a href="<?php echo route('admin.users.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.users.*') ? 'active' : ''; ?>">

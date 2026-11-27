@@ -84,24 +84,24 @@ class Fase4NavigasiIntegrasiTest extends TestCase
         $ofi->save();
 
         $steps = $this->sesi->getPerangkatAuditSteps();
-        $this->assertCount(7, $steps);
-        $this->assertSame(['tahap_awal', 'rencana', 'matrix', 'kesesuaian', 'pica', 'ofi', 'rekap'], array_column($steps, 'key'));
+        $this->assertCount(8, $steps);
+        $this->assertSame(['tahap_awal', 'rencana', 'matrix', 'kesesuaian', 'pica', 'ofi', 'rekap', 'laporan'], array_column($steps, 'key'));
 
-        // Verifikasi panel 7 langkah tampil di Rekap, Tahap Awal, Rencana, dan OFI
+        // Verifikasi panel 8 langkah tampil di Rekap, Rencana, dan OFI
         $this->actingAs($this->admin)
             ->get(route('admin.audit-sesi.rekap', $this->sesi->id))
             ->assertOk()
-            ->assertSee('Perangkat Audit SMKP (7 Langkah)');
+            ->assertSee('8 Langkah');
 
         $this->actingAs($this->admin)
             ->get(route('admin.audit-sesi.rencana.edit', $this->sesi->id))
             ->assertOk()
-            ->assertSee('Perangkat Audit SMKP (7 Langkah)');
+            ->assertSee('8 Langkah');
 
         $this->actingAs($this->admin)
             ->get(route('admin.audit-sesi.ofi.index', $this->sesi->id))
             ->assertOk()
-            ->assertSee('Perangkat Audit SMKP (7 Langkah)');
+            ->assertSee('8 Langkah');
     }
 
     public function test_cetak_lengkap_includes_available_forms_checklist(): void

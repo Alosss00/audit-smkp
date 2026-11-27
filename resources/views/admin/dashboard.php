@@ -132,6 +132,50 @@ ob_start();
     </div>
 </div>
 
+<!-- Widget Monitoring Pelaporan Audit Internal SMKP (Fase L5) -->
+<?php if (isset($laporanStats)): ?>
+<div class="card card-custom p-3 mb-4 border-start border-4 border-info bg-white">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+        <div class="fw-bold text-slate-800 small">
+            <i class="bi bi-file-earmark-check-fill text-info me-1"></i>Monitoring Pelaporan Audit Internal SMKP
+        </div>
+        <a href="<?php echo e(route('admin.audit-sesi.index')); ?>" class="small text-decoration-none fw-semibold">Lihat Sesi Audit &rarr;</a>
+    </div>
+    <div class="row g-2 text-center small">
+        <div class="col-6 col-md">
+            <div class="p-2 rounded-3 bg-light border">
+                <div class="text-muted">Menunggu Tinjauan/Sahkan</div>
+                <div class="fs-5 fw-bold text-warning-emphasis"><?php echo e($laporanStats['pending_review']); ?></div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="p-2 rounded-3 bg-light border">
+                <div class="text-muted">Mendekati Tenggat (H-14)</div>
+                <div class="fs-5 fw-bold text-info"><?php echo e($laporanStats['h14']); ?></div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="p-2 rounded-3 bg-light border">
+                <div class="text-muted">Kritis Tenggat (H-7)</div>
+                <div class="fs-5 fw-bold text-warning"><?php echo e($laporanStats['h7']); ?></div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="p-2 rounded-3 bg-danger bg-opacity-10 border border-danger">
+                <div class="text-danger fw-semibold">Melewati Tenggat</div>
+                <div class="fs-5 fw-bold text-danger"><?php echo e($laporanStats['overdue']); ?></div>
+            </div>
+        </div>
+        <div class="col-12 col-md">
+            <div class="p-2 rounded-3 bg-light border">
+                <div class="text-muted">Disahkan / Belum Dilaporkan</div>
+                <div class="fs-5 fw-bold text-primary"><?php echo e($laporanStats['belum_dilaporkan']); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Visual Chart Analytics Section 1: Average Compliance & Session Status -->
 <div class="row g-4 mb-4">
     <!-- Bar Chart Percentage per Elemen -->

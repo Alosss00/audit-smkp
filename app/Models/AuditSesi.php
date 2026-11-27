@@ -117,6 +117,41 @@ class AuditSesi extends Model
     }
 
     /**
+     * Relationship to AuditDokumenAcuan (RKAB, SOP Audit, Manual SMKP, dll).
+     */
+    public function dokumenAcuans(): HasMany
+    {
+        return $this->hasMany(AuditDokumenAcuan::class, 'audit_sesi_id')->orderBy('jenis_dokumen')->orderBy('id');
+    }
+
+    /**
+     * Checklist kelengkapan 5 dokumen wajib audit internal SMKP (slide 17):
+     * 1. RKAB, 2. SOP Audit, 3. Manual SMKP, 4. Rencana Audit, 5. Formulir Audit / Penilaian.
+     *
+     * @return array<int, array{key: string, label: string, tersedia: bool, keterangan: string}>
+     */
+    public function getKelengkapanDokumenWajib(): array
+    {
+        $acuans = AuditDokumenAcuan::where('audit_sesi_id', $this->id)->get();
+        $rencana = AuditRencana::where('audit_sesi_id', $this->id)->first();
+        $progress = $this->hitungProgressPenilaian();
+
+        $hasRkab = $acuans->contains('jenis_dokumen', 'rkab');
+        $hasSop = $acuans->contains('jenis_dokumen', 'sop_audit');
+        $hasManual = $acuans->contains('jenis_dokumen', 'manual_smkp');
+        $hasRencana = $rencana !== null;
+        $hasFormulir = $progress > 0 || $this->status === 'selesai';
+
+        return [
+            ['key' => 'rkab', 'label' => 'RKAB (Rencana Kerja & Anggaran Biaya)', 'tersedia' => $hasRkab, 'keterangan' => $hasRkab ? 'Diunggah pada Dokumen Acuan' : 'Belum diunggah'],
+            ['key' => 'sop_audit', 'label' => 'SOP / Prosedur Audit Internal SMKP', 'tersedia' => $hasSop, 'keterangan' => $hasSop ? 'Diunggah pada Dokumen Acuan' : 'Belum diunggah'],
+            ['key' => 'manual_smkp', 'label' => 'Manual SMKP Minerba', 'tersedia' => $hasManual, 'keterangan' => $hasManual ? 'Diunggah pada Dokumen Acuan' : 'Belum diunggah'],
+            ['key' => 'rencana_audit', 'label' => 'Rencana Audit (Formulir 026A)', 'tersedia' => $hasRencana, 'keterangan' => $hasRencana ? 'Status: ' . ucfirst((string) $rencana->status) : 'Belum disusun'],
+            ['key' => 'formulir_audit', 'label' => 'Formulir Kriteria & Penilaian Audit', 'tersedia' => $hasFormulir, 'keterangan' => $hasFormulir ? 'Progress: ' . number_format($progress, 0) . '%' : 'Belum diisi'],
+        ];
+    }
+
+    /**
      * Hitung status 7 langkah Perangkat Audit SMKP untuk sesi ini.
      *
      * @return array<int, array<string, mixed>>
@@ -232,6 +267,15 @@ class AuditSesi extends Model
                 'kode'    => number_format((float) $this->skor_akhir, 1) . '%',
                 'status'  => $rekapStatus,
                 'icon'    => 'bi-bar-chart-line',
+                'count'   => null,
+            ],
+            [
+                'key'     => 'laporan',
+                'no'      => 8,
+                'label'   => 'Laporan',
+                'kode'    => ($lap = AuditLaporan::where('audit_sesi_id', $this->id)->first()) ? strtoupper((string) $lap->status) : 'BELUM',
+                'status'  => ! $lap ? 'belum diisi' : ($lap->isDisahkanAtauLebih() ? 'final' : 'draft'),
+                'icon'    => 'bi-file-earmark-check',
                 'count'   => null,
             ],
         ];

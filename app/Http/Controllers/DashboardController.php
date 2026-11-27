@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditDetail;
+use App\Models\AuditLaporan;
 use App\Models\AuditSesi;
 use App\Models\Elemen;
 use App\Models\Kriteria;
@@ -422,8 +423,31 @@ class DashboardController extends Controller
             ];
         }
 
+        // Ringkasan Pelaporan Audit Internal SMKP (Widget Dashboard Fase L5)
+        $laporanQuery = AuditLaporan::with('auditSesi.perusahaan');
+        if ($perusahaanFilterInt || $tahunFilterInt) {
+            $laporanQuery->whereHas('auditSesi', function ($q) use ($perusahaanFilterInt, $tahunFilterInt) {
+                if ($perusahaanFilterInt) {
+                    $q->where('perusahaan_id', $perusahaanFilterInt);
+                }
+                if ($tahunFilterInt) {
+                    $q->where('tahun_periode', $tahunFilterInt);
+                }
+            });
+        }
+        $allLaporans = $laporanQuery->get();
+        $laporanStats = [
+            'total_laporan'    => $allLaporans->count(),
+            'pending_review'   => $allLaporans->whereIn('status', ['draft', 'ditinjau'])->count(),
+            'h14'              => $allLaporans->filter(fn ($l) => $l->status !== 'dilaporkan' && ($d = $l->getHariTersisa()) !== null && $d >= 8 && $d <= 14)->count(),
+            'h7'               => $allLaporans->filter(fn ($l) => $l->status !== 'dilaporkan' && ($d = $l->getHariTersisa()) !== null && $d >= 0 && $d <= 7)->count(),
+            'overdue'          => $allLaporans->filter(fn ($l) => $l->isOverdue())->count(),
+            'belum_dilaporkan' => $allLaporans->whereIn('status', ['disahkan', 'didistribusikan'])->count(),
+        ];
+
         return view('admin.dashboard', compact(
             'stats',
+            'laporanStats',
             'elementLabels',
             'elementScores',
             'elementColors',

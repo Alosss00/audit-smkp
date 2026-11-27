@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditDaftarHadir;
 use App\Models\AuditDetail;
+use App\Models\AuditDokumenAcuan;
 use App\Models\AuditLaporanDistribusi;
 use App\Models\AuditLaporanIujp;
 use App\Models\AuditLaporanProfil;
@@ -167,6 +168,20 @@ class AttachmentController extends Controller
             }
             if (!$iujp->dokumen_path || !($fullPath = $this->resolveFilePath($iujp->dokumen_path))) {
                 abort(404, 'Berkas hasil audit IUJP tidak ditemukan.');
+            }
+
+            return $this->buildSecureFileResponse($fullPath);
+        }
+
+        if ($type === 'dokumen_acuan') {
+            $doc = AuditDokumenAcuan::with('auditSesi')->findOrFail($id);
+            if ($user->role === 'auditor') {
+                if (!$doc->auditSesi || !$doc->auditSesi->matchesUserArea($user->area)) {
+                    abort(403, 'Anda tidak memiliki hak akses untuk melihat dokumen acuan sesi audit ini.');
+                }
+            }
+            if (!$doc->file_path || !($fullPath = $this->resolveFilePath($doc->file_path))) {
+                abort(404, 'Berkas dokumen acuan tidak ditemukan.');
             }
 
             return $this->buildSecureFileResponse($fullPath);

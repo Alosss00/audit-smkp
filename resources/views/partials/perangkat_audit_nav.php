@@ -15,6 +15,7 @@ $stepUrlMap = $isAuditorNav ? [
     'pica'       => ['url' => route('auditor.pica.index'), 'target' => '_self'],
     'ofi'        => ['url' => route('auditor.audit-sesi.ofi.index', $sesi->id), 'target' => '_self'],
     'rekap'      => ['url' => route('auditor.audit-sesi.rekap', $sesi->id), 'target' => '_self'],
+    'laporan'    => ['url' => route('auditor.audit-sesi.laporan.show', $sesi->id), 'target' => '_self'],
 ] : [
     'tahap_awal' => ['url' => route('admin.audit-sesi.tahap-awal', $sesi->id), 'target' => '_self'],
     'rencana'    => ['url' => route('admin.audit-sesi.rencana.edit', $sesi->id), 'target' => '_self'],
@@ -23,12 +24,13 @@ $stepUrlMap = $isAuditorNav ? [
     'pica'       => ['url' => route('admin.pica.index', ['perusahaan_id' => $sesi->perusahaan_id, 'tahun_periode' => $sesi->tahun_periode]), 'target' => '_self'],
     'ofi'        => ['url' => route('admin.audit-sesi.ofi.index', $sesi->id), 'target' => '_self'],
     'rekap'      => ['url' => route('admin.audit-sesi.rekap', $sesi->id), 'target' => '_self'],
+    'laporan'    => ['url' => route('admin.audit-sesi.laporan.show', $sesi->id), 'target' => '_self'],
 ];
 ?>
 <div class="card card-custom p-3 mb-4 bg-white border-start border-4 border-primary">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
         <div class="small fw-bold text-slate-800">
-            <i class="bi bi-compass-fill text-primary me-1"></i>Perangkat Audit SMKP (7 Langkah)
+            <i class="bi bi-compass-fill text-primary me-1"></i>Perangkat &amp; Laporan Audit SMKP (8 Langkah)
         </div>
         <span class="small text-muted">Klik langkah untuk berpindah antar formulir sesi ini</span>
     </div>

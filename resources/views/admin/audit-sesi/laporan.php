@@ -70,6 +70,7 @@ $hariTersisa = $laporan->getHariTersisa();
 </div>
 
 <!-- Checklist Definisi Audit Selesai -->
+<?php echo view('partials.perangkat_audit_nav', ['sesi' => $sesi, 'activeStep' => 'laporan'])->render(); ?>
 <div class="card card-custom p-4 mb-4">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
         <h5 class="fw-bold text-slate-800 mb-0">
@@ -327,6 +328,133 @@ $hariTersisa = $laporan->getHariTersisa();
         </table>
     </div>
 </div>
+
+<!-- Status Pelaksanaan Jadwal Audit -->
+<?php if (isset($kelengkapanDokumen)): ?>
+<div class="card card-custom p-4 mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 border-bottom pb-2">
+        <div>
+            <h5 class="fw-bold text-slate-800 mb-0">
+                <i class="bi bi-folder-check text-primary me-2"></i>Checklist Kelengkapan Dokumen Wajib Audit (Slide 17)
+            </h5>
+            <small class="text-muted">RKAB, SOP Audit, Manual SMKP, Rencana Audit, dan Formulir Audit.</small>
+        </div>
+        <?php if (! $isReadOnly): ?>
+            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAddDokumenAcuan">
+                <i class="bi bi-upload me-1"></i> Unggah Dokumen Acuan
+            </button>
+        <?php endif; ?>
+    </div>
+    <div class="row g-2 mb-3 small">
+        <?php foreach ($kelengkapanDokumen as $kd): ?>
+            <div class="col-md-6 col-lg-4">
+                <div class="p-2 rounded-3 border d-flex align-items-center gap-2 <?php echo $kd['tersedia'] ? 'bg-success bg-opacity-10 border-success' : 'bg-light'; ?>">
+                    <i class="bi <?php echo $kd['tersedia'] ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'; ?> fs-5"></i>
+                    <div>
+                        <div class="fw-bold text-slate-800"><?php echo e($kd['label']); ?></div>
+                        <div class="text-muted" style="font-size: 0.75rem;"><?php echo e($kd['keterangan']); ?></div>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <?php if ($sesi->dokumenAcuans->isNotEmpty()): ?>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>Jenis</th>
+                        <th>Judul &amp; Nomor</th>
+                        <th>Tanggal</th>
+                        <th>Berkas</th>
+                        <?php if (! $isReadOnly): ?><th class="text-end">Aksi</th><?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($sesi->dokumenAcuans as $doc): ?>
+                        <tr>
+                            <td><span class="badge bg-light text-dark border rounded-pill px-2 py-1"><?php echo e($doc->jenis_label); ?></span></td>
+                            <td>
+                                <div class="fw-bold"><?php echo e($doc->judul); ?></div>
+                                <?php if ($doc->nomor_dokumen): ?><div class="text-muted font-monospace"><?php echo e($doc->nomor_dokumen); ?></div><?php endif; ?>
+                            </td>
+                            <td><?php echo e($doc->tanggal_dokumen ? $doc->tanggal_dokumen->format('d/m/Y') : '-'); ?></td>
+                            <td>
+                                <?php if ($doc->file_url): ?>
+                                    <a href="<?php echo e($doc->file_url); ?>" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0">Lihat</a>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <?php if (! $isReadOnly): ?>
+                                <td class="text-end">
+                                    <form action="<?php echo e(route('admin.audit-sesi.laporan.dokumen-acuan.destroy', [$sesi->id, $doc->id])); ?>" method="POST" class="d-inline" data-confirm="Hapus dokumen acuan ini?">
+                                        <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="btn btn-sm btn-light rounded-circle"><i class="bi bi-trash-fill text-danger"></i></button>
+                                    </form>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if (! $isReadOnly): ?>
+<div class="modal fade" id="modalAddDokumenAcuan" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-slate-800"><i class="bi bi-upload text-primary me-2"></i>Unggah Dokumen Acuan Audit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?php echo e(route('admin.audit-sesi.laporan.dokumen-acuan.store', $sesi->id)); ?>" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
+                <div class="modal-body py-3">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Jenis Dokumen <span class="text-danger">*</span></label>
+                        <select name="jenis_dokumen" class="form-select" required>
+                            <?php foreach (\App\Models\AuditDokumenAcuan::JENIS_OPTIONS as $jdKey => $jdLabel): ?>
+                                <option value="<?php echo e($jdKey); ?>"><?php echo e($jdLabel); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Judul Dokumen <span class="text-danger">*</span></label>
+                        <input type="text" name="judul" class="form-control" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-7">
+                            <label class="form-label small fw-bold">Nomor Dokumen</label>
+                            <input type="text" name="nomor_dokumen" class="form-control">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold">Tanggal Dokumen</label>
+                            <input type="date" name="tanggal_dokumen" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Berkas (PDF/JPG/PNG, maks 5 MB)</label>
+                        <input type="file" name="berkas" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+                    <div>
+                        <label class="form-label small fw-bold">Catatan</label>
+                        <textarea name="catatan" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Simpan Dokumen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Status Pelaksanaan Jadwal Audit -->
 <?php if ($sesi->rencana && $sesi->rencana->jadwals->isNotEmpty()): ?>

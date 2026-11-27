@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditDokumenAcuan;
 use App\Models\AuditLaporan;
 use App\Models\AuditLaporanDistribusi;
 use App\Models\AuditLog;
@@ -29,12 +30,13 @@ class AuditLaporanController extends Controller
      */
     public function show(int|string $id): View
     {
-        $sesi = AuditSesi::with(['perusahaan', 'user', 'rencana.jadwals'])->findOrFail($id);
+        $sesi = AuditSesi::with(['perusahaan', 'user', 'rencana.jadwals', 'dokumenAcuans.pengunggah'])->findOrFail($id);
         $laporan = AuditLaporan::getOrCreateForSesi($sesi);
         $laporan->load(['pengaju', 'peninjau', 'pengesah', 'snapshots.pembuat', 'distribusis.pencatat']);
 
         $statusSelesai = $laporan->auditDinyatakanSelesai();
         $integrity = $laporan->verifyLatestSnapshotIntegrity();
+        $kelengkapanDokumen = $sesi->getKelengkapanDokumenWajib();
         $isReadOnly = false;
 
         return view('admin.audit-sesi.laporan', compact(
@@ -42,6 +44,7 @@ class AuditLaporanController extends Controller
             'laporan',
             'statusSelesai',
             'integrity',
+            'kelengkapanDokumen',
             'isReadOnly'
         ));
     }
@@ -56,7 +59,7 @@ class AuditLaporanController extends Controller
             abort(403, 'Akun Anda belum ditugaskan ke area kerja manapun. Hubungi Administrator.');
         }
 
-        $sesi = AuditSesi::with(['perusahaan', 'user', 'rencana.jadwals'])
+        $sesi = AuditSesi::with(['perusahaan', 'user', 'rencana.jadwals', 'dokumenAcuans.pengunggah'])
             ->forUserArea($userArea)
             ->findOrFail($id);
 
@@ -70,6 +73,7 @@ class AuditLaporanController extends Controller
 
         $statusSelesai = $laporan->auditDinyatakanSelesai();
         $integrity = $laporan->verifyLatestSnapshotIntegrity();
+        $kelengkapanDokumen = $sesi->getKelengkapanDokumenWajib();
         $isReadOnly = true;
 
         return view('admin.audit-sesi.laporan', compact(
@@ -77,6 +81,7 @@ class AuditLaporanController extends Controller
             'laporan',
             'statusSelesai',
             'integrity',
+            'kelengkapanDokumen',
             'isReadOnly'
         ));
     }
@@ -458,5 +463,100 @@ class AuditLaporanController extends Controller
             'integrity',
             'radarChartSvg'
         ));
+    }
+
+    /**
+     * Unggah Dokumen Acuan Wajib (RKAB, SOP Audit, Manual SMKP, Dokumen Lainnya).
+     */
+    public function storeDokumenAcuan(Request $request, int|string $id): RedirectResponse
+    {
+        $sesi = AuditSesi::findOrFail($id);
+
+        $validated = $request->validate([
+            'jenis_dokumen'   => ['required', Rule::in(array_keys(AuditDokumenAcuan::JENIS_OPTIONS))],
+            'judul'           => 'required|string|max:200',
+            'nomor_dokumen'   => 'nullable|string|max:100',
+            'tanggal_dokumen' => 'nullable|date',
+            'catatan'         => 'nullable|string|max:2000',
+            'berkas'          => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ], [
+            'jenis_dokumen.required' => 'Jenis dokumen wajib dipilih.',
+            'judul.required'         => 'Judul dokumen acuan wajib diisi.',
+            'berkas.mimes'           => 'Berkas dokumen acuan harus berformat PDF, JPG, JPEG, atau PNG.',
+            'berkas.max'             => 'Ukuran berkas dokumen acuan maksimal 5 MB.',
+        ]);
+
+        $filePath = null;
+        if ($request->hasFile('berkas')) {
+            $filePath = $request->file('berkas')->store('dokumen_acuan', 'attachments');
+        }
+
+        $doc = AuditDokumenAcuan::create([
+            'audit_sesi_id'   => $sesi->id,
+            'jenis_dokumen'   => $validated['jenis_dokumen'],
+            'judul'           => trim($validated['judul']),
+            'nomor_dokumen'   => isset($validated['nomor_dokumen']) && trim((string) $validated['nomor_dokumen']) !== '' ? trim((string) $validated['nomor_dokumen']) : null,
+            'tanggal_dokumen' => $validated['tanggal_dokumen'] ?? null,
+            'file_path'       => $filePath,
+            'catatan'         => isset($validated['catatan']) && trim((string) $validated['catatan']) !== '' ? trim((string) $validated['catatan']) : null,
+            'diunggah_oleh'   => auth()->id(),
+        ]);
+
+        AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Dokumen Acuan Audit',
+            'tindakan'        => "Menambahkan dokumen acuan ({$doc->jenis_dokumen}): {$doc->judul} pada sesi #{$sesi->id}",
+            'data_lama'       => null,
+            'data_baru'       => $doc->toArray(),
+            'waktu_perubahan' => now(),
+        ]);
+
+        return redirect()->route('admin.audit-sesi.laporan.show', $sesi->id)
+            ->with('success', "Dokumen acuan '{$doc->judul}' berhasil disimpan.");
+    }
+
+    /**
+     * Hapus (soft delete) Dokumen Acuan Wajib.
+     */
+    public function destroyDokumenAcuan(int|string $id, int|string $docId): RedirectResponse
+    {
+        $sesi = AuditSesi::findOrFail($id);
+        $doc = AuditDokumenAcuan::where('audit_sesi_id', $sesi->id)->findOrFail($docId);
+        $old = $doc->toArray();
+        $judul = $doc->judul;
+        $doc->delete();
+
+        AuditLog::create([
+            'user_id'         => auth()->id(),
+            'modul'           => 'Dokumen Acuan Audit',
+            'tindakan'        => "Menghapus (Soft Delete) dokumen acuan '{$judul}' pada sesi #{$sesi->id}",
+            'data_lama'       => $old,
+            'data_baru'       => null,
+            'waktu_perubahan' => now(),
+        ]);
+
+        return redirect()->route('admin.audit-sesi.laporan.show', $sesi->id)
+            ->with('success', "Dokumen acuan '{$judul}' berhasil dihapus.");
+    }
+
+    /**
+     * Menu Laporan Audit untuk role Auditor: HANYA menampilkan laporan berstatus disahkan/didistribusikan/dilaporkan
+     * pada area kerja auditor yang login.
+     */
+    public function indexForAuditor(): View
+    {
+        $userArea = auth()->user()->area;
+        if (empty($userArea)) {
+            abort(403, 'Akun Anda belum ditugaskan ke area kerja manapun. Hubungi Administrator.');
+        }
+
+        $laporans = AuditLaporan::with(['auditSesi.perusahaan', 'latestSnapshot'])
+            ->whereIn('status', ['disahkan', 'didistribusikan', 'dilaporkan'])
+            ->whereHas('auditSesi', fn ($q) => $q->forUserArea($userArea))
+            ->orderByDesc('tanggal_pengesahan')
+            ->orderByDesc('id')
+            ->get();
+
+        return view('auditor.laporan.index', compact('laporans'));
     }
 }

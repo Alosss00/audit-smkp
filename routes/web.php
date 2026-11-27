@@ -126,6 +126,8 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::delete('/audit-sesi/{id}/laporan/distribusi/{distId}', [AuditLaporanController::class, 'destroyDistribusi'])->name('audit-sesi.laporan.distribusi.destroy');
             Route::post('/audit-sesi/{id}/laporan/dilaporkan', [AuditLaporanController::class, 'markReported'])->name('audit-sesi.laporan.mark-reported');
             Route::patch('/audit-sesi/{id}/laporan/jadwal-status', [AuditLaporanController::class, 'updateJadwalStatus'])->name('audit-sesi.laporan.jadwal-status');
+            Route::post('/audit-sesi/{id}/laporan/dokumen-acuan', [AuditLaporanController::class, 'storeDokumenAcuan'])->name('audit-sesi.laporan.dokumen-acuan.store');
+            Route::delete('/audit-sesi/{id}/laporan/dokumen-acuan/{docId}', [AuditLaporanController::class, 'destroyDokumenAcuan'])->name('audit-sesi.laporan.dokumen-acuan.destroy');
         });
 
         // Formulir Lampiran Laporan (Fase L4: Daftar Hadir, Respon Manajemen, Hasil Audit IUJP)
@@ -264,6 +266,9 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
         Route::get('/audit-sesi/{id}/laporan/lampiran', [AuditLampiranLaporanController::class, 'showForAuditor'])->name('audit-sesi.laporan.lampiran');
         Route::get('/audit-sesi/{id}/laporan/daftar-hadir/{jenis}/cetak', [AuditLampiranLaporanController::class, 'cetakDaftarHadir'])->name('audit-sesi.laporan.daftar-hadir.cetak');
         Route::get('/audit-sesi/{id}/export-excel', [AuditSesiController::class, 'exportExcel'])->name('audit-sesi.export-excel');
+
+        // Menu Laporan Audit Disahkan (Fase L5)
+        Route::get('/laporan-audit', [AuditLaporanController::class, 'indexForAuditor'])->name('laporan.index');
 
         // Modul PICA (Tindak Lanjut Perbaikan Temuan Audit oleh Auditee / PIC Area)
         Route::get('/pica', [PicaController::class, 'index'])->name('pica.index');
