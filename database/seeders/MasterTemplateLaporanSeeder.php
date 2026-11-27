@@ -17,7 +17,7 @@ class MasterTemplateLaporanSeeder extends Seeder
             [
                 'bagian'       => 'latar_belakang',
                 'judul'        => 'Bab 1 — Latar Belakang',
-                'isi_template' => "Dalam rangka memenuhi ketentuan peraturan perundang-undangan di bidang keselamatan pertambangan mineral dan batubara serta untuk mengevaluasi tingkat pencapaian penerapan Sistem Manajemen Keselamatan Pertambangan (SMKP) Minerba, {{nama_perusahaan}} telah melaksanakan Audit Internal SMKP periode tahun {{tahun_periode}} pada tanggal {{tanggal_mulai}} sampai dengan {{tanggal_selesai}}.\n\nPelaksanaan dan pelaporan audit internal ini mengacu pada dasar hukum yang berlaku sebagai berikut:\n{{daftar_dasar_hukum}}",
+                'isi_template' => "Audit SMKP Minerba ini merupakan bagian dari penerapan Elemen SMKP Minerba sesuai dengan ketentuan dalam Peraturan Menteri Energi dan Sumber Daya Mineral Nomor 26 Tahun 2018 dan Keputusan Menteri Energi dan Sumber Daya Mineral Nomor 1827.K/30/MEM/2018 Lampiran IV serta Keputusan Dirjen Mineral dan Batubara Nomor 185.K/37.04/DJB/2019 tentang Petunjuk Teknis Pelaksanaan, Penilaian, dan Pelaporan SMKP Minerba.\n\nAudit SMKP Minerba ini bertujuan untuk mendapatkan gambaran tingkat penerapan SMKP Minerba di {{nama_perusahaan}} sejak periode 1 Januari {{tahun_periode}} sampai dengan periode 31 Desember {{tahun_periode}}.",
             ],
             [
                 'bagian'       => 'tujuan_audit',

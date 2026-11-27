@@ -218,16 +218,16 @@ class FaseL4LampiranLaporanTest extends TestCase
             ->assertSee('Ketua Tim Auditor (Lead Auditor)')
             ->assertSee('Perwakilan Auditi (KTT / PJO / Penanggung Jawab)');
 
-        // Laporan print includes Lampiran A-F
+        // Laporan print includes Lampiran VI (1..6 sesuai format dokumen perusahaan)
         $this->actingAs($auditorSmkp)
             ->get(route('admin.audit-sesi.laporan.cetak', $sesiA->id))
             ->assertStatus(200)
-            ->assertSee('Lampiran A')
-            ->assertSee('Lampiran B')
-            ->assertSee('Lampiran C')
-            ->assertSee('Lampiran D')
-            ->assertSee('Lampiran E')
-            ->assertSee('Lampiran F');
+            ->assertSee('Formulir Kriteria Audit')
+            ->assertSee('Tindak Lanjut Hasil Audit')
+            ->assertSee('Daftar Hadir Peserta Pertemuan Pembukaan Audit')
+            ->assertSee('Daftar Hadir Peserta Pertemuan Penutupan Audit')
+            ->assertSee('Respon Perusahaan Terhadap Pelaksanaan Audit')
+            ->assertSee('Hasil Audit Internal Perusahaan Jasa Pertambangan (IUJP)');
 
         // Auditor area scoping
         $this->flushSession();

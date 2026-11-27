@@ -102,7 +102,8 @@ class LaporanAuditWorkflowService
             'auditSesi.rencana.tims',
             'auditSesi.rencana.areas',
             'auditSesi.rencana.jadwals.elemen',
-            'auditSesi.ofis',
+            'auditSesi.ofis.subElemen.elemen',
+            'auditSesi.ofis.kriteria',
             'auditSesi.daftarHadirs.pesertas',
             'auditSesi.responManajemen',
             'profil',
@@ -269,9 +270,15 @@ class LaporanAuditWorkflowService
                 'minor'          => $mapPica($temuan['minor'] ?? [], 'minor'),
             ],
             'ofis' => $sesi->ofis->map(fn ($o) => [
-                'nomor_urut'       => $o->nomor_urut,
-                'deskripsi_temuan' => $o->deskripsi_temuan,
-                'rekomendasi'      => $o->rekomendasi,
+                'nomor_urut'         => $o->nomor_urut,
+                'elemen_kode'        => $o->subElemen?->elemen?->kode_elemen,
+                'elemen_nama'        => $o->subElemen?->elemen?->nama_elemen,
+                'sub_elemen_kode'    => $o->subElemen?->kode_sub,
+                'sub_elemen_nama'    => $o->subElemen?->nama_sub,
+                'kriteria_kode'      => $o->kriteria?->kode_kriteria,
+                'kriteria_deskripsi' => $o->kriteria?->deskripsi,
+                'deskripsi'          => $o->deskripsi,
+                'rekomendasi'        => $o->rekomendasi,
             ])->values()->all(),
             'lampiran' => [
                 'daftar_hadir_pembukaan' => ($dhP = $sesi->daftarHadirs->firstWhere('jenis', 'pembukaan')) ? [
