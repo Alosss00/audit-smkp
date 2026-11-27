@@ -2,24 +2,29 @@
 
 namespace App\Services;
 
-use App\Models\MasterFaktorPenyesuaian;
 use App\Models\MasterHariKerjaAudit;
 use DomainException;
 
 class HariKerjaAuditService
 {
     /**
-     * Hitung hari kerja audit (mandays) berdasarkan tabel acuan & faktor penyesuaian.
+     * Hitung hari kerja audit (mandays) berdasarkan tabel acuan & faktor penyesuaian
+     * yang disinkronkan dengan tabel 7 Kondisi Kepdirjen 185 pada Formulir Tahap Awal.
      *
-     * @param  int   $jumlahPekerja
-     * @param  string $kelasRisiko
-     * @param  array<int, int|string> $faktorIds
+     * @param  int               $jumlahPekerja
+     * @param  string            $kelasRisiko
+     * @param  float             $faktorPenyesuaianHari
+     * @param  array<int, int>   $kondisiYa Nomor kondisi (1..7) yang bernilai "Ya"
      * @return array<string, mixed>
      *
      * @throws DomainException
      */
-    public function hitung(int $jumlahPekerja, string $kelasRisiko, array $faktorIds = []): array
-    {
+    public function hitung(
+        int $jumlahPekerja,
+        string $kelasRisiko,
+        float $faktorPenyesuaianHari = 0.0,
+        array $kondisiYa = []
+    ): array {
         if ($jumlahPekerja < 1) {
             throw new DomainException('Jumlah pekerja harus minimal 1 orang.');
         }
@@ -48,66 +53,32 @@ class HariKerjaAuditService
             'Rendah'   => (float) $barisAcuan->hari_rendah,
         };
 
-        $cleanFaktorIds = array_values(array_unique(array_filter(array_map('intval', $faktorIds), fn (int $id) => $id > 0)));
-        $faktorHari = 0.0;
-        $faktorTerpilih = [];
+        $cleanKondisiYa = array_values(array_unique(array_filter(
+            array_map('intval', $kondisiYa),
+            fn (int $no) => $no >= 1 && $no <= 7
+        )));
+        sort($cleanKondisiYa);
 
-        if (! empty($cleanFaktorIds)) {
-            $faktors = MasterFaktorPenyesuaian::query()
-                ->where('is_active', true)
-                ->whereIn('id', $cleanFaktorIds)
-                ->orderBy('urutan')
-                ->get();
-
-            if ($faktors->count() !== count($cleanFaktorIds)) {
-                throw new DomainException('Sebagian faktor penyesuaian yang dipilih tidak ditemukan atau tidak aktif.');
-            }
-
-            $missingValues = [];
-            foreach ($faktors as $faktor) {
-                if ($faktor->nilai_hari === null) {
-                    $missingValues[] = "{$faktor->kode} ({$faktor->nama})";
-                    continue;
-                }
-
-                $nilai = (float) $faktor->nilai_hari;
-                if ($faktor->tipe === 'tambah') {
-                    $faktorHari += $nilai;
-                } else {
-                    $faktorHari -= $nilai;
-                }
-
-                $faktorTerpilih[] = [
-                    'id'         => $faktor->id,
-                    'kode'       => $faktor->kode,
-                    'nama'       => $faktor->nama,
-                    'tipe'       => $faktor->tipe,
-                    'nilai_hari' => round($nilai, 1),
-                ];
-            }
-
-            if (! empty($missingValues)) {
-                throw new DomainException(
-                    'Nilai hari belum ditetapkan pada faktor penyesuaian: ' . implode('; ', $missingValues) . '. Silakan isi nilai_hari di Master Faktor Penyesuaian terlebih dahulu.'
-                );
-            }
-        }
-
+        $faktorHari = round($faktorPenyesuaianHari, 1);
         $totalMandays = round(max(0.0, $mandaysAwal + $faktorHari), 1);
-        $warning = null;
+
+        $warnings = [];
         if (! $barisAcuan->is_verified) {
-            $warning = "Perhatian: Baris acuan ({$barisAcuan->rentang_label}) belum berstatus terverifikasi oleh admin.";
+            $warnings[] = "Baris acuan ({$barisAcuan->rentang_label}) belum berstatus terverifikasi oleh admin.";
+        }
+        if (! empty($cleanKondisiYa) && abs($faktorHari) < 0.001) {
+            $warnings[] = 'Terdapat ' . count($cleanKondisiYa) . ' kondisi penyesuaian Kepdirjen 185 bernilai "Ya" (No. ' . implode(', ', $cleanKondisiYa) . '); silakan isi penambahan/pengurangan pada kolom Faktor Penyesuaian (Hari) bila diperlukan.';
         }
 
         return [
-            'mandays_awal'    => round($mandaysAwal, 1),
-            'faktor_hari'     => round($faktorHari, 1),
-            'total_mandays'   => $totalMandays,
-            'baris_acuan_id'  => $barisAcuan->id,
-            'rentang_label'   => $barisAcuan->rentang_label,
-            'is_verified'     => (bool) $barisAcuan->is_verified,
-            'warning'         => $warning,
-            'faktor_terpilih' => $faktorTerpilih,
+            'mandays_awal'   => round($mandaysAwal, 1),
+            'faktor_hari'    => $faktorHari,
+            'total_mandays'  => $totalMandays,
+            'baris_acuan_id' => $barisAcuan->id,
+            'rentang_label'  => $barisAcuan->rentang_label,
+            'is_verified'    => (bool) $barisAcuan->is_verified,
+            'warning'        => ! empty($warnings) ? 'Perhatian: ' . implode(' ', $warnings) : null,
+            'kondisi_ya'     => $cleanKondisiYa,
         ];
     }
 
@@ -123,11 +94,9 @@ class HariKerjaAuditService
 
         return $query->where(function ($q) use ($min, $max) {
             if ($max === null) {
-                // New range is [min, +inf): overlaps if existing max is null OR existing max >= min
                 $q->whereNull('jumlah_max')
                     ->orWhere('jumlah_max', '>=', $min);
             } else {
-                // New range is [min, max]: overlaps if existing min <= max AND (existing max is null OR existing max >= min)
                 $q->where('jumlah_min', '<=', $max)
                     ->where(function ($sub) use ($min) {
                         $sub->whereNull('jumlah_max')
@@ -154,10 +123,10 @@ class HariKerjaAuditService
     public function normalizeKelasRisiko(string $kelasRisiko): ?string
     {
         return match (strtolower(trim($kelasRisiko))) {
-            'tinggi'            => 'Tinggi',
+            'tinggi'             => 'Tinggi',
             'menengah', 'sedang' => 'Menengah',
-            'rendah'            => 'Rendah',
-            default             => null,
+            'rendah'             => 'Rendah',
+            default              => null,
         };
     }
 }

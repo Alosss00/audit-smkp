@@ -336,13 +336,14 @@ $renderCopyPrevBtn = function (string $section, string $extraClass = '') use ($h
 
                 <!-- B. Perhitungan Hari Kerja Audit dan Jumlah Auditor -->
                 <?php
-                    $masterFaktorPenyesuaian = $masterFaktorPenyesuaian ?? collect();
                     $saranKelasRisiko = $saranKelasRisiko ?? ($sesi->perusahaan ? $sesi->perusahaan->kelasRisikoDefault() : null);
-                    $savedMasterFaktorIds = [];
-                    if (!empty($faktorPenyesuaian['master_faktor_terpilih']) && is_array($faktorPenyesuaian['master_faktor_terpilih'])) {
-                        $savedMasterFaktorIds = array_map(fn ($f) => (int) ($f['id'] ?? 0), $faktorPenyesuaian['master_faktor_terpilih']);
-                    }
                     $currentSumberPerhitungan = $tahapAwal->sumber_perhitungan ?? '';
+                    $kondisiYaAwal = [];
+                    foreach ($kondisiPenyesuaian as $noK => $txtK) {
+                        if (isset($faktorPenyesuaian[$noK]) && strtolower((string) $faktorPenyesuaian[$noK]) === 'ya') {
+                            $kondisiYaAwal[] = $noK;
+                        }
+                    }
                 ?>
                 <div class="col-12">
                     <div class="card card-custom p-4 border-start border-4 border-primary">
@@ -404,35 +405,18 @@ $renderCopyPrevBtn = function (string $section, string $extraClass = '') use ($h
                                 <input type="number" step="0.1" name="total_mandays" id="inpTotalMandays" class="form-control bg-light fw-bold mandays-manual-watch" value="<?php echo e($tahapAwal->total_mandays ?? ''); ?>">
                             </div>
 
-                            <?php if ($masterFaktorPenyesuaian->isNotEmpty()): ?>
-                                <div class="col-12">
-                                    <div class="p-3 rounded-3 bg-light border">
-                                        <div class="small fw-bold text-slate-800 mb-2">
-                                            <i class="bi bi-check2-square text-primary me-1"></i>Faktor Penyesuaian (Master Acuan) — Pilih faktor yang berlaku sebelum klik "Hitung dari Tabel Acuan":
-                                        </div>
-                                        <div class="row g-2">
-                                            <?php foreach ($masterFaktorPenyesuaian as $mf): ?>
-                                                <?php $isChecked = in_array((int) $mf->id, $savedMasterFaktorIds, true); ?>
-                                                <div class="col-md-6">
-                                                    <div class="form-check small">
-                                                        <input class="form-check-input chk-master-faktor" type="checkbox"
-                                                               name="master_faktor_ids[]"
-                                                               value="<?php echo e($mf->id); ?>"
-                                                               id="mf_<?php echo e($mf->id); ?>"
-                                                               <?php echo $isChecked ? 'checked' : ''; ?>>
-                                                        <label class="form-check-label" for="mf_<?php echo e($mf->id); ?>">
-                                                            <span class="badge <?php echo $mf->tipe === 'tambah' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-success bg-opacity-10 text-success'; ?> me-1">
-                                                                <?php echo $mf->tipe === 'tambah' ? '+' : '−'; ?><?php echo $mf->nilai_hari !== null ? e(number_format((float) $mf->nilai_hari, 1)) . ' hr' : 'belum diisi'; ?>
-                                                            </span>
-                                                            <?php echo e($mf->nama); ?>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
+                            <div class="col-12">
+                                <div class="p-2 px-3 rounded-3 bg-light border d-flex flex-wrap align-items-center justify-content-between gap-2 small">
+                                    <div>
+                                        <i class="bi bi-link-45deg text-primary me-1"></i>
+                                        Tersinkronisasi dengan <strong>Dasar Faktor Penyesuaian (7 Kondisi Kepdirjen 185)</strong> di atas:
+                                        <span id="infoKondisiPenyesuaianAktif" class="fw-bold text-primary">
+                                            <?php echo !empty($kondisiYaAwal) ? e(count($kondisiYaAwal) . ' kondisi bernilai "Ya" (No. ' . implode(', ', $kondisiYaAwal) . ')') : 'Tidak ada kondisi bernilai "Ya"'; ?>
+                                        </span>
                                     </div>
+                                    <span class="text-muted">Isi kolom <strong>Faktor Penyesuaian (Hari)</strong> (+ / -) bila ada penyesuaian durasi.</span>
                                 </div>
-                            <?php endif; ?>
+                            </div>
 
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Alokasi Mandays Tahap I (Maks. 10% Total)</label>
@@ -2137,14 +2121,36 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    function getSelectedKondisiYa() {
+        const list = [];
+        document.querySelectorAll('.kondisi-radio[value="ya"]:checked').forEach(el => {
+            const m = (el.name || '').match(/\[(\d+)\]/);
+            if (m) list.push(parseInt(m[1], 10));
+        });
+        return list.sort((a, b) => a - b);
+    }
+
+    function updateKondisiSyncBadge() {
+        const infoEl = document.getElementById('infoKondisiPenyesuaianAktif');
+        if (!infoEl) return;
+        const yaList = getSelectedKondisiYa();
+        infoEl.textContent = yaList.length > 0
+            ? `${yaList.length} kondisi bernilai "Ya" (No. ${yaList.join(', ')})`
+            : 'Tidak ada kondisi bernilai "Ya"';
+    }
+
+    document.querySelectorAll('.kondisi-radio').forEach(el => {
+        el.addEventListener('change', updateKondisiSyncBadge);
+    });
+    updateKondisiSyncBadge();
+
     if (btnHitungAcuan) {
         btnHitungAcuan.addEventListener('click', async function () {
             const endpoint = this.getAttribute('data-endpoint');
             const jumlahPekerja = parseInt(document.getElementById('inpJumlahPekerja')?.value || '', 10);
             const kelasRisiko = document.getElementById('inpKelasRisiko')?.value || '';
-            const faktorIds = Array.from(document.querySelectorAll('.chk-master-faktor:checked'))
-                .map(el => parseInt(el.value, 10))
-                .filter(v => !isNaN(v) && v > 0);
+            const faktorHariInput = parseFloat(document.getElementById('inpFaktorHari')?.value || '0') || 0;
+            const kondisiYa = getSelectedKondisiYa();
 
             if (isNaN(jumlahPekerja) || jumlahPekerja < 1) {
                 showAlertAcuan('danger', 'Isi Jumlah Pekerja Auditi (minimal 1) sebelum menghitung dari tabel acuan.');
@@ -2171,7 +2177,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     body: JSON.stringify({
                         jumlah_pekerja: jumlahPekerja,
                         kelas_risiko: kelasRisiko,
-                        faktor_ids: faktorIds,
+                        faktor_penyesuaian_hari: faktorHariInput,
+                        kondisi_ya: kondisiYa,
                     }),
                 });
                 const payload = await res.json();

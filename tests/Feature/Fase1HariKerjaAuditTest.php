@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\AuditSesi;
 use App\Models\AuditTahapAwal;
-use App\Models\MasterFaktorPenyesuaian;
 use App\Models\MasterHariKerjaAudit;
 use App\Models\Perusahaan;
 use App\Models\User;
@@ -82,47 +81,31 @@ class Fase1HariKerjaAuditTest extends TestCase
             'sumber'        => 'Uji',
         ]);
 
-        $fTambah = MasterFaktorPenyesuaian::create([
-            'kode'       => 'F_TAMBAH',
-            'nama'       => 'Faktor Tambah',
-            'tipe'       => 'tambah',
-            'nilai_hari' => 2.5,
-            'urutan'     => 1,
-            'is_active'  => true,
-        ]);
-        $fKurang = MasterFaktorPenyesuaian::create([
-            'kode'       => 'F_KURANG',
-            'nama'       => 'Faktor Kurang',
-            'tipe'       => 'kurang',
-            'nilai_hari' => 1.0,
-            'urutan'     => 2,
-            'is_active'  => true,
-        ]);
-
         $service = app(HariKerjaAuditService::class);
-        $result = $service->hitung(250, 'Tinggi', [$fTambah->id, $fKurang->id]);
+        $result = $service->hitung(250, 'Tinggi', 1.5, [1, 3]);
 
         $this->assertSame(12.0, $result['mandays_awal']);
         $this->assertSame(1.5, $result['faktor_hari']);
         $this->assertSame(13.5, $result['total_mandays']);
         $this->assertSame($baris->id, $result['baris_acuan_id']);
+        $this->assertSame([1, 3], $result['kondisi_ya']);
         $this->assertFalse($result['is_verified']);
         $this->assertNotNull($result['warning']);
     }
 
-    public function test_service_rejects_unmatched_range_and_null_factor_value(): void
+    public function test_service_rejects_unmatched_range_and_warns_when_kondisi_ya_has_zero_adjustment(): void
     {
         $service = app(HariKerjaAuditService::class);
 
         // No range in DB
         try {
-            $service->hitung(250, 'Tinggi', []);
+            $service->hitung(250, 'Tinggi', 0.0, []);
             $this->fail('Expected DomainException when no range matches.');
         } catch (DomainException $e) {
             $this->assertStringContainsString('Tidak ditemukan baris acuan', $e->getMessage());
         }
 
-        // Range exists, factor has null nilai_hari
+        // Range exists, kondisi Ya dipilih tapi faktor_hari masih 0 -> tampil warning pengingat
         MasterHariKerjaAudit::create([
             'jumlah_min'    => 1,
             'jumlah_max'    => null,
@@ -131,18 +114,11 @@ class Fase1HariKerjaAuditTest extends TestCase
             'hari_rendah'   => 5.0,
             'is_verified'   => true,
         ]);
-        $fNull = MasterFaktorPenyesuaian::create([
-            'kode'       => 'F_NULL',
-            'nama'       => 'Faktor Belum Dinilai',
-            'tipe'       => 'tambah',
-            'nilai_hari' => null,
-            'urutan'     => 1,
-            'is_active'  => true,
-        ]);
 
-        $this->expectException(DomainException::class);
-        $this->expectExceptionMessage('F_NULL');
-        $service->hitung(250, 'Menengah', [$fNull->id]);
+        $res = $service->hitung(250, 'Menengah', 0.0, [3]);
+        $this->assertSame(8.0, $res['total_mandays']);
+        $this->assertNotNull($res['warning']);
+        $this->assertStringContainsString('No. 3', $res['warning']);
     }
 
     public function test_admin_crud_rejects_overlapping_ranges(): void
@@ -242,9 +218,10 @@ class Fase1HariKerjaAuditTest extends TestCase
         $this->flushSession();
         $res = $this->actingAs($this->auditorSmkp)
             ->postJson(route('admin.audit-sesi.tahap-awal.hitung-hari', $this->sesi->id), [
-                'jumlah_pekerja' => 500,
-                'kelas_risiko'   => 'Tinggi',
-                'faktor_ids'     => [],
+                'jumlah_pekerja'          => 500,
+                'kelas_risiko'            => 'Tinggi',
+                'faktor_penyesuaian_hari' => 0,
+                'kondisi_ya'              => [],
             ]);
 
         $res->assertOk()

@@ -449,11 +449,6 @@ $cspNonce = $cspNonce ?? request()->attributes->get('cspNonce') ?? view()->share
                         <span>Master Hari Kerja</span>
                     </a>
 
-                    <a href="<?php echo route('admin.master-faktor-penyesuaian.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.master-faktor-penyesuaian.*') ? 'active' : ''; ?>">
-                        <i class="bi bi-sliders"></i>
-                        <span>Faktor Penyesuaian</span>
-                    </a>
-
                     <a href="<?php echo route('admin.master-dasar-hukum.index'); ?>" class="sidebar-nav-link <?php echo request()->routeIs('admin.master-dasar-hukum.*') ? 'active' : ''; ?>">
                         <i class="bi bi-journal-text"></i>
                         <span>Master Dasar Hukum</span>

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AuditSesi;
 use App\Models\AuditTahapAwal;
-use App\Models\MasterFaktorPenyesuaian;
 use App\Models\Perusahaan;
 use App\Services\HariKerjaAuditService;
 use DomainException;
@@ -183,10 +182,6 @@ class AuditTahapAwalController extends Controller
         $kondisiPenyesuaian = AuditTahapAwal::getDaftarKondisiPenyesuaian();
         $indikatorKelayakan = AuditTahapAwal::getDaftarIndikatorKelayakan();
         $elemenDokumentasi = AuditTahapAwal::getDaftarElemenDokumentasi();
-        $masterFaktorPenyesuaian = MasterFaktorPenyesuaian::where('is_active', true)
-            ->orderBy('urutan')
-            ->orderBy('id')
-            ->get();
         $saranKelasRisiko = $perusahaan ? $perusahaan->kelasRisikoDefault() : null;
         $rencanaAudit = \App\Models\AuditRencana::where('audit_sesi_id', $sesi->id)->first();
 
@@ -200,7 +195,6 @@ class AuditTahapAwalController extends Controller
             'prevTahunLabel',
             'isKontraktor',
             'pemegangIupList',
-            'masterFaktorPenyesuaian',
             'saranKelasRisiko',
             'rencanaAudit'
         ));
@@ -342,26 +336,7 @@ class AuditTahapAwalController extends Controller
             if (! is_array($faktorInput)) {
                 $faktorInput = [];
             }
-
-            // Simpan snapshot faktor terpilih dari master_faktor_penyesuaian ke dalam JSON faktor_penyesuaian
-            $selectedMasterFaktorIds = array_values(array_unique(array_filter(
-                array_map('intval', (array) $request->input('master_faktor_ids', [])),
-                fn (int $fid) => $fid > 0
-            )));
-            if (! empty($selectedMasterFaktorIds)) {
-                $masterFaktors = MasterFaktorPenyesuaian::whereIn('id', $selectedMasterFaktorIds)
-                    ->orderBy('urutan')
-                    ->get();
-                $faktorInput['master_faktor_terpilih'] = $masterFaktors->map(fn ($f) => [
-                    'id'         => $f->id,
-                    'kode'       => $f->kode,
-                    'nama'       => $f->nama,
-                    'tipe'       => $f->tipe,
-                    'nilai_hari' => $f->nilai_hari !== null ? (float) $f->nilai_hari : null,
-                ])->values()->all();
-            } else {
-                unset($faktorInput['master_faktor_terpilih']);
-            }
+            unset($faktorInput['master_faktor_terpilih']);
 
             $sumberPerhitungan = $request->input('sumber_perhitungan');
             if (! in_array($sumberPerhitungan, ['tabel', 'manual'], true)) {
@@ -465,10 +440,11 @@ class AuditTahapAwalController extends Controller
         AuditSesi::findOrFail($id);
 
         $validated = $request->validate([
-            'jumlah_pekerja' => 'required|integer|min:1',
-            'kelas_risiko'   => 'required|string|in:Tinggi,Menengah,Sedang,Rendah',
-            'faktor_ids'     => 'nullable|array',
-            'faktor_ids.*'   => 'integer|min:1',
+            'jumlah_pekerja'          => 'required|integer|min:1',
+            'kelas_risiko'            => 'required|string|in:Tinggi,Menengah,Sedang,Rendah',
+            'faktor_penyesuaian_hari' => 'nullable|numeric|min:-365|max:365',
+            'kondisi_ya'              => 'nullable|array',
+            'kondisi_ya.*'            => 'integer|min:1|max:7',
         ], [
             'jumlah_pekerja.required' => 'Jumlah pekerja auditi wajib diisi.',
             'jumlah_pekerja.integer'  => 'Jumlah pekerja harus berupa bilangan bulat.',
@@ -481,7 +457,8 @@ class AuditTahapAwalController extends Controller
             $result = $service->hitung(
                 (int) $validated['jumlah_pekerja'],
                 (string) $validated['kelas_risiko'],
-                $validated['faktor_ids'] ?? []
+                (float) ($validated['faktor_penyesuaian_hari'] ?? 0),
+                $validated['kondisi_ya'] ?? []
             );
 
             return response()->json([

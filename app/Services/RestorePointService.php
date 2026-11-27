@@ -24,7 +24,6 @@ class RestorePointService
         'kriterias',
         'users',
         'master_hari_kerja_audit',
-        'master_faktor_penyesuaian',
         'master_penandatangan_rencana',
         'master_dasar_hukum',
         'master_template_laporan',

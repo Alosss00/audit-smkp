@@ -12,7 +12,6 @@ use App\Http\Controllers\Admin\ElemenController;
 use App\Http\Controllers\Admin\KriteriaController;
 use App\Http\Controllers\Admin\MasterAturanPelaporanController;
 use App\Http\Controllers\Admin\MasterDasarHukumController;
-use App\Http\Controllers\Admin\MasterFaktorPenyesuaianController;
 use App\Http\Controllers\Admin\MasterHariKerjaAuditController;
 use App\Http\Controllers\Admin\MasterTemplateLaporanController;
 use App\Http\Controllers\Admin\PicaController as AdminPicaController;
@@ -174,10 +173,9 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
             Route::delete('/perusahaans/{id}/force-delete', [PerusahaanController::class, 'forceDelete'])->name('perusahaans.force-delete');
             Route::resource('perusahaans', PerusahaanController::class);
 
-            // Master Hari Kerja Audit & Faktor Penyesuaian (Fase 1 Perangkat Audit SMKP)
+            // Master Hari Kerja Audit (Fase 1 Perangkat Audit SMKP)
             Route::get('/master-hari-kerja', [MasterHariKerjaAuditController::class, 'index'])->name('master-hari-kerja.index');
             Route::get('/master-hari-kerja/template', [MasterHariKerjaAuditController::class, 'downloadTemplate'])->name('master-hari-kerja.template');
-            Route::get('/master-faktor-penyesuaian', [MasterFaktorPenyesuaianController::class, 'index'])->name('master-faktor-penyesuaian.index');
 
             // Master Dasar Hukum, Template Laporan, & Aturan Pelaporan + Revisi Laporan (Fase L2)
             Route::get('/master-dasar-hukum', [MasterDasarHukumController::class, 'index'])->name('master-dasar-hukum.index');
@@ -209,13 +207,6 @@ Route::middleware(['auth', 'prevent-back-history', 'session.idle'])->group(funct
                 Route::delete('/master-hari-kerja/{id}/force-delete', [MasterHariKerjaAuditController::class, 'forceDelete'])->name('master-hari-kerja.force-delete');
                 Route::post('/master-hari-kerja/import-preview', [MasterHariKerjaAuditController::class, 'importPreview'])->name('master-hari-kerja.import-preview');
                 Route::post('/master-hari-kerja/import-confirm', [MasterHariKerjaAuditController::class, 'importConfirm'])->name('master-hari-kerja.import-confirm');
-
-                Route::post('/master-faktor-penyesuaian', [MasterFaktorPenyesuaianController::class, 'store'])->name('master-faktor-penyesuaian.store');
-                Route::put('/master-faktor-penyesuaian/{id}', [MasterFaktorPenyesuaianController::class, 'update'])->name('master-faktor-penyesuaian.update');
-                Route::patch('/master-faktor-penyesuaian/{id}/toggle-active', [MasterFaktorPenyesuaianController::class, 'toggleActive'])->name('master-faktor-penyesuaian.toggle-active');
-                Route::delete('/master-faktor-penyesuaian/{id}', [MasterFaktorPenyesuaianController::class, 'destroy'])->name('master-faktor-penyesuaian.destroy');
-                Route::post('/master-faktor-penyesuaian/{id}/restore', [MasterFaktorPenyesuaianController::class, 'restore'])->name('master-faktor-penyesuaian.restore');
-                Route::delete('/master-faktor-penyesuaian/{id}/force-delete', [MasterFaktorPenyesuaianController::class, 'forceDelete'])->name('master-faktor-penyesuaian.force-delete');
             });
 
             // Log Aktivitas User & Audit Trail Perubahan File
